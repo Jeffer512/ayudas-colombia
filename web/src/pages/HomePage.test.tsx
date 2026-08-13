@@ -14,11 +14,29 @@ vi.mock('../api/client', () => ({
     report: vi.fn(),
     createReport: vi.fn(),
     updateStatus: vi.fn(),
+    acopios: vi.fn(),
+    acopio: vi.fn(),
+    createAcopio: vi.fn(),
   },
+}))
+
+vi.mock('react-leaflet', () => ({
+  MapContainer: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="map">{children}</div>
+  ),
+  TileLayer: () => null,
+  Marker: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="marker">{children}</div>
+  ),
+  Popup: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="popup">{children}</div>
+  ),
+  useMapEvents: () => null,
 }))
 
 const mockedReports = vi.mocked(api.reports)
 const mockedCities = vi.mocked(api.cities)
+const mockedAcopios = vi.mocked(api.acopios)
 
 function renderHomePage() {
   const queryClient = new QueryClient({
@@ -37,6 +55,7 @@ const listResponse: ReportListResponse = {
   reports: [
     {
       id: 'r1',
+      direction: 'need',
       type: 'supplies_request',
       urgency: 'high',
       status: 'open',
@@ -59,6 +78,7 @@ const listResponse: ReportListResponse = {
     },
     {
       id: 'r2',
+      direction: 'offer',
       type: 'volunteers_request',
       urgency: 'medium',
       status: 'in_progress',
@@ -89,6 +109,8 @@ describe('HomePage', () => {
   beforeEach(() => {
     mockedCities.mockReset()
     mockedReports.mockReset()
+    mockedAcopios.mockReset()
+    mockedAcopios.mockResolvedValue({ acopios: [], total: 0, limit: 50, offset: 0 })
     mockedCities.mockResolvedValue({
       cities: [
         {
@@ -162,5 +184,44 @@ describe('HomePage', () => {
     expect(
       screen.getByRole('button', { name: 'Reintentar' }),
     ).toBeInTheDocument()
+  })
+
+  it('muestra el mapa con los controles de capas y los centros de acopio', async () => {
+    mockedReports.mockResolvedValue(listResponse)
+    mockedAcopios.mockResolvedValue({
+      acopios: [
+        {
+          id: 'a1',
+          type: 'ciudadano',
+          name: 'Centro La Florida',
+          description: null,
+          address: 'Carrera 20 #40-25',
+          lat: 4.82,
+          lng: -75.7,
+          city: { code: 'pereira', name: 'Pereira' },
+          contactName: null,
+          contactPhone: '3105552222',
+          hours: null,
+          accepts: null,
+          status: 'open',
+          createdAt: '2026-08-13T12:00:00Z',
+          updatedAt: '2026-08-13T12:00:00Z',
+        },
+      ],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    })
+    renderHomePage()
+
+    expect(await screen.findByTestId('map')).toBeInTheDocument()
+    expect(
+      screen.getByRole('checkbox', { name: 'Mostrar reportes' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('checkbox', { name: 'Mostrar centros de acopio' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Necesito ayuda')).toBeInTheDocument()
+    expect(await screen.findByText('Centro La Florida')).toBeInTheDocument()
   })
 })

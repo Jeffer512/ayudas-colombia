@@ -6,20 +6,35 @@ function navClass({ isActive }: { isActive: boolean }) {
     : 'rounded px-3 py-1 text-sky-100 hover:bg-sky-700/60'
 }
 
+const tertiaryClass =
+  'rounded px-3 py-1 text-sky-200/80 underline underline-offset-4 decoration-sky-300/60 hover:text-white'
+
 export default function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="bg-sky-800 text-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <Link to="/" className="text-lg font-bold tracking-tight">
             Ayudas Pereira
           </Link>
-          <nav className="flex items-center gap-2 text-sm" aria-label="Principal">
+          <nav
+            className="flex flex-wrap items-center gap-2 text-sm"
+            aria-label="Principal"
+          >
             <NavLink to="/" className={navClass} end>
-              Mapa
+              Inicio
             </NavLink>
-            <NavLink to="/nuevo-reporte" className={navClass}>
-              Reportar
+            <NavLink to="/pedir-ayuda" className={navClass}>
+              Pedir ayuda
+            </NavLink>
+            <NavLink to="/ofrecer-ayuda" className={navClass}>
+              Ofrecer ayuda
+            </NavLink>
+            <NavLink to="/centros-de-acopio" className={navClass}>
+              Centros de acopio
+            </NavLink>
+            <NavLink to="/informar" className={tertiaryClass}>
+              Informar
             </NavLink>
           </nav>
         </div>

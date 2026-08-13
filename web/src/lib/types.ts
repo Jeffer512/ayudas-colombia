@@ -1,13 +1,18 @@
+export type Direction = 'need' | 'offer' | 'info'
+
 export type ReportType =
   | 'missing_person'
   | 'missing_pet'
   | 'supplies_request'
   | 'volunteers_request'
   | 'shelter_request'
-  | 'shelter_offered'
   | 'medical_request'
+  | 'transport_request'
+  | 'supplies_offered'
+  | 'volunteers_offered'
+  | 'shelter_offered'
+  | 'transport_offered'
   | 'damage_report'
-  | 'aid_offered'
   | 'info'
 
 export type Urgency = 'critical' | 'high' | 'medium' | 'low'
@@ -43,6 +48,7 @@ export interface Reporter {
 
 export interface Report {
   id: string
+  direction: Direction
   type: ReportType
   urgency: Urgency
   status: Status
@@ -59,6 +65,10 @@ export interface Report {
   events?: ReportEvent[]
 }
 
+export interface CreatedReport extends Report {
+  resolveCode: string
+}
+
 export interface ReportListResponse {
   reports: Report[]
   total: number
@@ -67,6 +77,7 @@ export interface ReportListResponse {
 }
 
 export interface ReportFilters {
+  direction?: Direction
   type?: ReportType
   status?: Status | 'active'
   urgency?: Urgency
@@ -97,7 +108,54 @@ export type NewReport = {
 
 export type StatusUpdate = {
   status: Status
-  phoneVerify?: string
+  resolveCode?: string
   note?: string
   actorName?: string
+}
+
+export type AcopioType = 'ciudadano' | 'oficial'
+export type AcopioStatus = 'open' | 'closed'
+
+export interface AcopioCenter {
+  id: string
+  type: AcopioType
+  name: string
+  description: string | null
+  address: string | null
+  lat: number | null
+  lng: number | null
+  city: { code: string; name: string }
+  contactName: string | null
+  contactPhone: string | null
+  hours: string | null
+  accepts: string | null
+  status: AcopioStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AcopioListResponse {
+  acopios: AcopioCenter[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface AcopioFilters {
+  city?: string
+  type?: AcopioType
+  status?: AcopioStatus
+}
+
+export type NewAcopio = {
+  name: string
+  description?: string
+  address?: string
+  lat: number
+  lng: number
+  cityCode: string
+  contactName?: string
+  contactPhone?: string
+  hours?: string
+  accepts?: string
 }

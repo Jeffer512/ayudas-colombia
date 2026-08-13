@@ -1,5 +1,10 @@
 import type {
+  AcopioCenter,
+  AcopioFilters,
+  AcopioListResponse,
   City,
+  CreatedReport,
+  NewAcopio,
   NewReport,
   Report,
   ReportFilters,
@@ -29,7 +34,7 @@ async function http<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-function buildQuery(filters: ReportFilters): string {
+function buildQuery(filters: object): string {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(filters)) {
     if (value !== undefined && value !== '') params.set(key, String(value))
@@ -51,7 +56,7 @@ export const api = {
     return http(`/reports/${id}`)
   },
 
-  createReport(body: NewReport): Promise<Report> {
+  createReport(body: NewReport): Promise<CreatedReport> {
     return http('/reports', { method: 'POST', body: JSON.stringify(body) })
   },
 
@@ -60,5 +65,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     })
+  },
+
+  acopios(filters: AcopioFilters = {}): Promise<AcopioListResponse> {
+    return http(`/acopios${buildQuery(filters)}`)
+  },
+
+  acopio(id: string): Promise<AcopioCenter> {
+    return http(`/acopios/${id}`)
+  },
+
+  createAcopio(body: NewAcopio): Promise<AcopioCenter> {
+    return http('/acopios', { method: 'POST', body: JSON.stringify(body) })
   },
 }

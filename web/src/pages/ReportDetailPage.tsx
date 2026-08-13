@@ -24,7 +24,7 @@ export default function ReportDetailPage() {
   const [mode, setMode] = useState<ActionMode>(null)
   const [actorName, setActorName] = useState('')
   const [note, setNote] = useState('')
-  const [phoneVerify, setPhoneVerify] = useState('')
+  const [resolveCode, setResolveCode] = useState('')
 
   const { data: report, isPending, isError } = useQuery({
     queryKey: ['report', id],
@@ -39,7 +39,7 @@ export default function ReportDetailPage() {
       setMode(null)
       setActorName('')
       setNote('')
-      setPhoneVerify('')
+      setResolveCode('')
     },
   })
 
@@ -253,28 +253,29 @@ export default function ReportDetailPage() {
               e.preventDefault()
               mutation.mutate({
                 status: 'resolved',
-                phoneVerify: phoneVerify.trim(),
+                resolveCode: resolveCode.trim(),
                 note: note.trim() || undefined,
               })
             }}
             className="mt-3 space-y-3"
           >
             <div>
-              <label htmlFor="phoneVerify" className="text-sm font-medium text-slate-700">
-                Últimos 4 dígitos del teléfono del reporte
+              <label htmlFor="resolveCode" className="text-sm font-medium text-slate-700">
+                Código de cierre (4 dígitos)
               </label>
               <input
-                id="phoneVerify"
+                id="resolveCode"
                 required
+                minLength={4}
                 maxLength={4}
                 placeholder="1234"
-                value={phoneVerify}
-                onChange={(e) => setPhoneVerify(e.target.value)}
+                value={resolveCode}
+                onChange={(e) => setResolveCode(e.target.value)}
                 className={`mt-1 ${inputClass}`}
               />
               <p className="mt-1 text-xs text-slate-500">
-                Lo saben quienes crearon el reporte. Esto evita que se cierre por
-                error.
+                Se entregó al publicar el reporte. Con él se confirma que la
+                situación terminó y evita cierres por error.
               </p>
             </div>
             <div>

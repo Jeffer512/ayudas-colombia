@@ -14,6 +14,9 @@ vi.mock('../api/client', () => ({
     report: vi.fn(),
     createReport: vi.fn(),
     updateStatus: vi.fn(),
+    acopios: vi.fn(),
+    acopio: vi.fn(),
+    createAcopio: vi.fn(),
   },
 }))
 
@@ -31,6 +34,7 @@ const mockedUpdateStatus = vi.mocked(api.updateStatus)
 
 const baseReport: Report = {
   id: 'r1',
+  direction: 'need',
   type: 'supplies_request',
   urgency: 'high',
   status: 'open',
@@ -120,7 +124,7 @@ describe('ReportDetailPage', () => {
     )
   })
 
-  it('resuelve ingresando los 4 dígitos de verificación', async () => {
+  it('resuelve ingresando el código de cierre', async () => {
     mockedUpdateStatus.mockResolvedValue({ ...baseReport, status: 'resolved' })
     const user = userEvent.setup()
     renderPage()
@@ -129,7 +133,7 @@ describe('ReportDetailPage', () => {
       await screen.findByRole('button', { name: 'Marcarlo como resuelto' }),
     )
     await user.type(
-      screen.getByLabelText('Últimos 4 dígitos del teléfono del reporte'),
+      screen.getByLabelText('Código de cierre (4 dígitos)'),
       '5432',
     )
     await user.click(screen.getByRole('button', { name: 'Confirmar resolución' }))
@@ -137,15 +141,15 @@ describe('ReportDetailPage', () => {
     await waitFor(() =>
       expect(mockedUpdateStatus).toHaveBeenCalledWith('r1', {
         status: 'resolved',
-        phoneVerify: '5432',
+        resolveCode: '5432',
         note: undefined,
       }),
     )
   })
 
-  it('muestra el error cuando el código de verificación es incorrecto', async () => {
+  it('muestra el error cuando el código de cierre es incorrecto', async () => {
     mockedUpdateStatus.mockRejectedValue(
-      new Error('Código de verificación incorrecto'),
+      new Error('Código de cierre incorrecto'),
     )
     const user = userEvent.setup()
     renderPage()
@@ -154,13 +158,13 @@ describe('ReportDetailPage', () => {
       await screen.findByRole('button', { name: 'Marcarlo como resuelto' }),
     )
     await user.type(
-      screen.getByLabelText('Últimos 4 dígitos del teléfono del reporte'),
+      screen.getByLabelText('Código de cierre (4 dígitos)'),
       '0000',
     )
     await user.click(screen.getByRole('button', { name: 'Confirmar resolución' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Código de verificación incorrecto',
+      'Código de cierre incorrecto',
     )
   })
 })

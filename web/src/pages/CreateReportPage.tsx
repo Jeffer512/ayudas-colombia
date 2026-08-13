@@ -1,21 +1,48 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
 import {
   CONTACT_TYPE_LABELS,
   ORGANIZATION_TYPE_LABELS,
   REPORT_TYPE_LABELS,
+  TYPE_DIRECTION,
   URGENCY_META,
 } from '../lib/constants'
 import type {
   ContactType,
+  CreatedReport,
+  Direction,
   NewReport,
   ReportType,
   Urgency,
 } from '../lib/types'
+
+const PAGE_META: Record<
+  Direction,
+  { title: string; intro: string; submitLabel: string }
+> = {
+  need: {
+    title: 'Pedir ayuda',
+    intro:
+      'Cuéntanos qué necesitas. Así, vecinos, organizaciones y centros de acopio lo verán en el mapa y podrán coordinar la ayuda hacia tu zona.',
+    submitLabel: 'Publicar pedido',
+  },
+  offer: {
+    title: 'Ofrecer ayuda',
+    intro:
+      'Diles a los demás qué puedes ofrecer (suministros, voluntariado, refugio, transporte). Cuando alguien te contacte, podrás cerrarlo desde tu reporte con tu código.',
+    submitLabel: 'Publicar oferta',
+  },
+  info: {
+    title: 'Informar',
+    intro:
+      'Comparte información útil para la comunidad: daños, punto de distribución funcionando, rutas, avisos. No es un pedido ni una oferta.',
+    submitLabel: 'Publicar aviso',
+  },
+}
 
 interface FormState {
   type: ReportType | ''
@@ -56,11 +83,16 @@ const inputClass =
 
 const labelClass = 'text-sm font-medium text-slate-700'
 
-export default function CreateReportPage() {
+export default function CreateReportPage({
+  direction,
+}: {
+  direction: Direction
+}) {
   const navigate = useNavigate()
   const [form, setForm] = useState<FormState>(initialForm)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [created, setCreated] = useState<CreatedReport | null>(null)
 
   const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
   const cities = citiesQuery.data?.cities ?? []
@@ -70,6 +102,11 @@ export default function CreateReportPage() {
       setForm((f) => ({ ...f, cityCode: cities[0].code }))
     }
   }, [cities, form.cityCode])
+
+  const typeOptions = Object.entries(REPORT_TYPE_LABELS).filter(
+    ([code]) => TYPE_DIRECTION[code] === direction,
+  )
+  const meta = PAGE_META[direction]
 
   const patch = (partial: Partial<FormState>) =>
     setForm((f) => ({ ...f, ...partial }))
@@ -106,26 +143,67 @@ export default function CreateReportPage() {
 
     api
       .createReport(body)
-      .then((created) => navigate(`/reporte/${created.id}`))
+      .then((createdReport) => {
+        setCreated(createdReport)
+        setSubmitting(false)
+      })
       .catch((err: unknown) => {
         setError(
           err instanceof Error
             ? err.message
-            : 'No se pudo crear el reporte. Inténtalo de nuevo.',
+            : 'No se pudo publicar. Inténtalo de nuevo.',
         )
         setSubmitting(false)
       })
   }
 
+  if (created) {
+    return (
+      <div className="mx-auto max-w-2xl text-center">
+        <div className="rounded-2xl border border-green-200 bg-green-50 p-8">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Reporte publicado
+          </h1>
+          <p className="mt-2 text-slate-700">
+            Tu reporte ya aparece en el mapa y en la lista. Guarda tu código
+            para cerrarlo cuando la situación termine:
+          </p>
+          <p
+            className="mx-auto mt-4 inline-block rounded-lg bg-white px-6 py-3 font-mono text-3xl font-bold tracking-widest text-green-800 shadow-sm"
+            aria-label="Código de cierre"
+          >
+            {created.resolveCode}
+          </p>
+          <p className="mt-3 text-xs text-slate-500">
+            Nadie más podrá ver este código por la aplicación. Con él se marca
+            tu reporte como resuelto.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link
+              to={`/reporte/${created.id}`}
+              className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+            >
+              Ver reporte en el mapa
+            </Link>
+            <button
+              onClick={() => {
+                setCreated(null)
+                setForm(initialForm)
+              }}
+              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Publicar otro
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold tracking-tight">
-        Reportar una necesidad u ofrecer ayuda
-      </h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Cuéntanos qué ocurre y hacia dónde dirigir la ayuda. Si ya alguien está
-        atendiendo el caso, se verá reflejado y podrás ayudar en otra zona.
-      </p>
+      <h1 className="text-2xl font-bold tracking-tight">{meta.title}</h1>
+      <p className="mt-1 text-sm text-slate-600">{meta.intro}</p>
 
       {error && (
         <div
@@ -139,27 +217,25 @@ export default function CreateReportPage() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <fieldset className="rounded-lg border border-slate-200 bg-white p-4">
           <legend className="px-1 text-sm font-semibold text-slate-700">
-            ¿Qué necesitas o qué ofreces?
+            ¿Qué {direction === 'need' ? 'necesitas' : direction === 'offer' ? 'ofreces' : 'quieres informar'}?
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="type" className={labelClass}>
-                Tipo de reporte
+                Tipo
               </label>
               <select
                 id="type"
                 required
                 value={form.type}
-                onChange={(e) =>
-                  patch({ type: e.target.value as ReportType })
-                }
+                onChange={(e) => patch({ type: e.target.value as ReportType })}
                 className={`mt-1 ${inputClass}`}
               >
                 <option value="" disabled>
                   Selecciona un tipo…
                 </option>
-                {Object.entries(REPORT_TYPE_LABELS).map(([code, label]) => (
+                {typeOptions.map(([code, label]) => (
                   <option key={code} value={code}>
                     {label}
                   </option>
@@ -174,9 +250,7 @@ export default function CreateReportPage() {
               <select
                 id="urgency"
                 value={form.urgency}
-                onChange={(e) =>
-                  patch({ urgency: e.target.value as Urgency })
-                }
+                onChange={(e) => patch({ urgency: e.target.value as Urgency })}
                 className={`mt-1 ${inputClass}`}
               >
                 {Object.entries(URGENCY_META).map(([code, { label }]) => (
@@ -391,8 +465,8 @@ export default function CreateReportPage() {
                 className={`mt-1 ${inputClass}`}
               />
               <p className="mt-1 text-xs text-slate-500">
-                Es público para coordinar la ayuda. Con los últimos 4 dígitos se
-                podrá marcar el reporte como resuelto.
+                Es público para coordinar la ayuda. Al publicar recibirás un
+                código de cierre de 4 dígitos.
               </p>
             </div>
 
@@ -425,7 +499,7 @@ export default function CreateReportPage() {
             disabled={submitting}
             className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
           >
-            {submitting ? 'Publicando…' : 'Publicar reporte'}
+            {submitting ? 'Publicando…' : meta.submitLabel}
           </button>
         </div>
       </form>
