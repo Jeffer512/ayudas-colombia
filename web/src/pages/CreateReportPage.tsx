@@ -119,7 +119,7 @@ export default function CreateReportPage({
     const isOrganization = form.contactType === 'organization'
     const body: NewReport = {
       type: form.type as ReportType,
-      urgency: form.urgency,
+      ...(direction !== 'offer' ? { urgency: form.urgency } : {}),
       title: form.title.trim(),
       description: form.description.trim(),
       cityCode: form.cityCode,
@@ -221,7 +221,11 @@ export default function CreateReportPage({
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
+            <div
+              className={
+                direction === 'offer' ? 'sm:col-span-2' : undefined
+              }
+            >
               <label htmlFor="type" className={labelClass}>
                 Tipo
               </label>
@@ -243,23 +247,27 @@ export default function CreateReportPage({
               </select>
             </div>
 
-            <div>
-              <label htmlFor="urgency" className={labelClass}>
-                Urgencia
-              </label>
-              <select
-                id="urgency"
-                value={form.urgency}
-                onChange={(e) => patch({ urgency: e.target.value as Urgency })}
-                className={`mt-1 ${inputClass}`}
-              >
-                {Object.entries(URGENCY_META).map(([code, { label }]) => (
-                  <option key={code} value={code}>
-                    Urgencia {label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {direction !== 'offer' && (
+              <div>
+                <label htmlFor="urgency" className={labelClass}>
+                  Urgencia
+                </label>
+                <select
+                  id="urgency"
+                  value={form.urgency}
+                  onChange={(e) =>
+                    patch({ urgency: e.target.value as Urgency })
+                  }
+                  className={`mt-1 ${inputClass}`}
+                >
+                  {Object.entries(URGENCY_META).map(([code, { label }]) => (
+                    <option key={code} value={code}>
+                      Urgencia {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="mt-4">

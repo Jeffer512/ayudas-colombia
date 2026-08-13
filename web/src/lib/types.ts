@@ -89,7 +89,7 @@ export interface ReportFilters {
 
 export type NewReport = {
   type: ReportType
-  urgency: Urgency
+  urgency?: Urgency
   title: string
   description: string
   address?: string

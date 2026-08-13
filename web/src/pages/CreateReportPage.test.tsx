@@ -111,7 +111,7 @@ describe('CreateReportPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('en modo ofrecer solo muestra tipos de oferta', async () => {
+  it('en modo ofrecer solo muestra tipos de oferta y no pide urgencia', async () => {
     const user = userEvent.setup()
     renderPage('offer')
 
@@ -123,6 +123,7 @@ describe('CreateReportPage', () => {
     expect(options).toContain('Ofrezco suministros')
     expect(options).toContain('Refugio ofrecido')
     expect(options).not.toContain('Solicitud de suministros')
+    expect(screen.queryByLabelText('Urgencia')).not.toBeInTheDocument()
 
     await user.selectOptions(typeSelect, 'shelter_offered')
     expect(
