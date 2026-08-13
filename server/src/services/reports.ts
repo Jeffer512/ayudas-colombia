@@ -68,7 +68,11 @@ export function serializeReport(report: SerializedReport) {
 export async function listReports(filters: ReportFilters) {
   const where: Record<string, unknown> = {}
   if (filters.type) where.type = filters.type
-  if (filters.status) where.status = filters.status
+  if (filters.status === 'active') {
+    where.status = { in: ['open', 'in_progress'] }
+  } else if (filters.status) {
+    where.status = filters.status
+  }
   if (filters.urgency) where.urgency = filters.urgency
   if (filters.city) where.city = { code: filters.city }
   if (filters.q) {

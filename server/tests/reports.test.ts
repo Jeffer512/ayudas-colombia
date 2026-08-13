@@ -51,6 +51,17 @@ describe('GET /api/reports', () => {
     expect(res.body.reports[0].id).toBe(resolved.id)
   })
 
+  it('el filtro active incluye abiertos y siendo atendidos, excluyendo resueltos', async () => {
+    await createReport({ status: 'open' })
+    const inProgress = await createReport({ status: 'in_progress' })
+    await createReport({ status: 'resolved', resolvedAt: new Date() })
+
+    const res = await request(app).get('/api/reports').query({ status: 'active' })
+    expect(res.body.total).toBe(2)
+    const ids = res.body.reports.map((r: { id: string }) => r.id)
+    expect(ids).toContain(inProgress.id)
+  })
+
   it('filtra por urgencia', async () => {
     await createReport({ urgency: 'low' })
     const critical = await createReport({ urgency: 'critical' })

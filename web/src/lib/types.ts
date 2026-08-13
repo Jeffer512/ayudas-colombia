@@ -68,7 +68,7 @@ export interface ReportListResponse {
 
 export interface ReportFilters {
   type?: ReportType
-  status?: Status
+  status?: Status | 'active'
   urgency?: Urgency
   city?: string
   q?: string

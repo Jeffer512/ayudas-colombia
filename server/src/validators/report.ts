@@ -47,7 +47,9 @@ export type CreateReportInput = z.infer<typeof createReportSchema>
 
 export const reportFiltersSchema = z.object({
   type: z.enum(REPORT_TYPES).optional(),
-  status: z.enum(['open', 'in_progress', 'resolved', 'duplicate', 'invalid']).optional(),
+  status: z
+    .enum(['open', 'in_progress', 'resolved', 'duplicate', 'invalid', 'active'])
+    .optional(),
   urgency: z.enum(URGENCIES).optional(),
   city: z.string().trim().optional(),
   q: z.string().trim().max(200).optional(),
