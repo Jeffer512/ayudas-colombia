@@ -4,6 +4,7 @@ import { ApiError } from '../lib/errors.js'
 import type {
   CreateReportInput,
   ReportFilters,
+  UpdateStatusInput,
 } from '../validators/report.js'
 
 type SerializedReport = Report & {
@@ -11,6 +12,16 @@ type SerializedReport = Report & {
   reporter: Reporter
   events?: ReportEvent[]
 }
+
+const TRANSITIONS: Record<string, string[]> = {
+  open: ['in_progress', 'resolved', 'duplicate', 'invalid'],
+  in_progress: ['open', 'resolved', 'duplicate', 'invalid'],
+  resolved: ['open', 'duplicate', 'invalid'],
+  duplicate: ['open'],
+  invalid: ['open'],
+}
+
+const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function lastDigits(phone: string): string | null {
   const digits = phone.replace(/\D/g, '')
@@ -91,7 +102,6 @@ export async function listReports(filters: ReportFilters) {
 }
 
 export async function getReport(id: string) {
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!isUuid.test(id)) throw new ApiError(404, 'Reporte no encontrado')
 
   const report = await prisma.report.findUnique({
@@ -151,4 +161,52 @@ export async function createReport(input: CreateReportInput) {
   })
 
   return serializeReport(report)
+}
+
+export async function updateReportStatus(id: string, input: UpdateStatusInput) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Reporte no encontrado')
+
+  const report = await prisma.report.findUnique({ where: { id } })
+  if (!report) throw new ApiError(404, 'Reporte no encontrado')
+
+  const from = report.status
+  if (from === input.status) {
+    return getReport(id)
+  }
+
+  const allowed = TRANSITIONS[from] ?? []
+  if (!allowed.includes(input.status)) {
+    throw new ApiError(
+      400,
+      `No se puede cambiar el estado de '${from}' a '${input.status}'`,
+    )
+  }
+
+  let resolvedAt = report.resolvedAt
+  if (input.status === 'resolved') {
+    const digits = (input.phoneVerify ?? '').replace(/\D/g, '')
+    if (report.phoneVerify && digits !== report.phoneVerify) {
+      throw new ApiError(403, 'Código de verificación incorrecto')
+    }
+    resolvedAt = report.resolvedAt ?? new Date()
+  } else if (input.status === 'open') {
+    resolvedAt = null
+  }
+
+  await prisma.$transaction([
+    prisma.report.update({
+      where: { id },
+      data: { status: input.status, resolvedAt },
+    }),
+    prisma.reportEvent.create({
+      data: {
+        reportId: id,
+        status: input.status,
+        note: input.note ?? null,
+        actorName: input.actorName ?? null,
+      },
+    }),
+  ])
+
+  return getReport(id)
 }

@@ -5,10 +5,12 @@ import {
   createReport,
   getReport,
   listReports,
+  updateReportStatus,
 } from '../services/reports.js'
 import {
   createReportSchema,
   reportFiltersSchema,
+  updateStatusSchema,
 } from '../validators/report.js'
 
 const createLimiter = rateLimit({
@@ -43,5 +45,13 @@ reportsRouter.post(
     const input = createReportSchema.parse(req.body)
     const report = await createReport(input)
     res.status(201).json(report)
+  }),
+)
+
+reportsRouter.post(
+  '/:id/status',
+  asyncHandler(async (req, res) => {
+    const input = updateStatusSchema.parse(req.body)
+    res.json(await updateReportStatus(String(req.params.id), input))
   }),
 )
