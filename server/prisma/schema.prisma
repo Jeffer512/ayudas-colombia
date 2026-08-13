@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  department String?
+  centerLat Float?   @map("center_lat")
+  centerLng Float?   @map("center_lng")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  reports   Report[]
+
+  @@map("cities")
+}
+
+model Reporter {
+  id               String   @id @default(uuid())
+  contactType      String   @map("contact_type")
+  name             String
+  organizationName String?  @map("organization_name")
+  organizationType String?  @map("organization_type")
+  phone            String?
+  email            String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  reports          Report[]
+
+  @@map("reporters")
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  type        String
+  urgency     String   @default("medium")
+  status      String   @default("open")
+  title       String
+  description String
+  address     String?
+  lat         Float?   @map("lat")
+  lng         Float?   @map("lng")
+  cityId      Int      @map("city_id")
+  reporterId  String   @map("reporter_id")
+  phoneVerify String?  @map("phone_verify")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  city     City          @relation(fields: [cityId], references: [id])
+  reporter Reporter      @relation(fields: [reporterId], references: [id])
+  events   ReportEvent[]
+
+  @@index([cityId, status])
+  @@index([type])
+  @@map("reports")
+}
+
+model ReportEvent {
+  id        BigInt   @id @default(autoincrement())
+  reportId  String   @map("report_id")
+  status    String
+  note      String?
+  actorName String?  @map("actor_name")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@map("report_events")
+}
