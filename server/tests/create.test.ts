@@ -23,13 +23,14 @@ const validReport = {
 
 describe('POST /api/reports', () => {
 
-  it('crea un reporte como abierto y guarda evento inicial', async () => {
+  it('crea un reporte como abierto con dirección derivada y guarda evento inicial', async () => {
     await ensureCity()
     const res = await request(app).post('/api/reports').send(validReport)
 
     expect(res.status).toBe(201)
     expect(res.body).toMatchObject({
       type: 'supplies_request',
+      direction: 'need',
       urgency: 'high',
       status: 'open',
       title: validReport.title,
@@ -40,12 +41,31 @@ describe('POST /api/reports', () => {
     expect(res.body.events[0]).toMatchObject({ status: 'open' })
   })
 
-  it('guarda el código de verificación con los últimos 4 dígitos del teléfono', async () => {
+  it('genera un código de cierre de 4 dígitos y lo devuelve una sola vez', async () => {
     await ensureCity()
     const res = await request(app).post('/api/reports').send(validReport)
 
+    expect(res.body.resolveCode).toMatch(/^\d{4}$/)
+
     const stored = await prisma.report.findUnique({ where: { id: res.body.id } })
-    expect(stored?.phoneVerify).toBe('5432')
+    expect(stored?.resolveCode).toBe(res.body.resolveCode)
+
+    const detail = await request(app).get(`/api/reports/${res.body.id}`)
+    expect(detail.body.resolveCode).toBeUndefined()
+  })
+
+  it('asigna dirección segun el tipo (oferta y aviso)', async () => {
+    await ensureCity()
+
+    const offer = await request(app)
+      .post('/api/reports')
+      .send({ ...validReport, type: 'shelter_offered' })
+    expect(offer.body.direction).toBe('offer')
+
+    const info = await request(app)
+      .post('/api/reports')
+      .send({ ...validReport, type: 'damage_report' })
+    expect(info.body.direction).toBe('info')
   })
 
   it('crea el reporter asociado', async () => {
@@ -126,16 +146,13 @@ describe('POST /api/reports', () => {
     expect(res.status).toBe(400)
   })
 
-  it('con teléfono muy corto guarda los dígitos que existan como verificación', async () => {
+  it('los reportes de un tipo oferta no se marcan nunca como necesidad', async () => {
     await ensureCity()
     const res = await request(app)
       .post('/api/reports')
-      .send({
-        ...validReport,
-        reporter: { ...validReport.reporter, phone: '999' },
-      })
+      .send({ ...validReport, type: 'transport_offered' })
 
-    const stored = await prisma.report.findUnique({ where: { id: res.body.id } })
-    expect(stored?.phoneVerify).toBe('999')
+    expect(res.status).toBe(201)
+    expect(res.body.direction).toBe('offer')
   })
 })

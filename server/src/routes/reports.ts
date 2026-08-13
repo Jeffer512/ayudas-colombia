@@ -21,6 +21,14 @@ const createLimiter = rateLimit({
   message: { error: 'Demasiados reportes creados, intenta más tarde' },
 })
 
+const statusLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados cambios de estado, intenta más tarde' },
+})
+
 export const reportsRouter = Router()
 
 reportsRouter.get(
@@ -50,6 +58,7 @@ reportsRouter.post(
 
 reportsRouter.post(
   '/:id/status',
+  statusLimiter,
   asyncHandler(async (req, res) => {
     const input = updateStatusSchema.parse(req.body)
     res.json(await updateReportStatus(String(req.params.id), input))

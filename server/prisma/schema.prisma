@@ -17,6 +17,7 @@ model City {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   reports   Report[]
+  acopios   AcopioCenter[]
 
   @@map("cities")
 }
@@ -38,6 +39,7 @@ model Reporter {
 model Report {
   id          String   @id @default(uuid())
   type        String
+  direction   String   @default("need")
   urgency     String   @default("medium")
   status      String   @default("open")
   title       String
@@ -47,7 +49,7 @@ model Report {
   lng         Float?   @map("lng")
   cityId      Int      @map("city_id")
   reporterId  String   @map("reporter_id")
-  phoneVerify String?  @map("phone_verify")
+  resolveCode String   @default("0000") @map("resolve_code")
   resolvedAt  DateTime? @map("resolved_at")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -73,4 +75,27 @@ model ReportEvent {
 
   @@index([reportId])
   @@map("report_events")
+}
+
+model AcopioCenter {
+  id           String   @id @default(uuid())
+  type         String   @default("ciudadano")
+  name         String
+  description  String?
+  address      String?
+  lat          Float?
+  lng          Float?
+  cityId       Int      @map("city_id")
+  contactName  String?  @map("contact_name")
+  contactPhone String?  @map("contact_phone")
+  hours        String?
+  accepts      String?
+  status       String   @default("open")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  city City @relation(fields: [cityId], references: [id])
+
+  @@index([cityId, status])
+  @@map("acopio_centers")
 }

@@ -25,24 +25,24 @@ describe('POST /api/reports/:id/status', () => {
     expect(last).toMatchObject({ status: 'in_progress', actorName: 'Cruz Roja' })
   })
 
-  it('resuelve con el código de verificación correcto', async () => {
+  it('resuelve con el código de cierre correcto', async () => {
     const report = await createReport()
 
     const res = await request(app)
       .post(`/api/reports/${report.id}/status`)
-      .send({ status: 'resolved', phoneVerify: '1234' })
+      .send({ status: 'resolved', resolveCode: '1234' })
 
     expect(res.status).toBe(200)
     expect(res.body.status).toBe('resolved')
     expect(res.body.resolvedAt).not.toBeNull()
   })
 
-  it('rechaza resolver sin el código de verificación correcto', async () => {
+  it('rechaza resolver con el código de cierre incorrecto', async () => {
     const report = await createReport()
 
     const res = await request(app)
       .post(`/api/reports/${report.id}/status`)
-      .send({ status: 'resolved', phoneVerify: '9999' })
+      .send({ status: 'resolved', resolveCode: '9999' })
 
     expect(res.status).toBe(403)
   })
@@ -67,7 +67,7 @@ describe('POST /api/reports/:id/status', () => {
 
     await request(app)
       .post(`/api/reports/${report.id}/status`)
-      .send({ status: 'resolved', phoneVerify: '1234' })
+      .send({ status: 'resolved', resolveCode: '1234' })
     const res = await request(app)
       .post(`/api/reports/${report.id}/status`)
       .send({ status: 'open' })
@@ -85,7 +85,7 @@ describe('POST /api/reports/:id/status', () => {
 
     const res = await request(app)
       .post(`/api/reports/${report.id}/status`)
-      .send({ status: 'resolved', phoneVerify: '1234' })
+      .send({ status: 'resolved', resolveCode: '1234' })
 
     expect(res.status).toBe(400)
   })

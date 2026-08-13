@@ -1,4 +1,5 @@
 import type { City, Report, ReportEvent, Reporter } from '@prisma/client'
+import { TYPE_DIRECTION } from '../constants.js'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type {
@@ -23,15 +24,15 @@ const TRANSITIONS: Record<string, string[]> = {
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function lastDigits(phone: string): string | null {
-  const digits = phone.replace(/\D/g, '')
-  return digits.length >= 4 ? digits.slice(-4) : digits || null
+function generateResolveCode(): string {
+  return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
 
 export function serializeReport(report: SerializedReport) {
   return {
     id: report.id,
     type: report.type,
+    direction: report.direction,
     urgency: report.urgency,
     status: report.status,
     title: report.title,
@@ -124,6 +125,9 @@ export async function createReport(input: CreateReportInput) {
   const city = await prisma.city.findUnique({ where: { code: input.cityCode } })
   if (!city) throw new ApiError(400, `Ciudad no encontrada: ${input.cityCode}`)
 
+  const direction = TYPE_DIRECTION[input.type]
+  if (!direction) throw new ApiError(400, `Tipo de reporte inválido: ${input.type}`)
+
   const report = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
@@ -139,6 +143,7 @@ export async function createReport(input: CreateReportInput) {
     const created = await tx.report.create({
       data: {
         type: input.type,
+        direction,
         urgency: input.urgency,
         status: 'open',
         title: input.title,
@@ -148,7 +153,7 @@ export async function createReport(input: CreateReportInput) {
         lng: input.lng ?? null,
         cityId: city.id,
         reporterId: reporter.id,
-        phoneVerify: lastDigits(input.reporter.phone),
+        resolveCode: generateResolveCode(),
         events: {
           create: [
             {
@@ -164,7 +169,7 @@ export async function createReport(input: CreateReportInput) {
     return created
   })
 
-  return serializeReport(report)
+  return { ...serializeReport(report), resolveCode: report.resolveCode }
 }
 
 export async function updateReportStatus(id: string, input: UpdateStatusInput) {
@@ -188,9 +193,9 @@ export async function updateReportStatus(id: string, input: UpdateStatusInput) {
 
   let resolvedAt = report.resolvedAt
   if (input.status === 'resolved') {
-    const digits = (input.phoneVerify ?? '').replace(/\D/g, '')
-    if (report.phoneVerify && digits !== report.phoneVerify) {
-      throw new ApiError(403, 'Código de verificación incorrecto')
+    const code = (input.resolveCode ?? '').trim()
+    if (!report.resolveCode || code !== report.resolveCode) {
+      throw new ApiError(403, 'Código de cierre incorrecto')
     }
     resolvedAt = report.resolvedAt ?? new Date()
   } else if (input.status === 'open') {

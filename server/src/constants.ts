@@ -4,13 +4,39 @@ export const REPORT_TYPES = [
   'supplies_request',
   'volunteers_request',
   'shelter_request',
-  'shelter_offered',
   'medical_request',
+  'transport_request',
+  'supplies_offered',
+  'volunteers_offered',
+  'shelter_offered',
+  'transport_offered',
   'damage_report',
-  'aid_offered',
   'info',
 ] as const
 export type ReportType = (typeof REPORT_TYPES)[number]
+export type ReportTypeCode = ReportType
+
+export const DIRECTIONS = ['need', 'offer', 'info'] as const
+export type Direction = (typeof DIRECTIONS)[number]
+
+export const TYPE_DIRECTION: Record<ReportType, Direction> = {
+  missing_person: 'need',
+  missing_pet: 'need',
+  supplies_request: 'need',
+  volunteers_request: 'need',
+  shelter_request: 'need',
+  medical_request: 'need',
+  transport_request: 'need',
+  supplies_offered: 'offer',
+  volunteers_offered: 'offer',
+  shelter_offered: 'offer',
+  transport_offered: 'offer',
+  damage_report: 'info',
+  info: 'info',
+}
+
+export const ACOPIO_TYPES = ['ciudadano', 'oficial'] as const
+export type AcopioType = (typeof ACOPIO_TYPES)[number]
 
 export const URGENCIES = ['critical', 'high', 'medium', 'low'] as const
 export type Urgency = (typeof URGENCIES)[number]

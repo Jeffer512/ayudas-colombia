@@ -31,6 +31,8 @@ describe('GET /api/reports', () => {
     expect(first.reporter.name).toBe('Juan Pérez')
     expect(first.reporter.contactType).toBe('individual')
     expect(first.status).toBe('open')
+    expect(first.direction).toBe('need')
+    expect(first.resolveCode).toBeUndefined()
   })
 
   it('filtra por tipo', async () => {

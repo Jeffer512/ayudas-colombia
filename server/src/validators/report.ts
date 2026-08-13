@@ -61,7 +61,7 @@ export type ReportFilters = z.infer<typeof reportFiltersSchema>
 
 export const updateStatusSchema = z.object({
   status: z.enum(['open', 'in_progress', 'resolved', 'duplicate', 'invalid']),
-  phoneVerify: z.string().trim().max(30).optional(),
+  resolveCode: z.string().trim().max(6).optional(),
   note: z.string().trim().max(2000).optional(),
   actorName: z.string().trim().max(120).optional(),
 })
