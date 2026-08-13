@@ -1,7 +1,9 @@
 import cors from 'cors'
 import express from 'express'
 import { notFound, errorHandler } from './middleware/error.js'
+import { citiesRouter } from './routes/cities.js'
 import { healthRouter } from './routes/health.js'
+import { reportsRouter } from './routes/reports.js'
 
 export function createApp() {
   const app = express()
@@ -10,6 +12,8 @@ export function createApp() {
   app.use(express.json())
 
   app.use('/api/health', healthRouter)
+  app.use('/api/cities', citiesRouter)
+  app.use('/api/reports', reportsRouter)
 
   app.use(notFound)
   app.use(errorHandler)
