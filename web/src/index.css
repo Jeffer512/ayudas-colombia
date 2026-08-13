@@ -9,3 +9,8 @@ body {
   background-color: #f8fafc;
   color: #0f172a;
 }
+
+/* Tailwind's preflight resets img sizing, which breaks Leaflet's tile grid */
+.leaflet-container img {
+  max-width: none !important;
+}
