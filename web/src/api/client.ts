@@ -88,6 +88,13 @@ export const api = {
     })
   },
 
+  helpRequest(id: string, body: { markerId?: string; name?: string; note?: string }): Promise<Request> {
+    return http(`/requests/${id}/help`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
   offers(filters: OfferFilters): Promise<OfferListResponse> {
     return http(`/offers${buildQuery(filters)}`)
   },

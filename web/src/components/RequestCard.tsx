@@ -45,6 +45,13 @@ export default function RequestCard({ request }: { request: Request }) {
             {TRANSPORT_LABELS[request.transport]}
           </span>
         )}
+        {request.helpers > 0 && (
+          <span className="inline-block rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-800">
+            {request.helpers === 1
+              ? '1 persona está ayudando'
+              : `${request.helpers} personas están ayudando`}
+          </span>
+        )}
         <span>
           {request.address ? `${request.address} · ` : null}
           {formatDate(request.createdAt)}

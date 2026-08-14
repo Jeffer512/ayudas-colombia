@@ -46,3 +46,11 @@ export const updateRequestStatusSchema = z.object({
 })
 
 export type UpdateRequestStatusInput = z.infer<typeof updateRequestStatusSchema>
+
+export const helpRequestSchema = z.object({
+  markerId: z.string().trim().max(100).optional(),
+  name: z.string().trim().max(120).optional(),
+  note: z.string().trim().max(2000).optional(),
+})
+
+export type HelpRequestInput = z.infer<typeof helpRequestSchema>

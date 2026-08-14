@@ -17,15 +17,18 @@ import type { StatusUpdate } from '../lib/types'
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
 
-type ActionMode = 'attend' | 'resolve' | null
+type ActionMode = 'resolve' | null
 
 export default function RequestDetailPage() {
   const { id = '' } = useParams()
   const queryClient = useQueryClient()
   const [mode, setMode] = useState<ActionMode>(null)
-  const [actorName, setActorName] = useState('')
   const [note, setNote] = useState('')
   const [resolveCode, setResolveCode] = useState('')
+  const [helpMode, setHelpMode] = useState(false)
+  const [helperName, setHelperName] = useState('')
+  const [helperNote, setHelperNote] = useState('')
+  const [iHelped, setIHelped] = useState(false)
 
   const { data: request, isPending, isError } = useQuery({
     queryKey: ['request', id],
@@ -38,9 +41,21 @@ export default function RequestDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['request', id] })
       queryClient.invalidateQueries({ queryKey: ['requests'] })
       setMode(null)
-      setActorName('')
       setNote('')
       setResolveCode('')
+    },
+  })
+
+  const helpMutation = useMutation({
+    mutationFn: (body: { markerId?: string; name?: string; note?: string }) =>
+      api.helpRequest(id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['request', id] })
+      queryClient.invalidateQueries({ queryKey: ['requests'] })
+      setHelpMode(false)
+      setHelperName('')
+      setHelperNote('')
+      setIHelped(true)
     },
   })
 
@@ -136,9 +151,9 @@ export default function RequestDetailPage() {
         </h2>
         <p className="mt-1 text-sm text-slate-600">
           {request.status === 'open' &&
-            '¿Estás atendiendo esta situación? Avísales a los demás para que dirijan sus esfuerzos a otra zona.'}
+            'Si puedes apoyar esta situación, dilo para que quienes esperan ayuda sepan que ya hay gente en camino.'}
           {request.status === 'in_progress' &&
-            'Este pedido ya tiene quién lo atiende. Si terminaron, márquenlo como resuelto.'}
+            'Este pedido ya tiene gente ayudando. Si la situación terminó, márquenlo como resuelto.'}
           {request.status === 'resolved' &&
             'Este pedido fue resuelto. Si sigue pendiente, reábrelo.'}
           {(request.status === 'duplicate' || request.status === 'invalid') &&
@@ -157,73 +172,12 @@ export default function RequestDetailPage() {
         {!mode && canBeMarkedActive && (
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              onClick={() => setMode('attend')}
-              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
-            >
-              Marcarlo como siendo atendido
-            </button>
-            <button
               onClick={() => setMode('resolve')}
               className="rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
             >
               Marcarlo como resuelto
             </button>
           </div>
-        )}
-
-        {mode === 'attend' && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              mutation.mutate({
-                status: 'in_progress',
-                actorName: actorName.trim() || undefined,
-                note: note.trim() || undefined,
-              })
-            }}
-            className="mt-3 space-y-3"
-          >
-            <div>
-              <label htmlFor="actorName" className="text-sm font-medium text-slate-700">
-                ¿Quién está atendiendo? (opcional)
-              </label>
-              <input
-                id="actorName"
-                placeholder="Ej: Cruz Roja, grupo de voluntarios…"
-                value={actorName}
-                onChange={(e) => setActorName(e.target.value)}
-                className={`mt-1 ${inputClass}`}
-              />
-            </div>
-            <div>
-              <label htmlFor="note" className="text-sm font-medium text-slate-700">
-                Nota (opcional)
-              </label>
-              <input
-                id="note"
-                placeholder="Ej: ya van con los suministros"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className={`mt-1 ${inputClass}`}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={mutation.isPending}
-                className="rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-              >
-                Confirmar
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
         )}
 
         {mode === 'resolve' && (
@@ -300,6 +254,123 @@ export default function RequestDetailPage() {
           </button>
         )}
       </section>
+
+      {canBeMarkedActive && (
+        <section className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <h2 className="text-sm font-semibold text-emerald-800">
+            {request.helpers === 1
+              ? '1 persona está ayudando'
+              : `${request.helpers} personas están ayudando`}
+          </h2>
+          <p className="mt-1 text-sm text-emerald-700">
+            {iHelped
+              ? 'Gracias por ayudar. Tu apoyo a este pedido ya quedó registrado.'
+              : 'Registra que puedes ayudar para que los demás coordinen sus esfuerzos.'}
+          </p>
+
+          {helpMutation.isError && (
+            <div
+              role="alert"
+              className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            >
+              {(helpMutation.error as Error).message}
+            </div>
+          )}
+
+          {iHelped ? (
+            <p className="mt-3 inline-block rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
+              Ya estás ayudando en este pedido
+            </p>
+          ) : !helpMode ? (
+            <button
+              onClick={() => setHelpMode(true)}
+              className="mt-3 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Voy a ayudar
+            </button>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                helpMutation.mutate({
+                  markerId: api.markerId(),
+                  name: helperName.trim() || undefined,
+                  note: helperNote.trim() || undefined,
+                })
+              }}
+              className="mt-3 space-y-3"
+            >
+              <div>
+                <label
+                  htmlFor="helperName"
+                  className="text-sm font-medium text-emerald-800"
+                >
+                  Tu nombre (opcional)
+                </label>
+                <input
+                  id="helperName"
+                  placeholder="Ej: Camila"
+                  value={helperName}
+                  onChange={(e) => setHelperName(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="helperNote"
+                  className="text-sm font-medium text-emerald-800"
+                >
+                  ¿Qué vas a aportar? (opcional)
+                </label>
+                <input
+                  id="helperNote"
+                  placeholder="Ej: llevo agua y una carpa"
+                  value={helperNote}
+                  onChange={(e) => setHelperNote(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={helpMutation.isPending}
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  Confirmar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHelpMode(false)}
+                  className="rounded-md border border-emerald-300 bg-white px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+
+          {request.helperList && request.helperList.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {request.helperList.map((helper, index) => (
+                <li
+                  key={index}
+                  className="rounded-md bg-white p-3 text-sm"
+                >
+                  <p className="font-medium text-emerald-900">
+                    {helper.name ?? 'Alguien'}
+                    <span className="ml-2 font-normal text-emerald-600">
+                      {formatDate(helper.createdAt)}
+                    </span>
+                  </p>
+                  {helper.note && (
+                    <p className="mt-0.5 text-emerald-800">{helper.note}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {request.events && request.events.length > 0 && (
         <section className="mt-6">

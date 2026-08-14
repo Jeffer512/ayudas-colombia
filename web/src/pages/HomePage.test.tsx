@@ -86,6 +86,7 @@ const requestsResponse: RequestListResponse = {
         whatsapp: null,
         email: null,
       },
+      helpers: 0,
       resolvedAt: null,
       createdAt: '2026-08-13T12:00:00Z',
       updatedAt: '2026-08-13T12:00:00Z',

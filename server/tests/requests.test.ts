@@ -274,3 +274,80 @@ describe('POST /api/requests/:id/status', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('POST /api/requests/:id/help', () => {
+  it('registra a una persona que va a ayudar', async () => {
+    const created = await createRequest()
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ markerId: 'marker-1', name: 'Camila', note: 'Llevo agua' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.helpers).toBe(1)
+    expect(res.body.helperList).toEqual([
+      expect.objectContaining({ name: 'Camila', note: 'Llevo agua' }),
+    ])
+  })
+
+  it('no cuenta dos veces al mismo dispositivo', async () => {
+    const created = await createRequest()
+    await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ markerId: 'marker-1', name: 'Camila' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ markerId: 'marker-1', name: 'Camila' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.helpers).toBe(1)
+    expect(res.body.helperList).toHaveLength(1)
+  })
+
+  it('cuenta dispositivos distintos por separado', async () => {
+    const created = await createRequest()
+    await request(app).post(`/api/requests/${created.id}/help`).send({ markerId: 'm1' })
+    await request(app).post(`/api/requests/${created.id}/help`).send({ markerId: 'm2' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ markerId: 'm3' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.helpers).toBe(3)
+  })
+
+  it('permite ofrecer ayuda sin identificador de dispositivo', async () => {
+    const created = await createRequest()
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Anónimo' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.helpers).toBe(1)
+  })
+
+  it('el conteo aparece en el listado', async () => {
+    const created = await createRequest()
+    await request(app).post(`/api/requests/${created.id}/help`).send({ markerId: 'm1' })
+    await request(app).post(`/api/requests/${created.id}/help`).send({ markerId: 'm2' })
+
+    const res = await request(app).get('/api/requests')
+    expect(res.status).toBe(200)
+    expect(res.body.requests[0].id).toBe(created.id)
+    expect(res.body.requests[0].helpers).toBe(2)
+  })
+
+  it('rechaza ayudar en un pedido ya resuelto', async () => {
+    const created = await createRequest({ status: 'resolved', resolvedAt: new Date() })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Este pedido ya se cerró')
+  })
+
+  it('devuelve 404 si la solicitud no existe', async () => {
+    const res = await request(app).post('/api/requests/no-existe/help').send({})
+    expect(res.status).toBe(404)
+  })
+})

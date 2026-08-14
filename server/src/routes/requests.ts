@@ -4,11 +4,13 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 import {
   createRequest,
   getRequest,
+  helpRequest,
   listRequests,
   updateRequestStatus,
 } from '../services/requests.js'
 import {
   createRequestSchema,
+  helpRequestSchema,
   requestFiltersSchema,
   updateRequestStatusSchema,
 } from '../validators/request.js'
@@ -62,5 +64,14 @@ requestsRouter.post(
   asyncHandler(async (req, res) => {
     const input = updateRequestStatusSchema.parse(req.body)
     res.json(await updateRequestStatus(String(req.params.id), input))
+  }),
+)
+
+requestsRouter.post(
+  '/:id/help',
+  statusLimiter,
+  asyncHandler(async (req, res) => {
+    const input = helpRequestSchema.parse(req.body)
+    res.json(await helpRequest(String(req.params.id), input))
   }),
 )

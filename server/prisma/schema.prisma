@@ -61,6 +61,7 @@ model Request {
   city     City           @relation(fields: [cityId], references: [id])
   reporter Reporter       @relation(fields: [reporterId], references: [id])
   events   RequestEvent[]
+  helpers  RequestHelper[]
 
   @@index([cityId, status])
   @@index([type])
@@ -79,6 +80,21 @@ model RequestEvent {
 
   @@index([requestId])
   @@map("request_events")
+}
+
+model RequestHelper {
+  id        BigInt   @id @default(autoincrement())
+  requestId String   @map("request_id")
+  markerId  String?  @map("marker_id")
+  name      String?
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, markerId])
+  @@index([requestId])
+  @@map("request_helpers")
 }
 
 model Offer {

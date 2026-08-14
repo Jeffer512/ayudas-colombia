@@ -11,6 +11,8 @@ vi.mock('../api/client', () => ({
   api: {
     request: vi.fn(),
     updateRequestStatus: vi.fn(),
+    helpRequest: vi.fn(),
+    markerId: vi.fn(() => 'device-abc'),
   },
 }))
 
@@ -21,6 +23,7 @@ vi.mock('../components/Map', () => ({
 
 const mockedRequest = vi.mocked(api.request)
 const mockedUpdateStatus = vi.mocked(api.updateRequestStatus)
+const mockedHelpRequest = vi.mocked(api.helpRequest)
 
 const baseRequest: Request = {
   id: 'r1',
@@ -40,6 +43,7 @@ const baseRequest: Request = {
     whatsapp: null,
     email: null,
   },
+  helpers: 0,
   resolvedAt: null,
   createdAt: '2026-08-13T12:00:00Z',
   updatedAt: '2026-08-13T12:00:00Z',
@@ -74,6 +78,7 @@ describe('RequestDetailPage', () => {
   beforeEach(() => {
     mockedRequest.mockReset()
     mockedUpdateStatus.mockReset()
+    mockedHelpRequest.mockReset()
   })
 
   it('muestra la información completa del pedido', async () => {
@@ -90,27 +95,54 @@ describe('RequestDetailPage', () => {
     expect(screen.getByText('Pedido creado')).toBeInTheDocument()
   })
 
-  it('marca como siendo atendido y lo reporta al servidor', async () => {
-    mockedUpdateStatus.mockResolvedValue({ ...baseRequest, status: 'in_progress' })
+  it('registra que una persona va a ayudar', async () => {
+    mockedHelpRequest.mockResolvedValue({
+      ...baseRequest,
+      helpers: 2,
+      helperList: [{ name: 'Camila', note: 'Llevo agua', createdAt: '2026-08-14T10:00:00Z' }],
+    })
     const user = userEvent.setup()
     renderPage()
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Marcarlo como siendo atendido' }),
-    )
+    await user.click(await screen.findByRole('button', { name: 'Voy a ayudar' }))
+    await user.type(screen.getByLabelText('Tu nombre (opcional)'), 'Camila')
     await user.type(
-      screen.getByLabelText('¿Quién está atendiendo? (opcional)'),
-      'Cruz Roja',
+      screen.getByLabelText('¿Qué vas a aportar? (opcional)'),
+      'Llevo agua',
     )
     await user.click(screen.getByRole('button', { name: 'Confirmar' }))
 
     await waitFor(() =>
-      expect(mockedUpdateStatus).toHaveBeenCalledWith('r1', {
-        status: 'in_progress',
-        actorName: 'Cruz Roja',
-        note: undefined,
+      expect(mockedHelpRequest).toHaveBeenCalledWith('r1', {
+        markerId: 'device-abc',
+        name: 'Camila',
+        note: 'Llevo agua',
       }),
     )
+    expect(
+      await screen.findByText('Ya estás ayudando en este pedido'),
+    ).toBeInTheDocument()
+  })
+
+  it('muestra el conteo de ayudas y la lista de quienes ayudan', async () => {
+    renderPage({
+      ...baseRequest,
+      helpers: 2,
+      helperList: [
+        { name: 'Camila', note: 'Llevo agua', createdAt: '2026-08-14T10:00:00Z' },
+        { name: null, note: null, createdAt: '2026-08-14T11:00:00Z' },
+      ],
+    })
+
+    expect(
+      await screen.findByText('2 personas están ayudando'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Camila')).toBeInTheDocument()
+    expect(screen.getByText('Llevo agua')).toBeInTheDocument()
+    expect(screen.getByText('Alguien')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Voy a ayudar' }),
+    ).toBeInTheDocument()
   })
 
   it('resuelve ingresando el código de cierre', async () => {

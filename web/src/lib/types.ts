@@ -40,6 +40,12 @@ export interface RequestEvent {
   createdAt: string
 }
 
+export interface RequestHelper {
+  name: string | null
+  note: string | null
+  createdAt: string
+}
+
 export interface Reporter {
   name: string
   phone: string | null
@@ -65,6 +71,8 @@ export interface Request {
   lng: number | null
   city: CityRef
   reporter: Reporter
+  helpers: number
+  helperList?: RequestHelper[]
   resolvedAt: string | null
   createdAt: string
   updatedAt: string

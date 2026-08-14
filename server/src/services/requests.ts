@@ -3,6 +3,7 @@ import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type {
   CreateRequestInput,
+  HelpRequestInput,
   RequestFilters,
   UpdateRequestStatusInput,
 } from '../validators/request.js'
@@ -27,7 +28,11 @@ function generateResolveCode(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
 
-export function serializeRequest(request: SerializedRequest) {
+export function serializeRequest(
+  request: SerializedRequest,
+  helperCount = 0,
+  helperList?: { name: string | null; note: string | null; createdAt: Date }[],
+) {
   return {
     id: request.id,
     type: request.type,
@@ -49,6 +54,14 @@ export function serializeRequest(request: SerializedRequest) {
       whatsapp: request.reporter.whatsapp ?? null,
       email: request.reporter.email ?? null,
     },
+    helpers: helperCount,
+    helperList: helperList
+      ? helperList.map((helper) => ({
+          name: helper.name ?? null,
+          note: helper.note ?? null,
+          createdAt: helper.createdAt,
+        }))
+      : undefined,
     resolvedAt: request.resolvedAt,
     createdAt: request.createdAt,
     updatedAt: request.updatedAt,
@@ -85,7 +98,7 @@ export async function listRequests(filters: RequestFilters) {
   const limit = filters.limit ?? 50
   const offset = filters.offset ?? 0
 
-  const [requests, total] = await prisma.$transaction([
+  const [requests, total, helperGroups] = await prisma.$transaction([
     prisma.request.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -94,10 +107,21 @@ export async function listRequests(filters: RequestFilters) {
       include: { city: true, reporter: true },
     }),
     prisma.request.count({ where }),
+    prisma.requestHelper.groupBy({
+      by: ['requestId'],
+      _count: { _all: true },
+    }),
   ])
 
+  const helpersById = new Map<string, number>()
+  for (const group of helperGroups) {
+    helpersById.set(group.requestId, group._count._all)
+  }
+
   return {
-    requests: requests.map(serializeRequest),
+    requests: requests.map((request) =>
+      serializeRequest(request, helpersById.get(request.id) ?? 0),
+    ),
     total,
     limit,
     offset,
@@ -107,16 +131,24 @@ export async function listRequests(filters: RequestFilters) {
 export async function getRequest(id: string) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const request = await prisma.request.findUnique({
-    where: { id },
-    include: {
-      city: true,
-      reporter: true,
-      events: { orderBy: { createdAt: 'asc' } },
-    },
-  })
+  const [request, helpers, helperList] = await prisma.$transaction([
+    prisma.request.findUnique({
+      where: { id },
+      include: {
+        city: true,
+        reporter: true,
+        events: { orderBy: { createdAt: 'asc' } },
+      },
+    }),
+    prisma.requestHelper.count({ where: { requestId: id } }),
+    prisma.requestHelper.findMany({
+      where: { requestId: id },
+      orderBy: { createdAt: 'desc' },
+      select: { name: true, note: true, createdAt: true },
+    }),
+  ])
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
-  return serializeRequest(request)
+  return serializeRequest(request, helpers, helperList)
 }
 
 export async function createRequest(input: CreateRequestInput) {
@@ -169,6 +201,34 @@ export async function createRequest(input: CreateRequestInput) {
   })
 
   return { ...serializeRequest(created), resolveCode: created.resolveCode }
+}
+
+export async function helpRequest(id: string, input: HelpRequestInput) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
+
+  const request = await prisma.request.findUnique({ where: { id } })
+  if (!request) throw new ApiError(404, 'Solicitud no encontrada')
+
+  if (request.status !== 'open' && request.status !== 'in_progress') {
+    throw new ApiError(400, 'Este pedido ya se cerró')
+  }
+
+  if (input.markerId) {
+    const existing = await prisma.requestHelper.findFirst({
+      where: { requestId: id, markerId: input.markerId },
+    })
+    if (existing) return getRequest(id)
+  }
+
+  await prisma.requestHelper.create({
+    data: {
+      requestId: id,
+      markerId: input.markerId ?? null,
+      name: input.name ?? null,
+      note: input.note ?? null,
+    },
+  })
+  return getRequest(id)
 }
 
 export async function updateRequestStatus(
