@@ -1,5 +1,10 @@
 import { Link } from 'react-router-dom'
-import { REQUEST_TYPE_LABELS, TRANSPORT_LABELS, URGENCY_META } from '../lib/constants'
+import {
+  HELP_ORG_CATEGORY_LABELS,
+  REQUEST_TYPE_LABELS,
+  TRANSPORT_LABELS,
+  URGENCY_META,
+} from '../lib/constants'
 import { formatDate } from '../lib/format'
 import type { Request } from '../lib/types'
 import StatusBadge from './StatusBadge'
@@ -19,6 +24,13 @@ export default function RequestCard({ request }: { request: Request }) {
     >
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={request.status} meta={REQUEST_STATUS_META} />
+        {request.organization && (
+          <span className="inline-block rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
+            {HELP_ORG_CATEGORY_LABELS[request.organization.category] ??
+              request.organization.category}{' '}
+            · {request.organization.name}
+          </span>
+        )}
         <span className="text-xs text-slate-500">
           {typeLabel} · {request.city.name}
         </span>

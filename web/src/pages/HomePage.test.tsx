@@ -41,9 +41,7 @@ vi.mock('../api/client', () => ({
     createAviso: vi.fn(),
     markAviso: vi.fn(),
     markerId: vi.fn(),
-    acopios: vi.fn(),
-    acopio: vi.fn(),
-    createAcopio: vi.fn(),
+    helpOrgs: vi.fn(),
   },
 }))
 
@@ -51,7 +49,7 @@ const mockedRequests = vi.mocked(api.requests)
 const mockedOffers = vi.mocked(api.offers)
 const mockedAvisos = vi.mocked(api.avisos)
 const mockedCities = vi.mocked(api.cities)
-const mockedAcopios = vi.mocked(api.acopios)
+const mockedHelpOrgs = vi.mocked(api.helpOrgs)
 
 function renderHomePage() {
   const queryClient = new QueryClient({
@@ -161,7 +159,7 @@ describe('HomePage', () => {
     mockedRequests.mockReset()
     mockedOffers.mockReset()
     mockedAvisos.mockReset()
-    mockedAcopios.mockReset()
+    mockedHelpOrgs.mockReset()
 
     mockedCities.mockResolvedValue({
       cities: [
@@ -175,7 +173,7 @@ describe('HomePage', () => {
         },
       ],
     })
-    mockedAcopios.mockResolvedValue({ acopios: [], total: 0, limit: 50, offset: 0 })
+    mockedHelpOrgs.mockResolvedValue({ helpOrgs: [], total: 0, limit: 50, offset: 0 })
   })
 
   it('muestra las tres secciones con sus conteos y listados', async () => {
@@ -284,7 +282,7 @@ describe('HomePage', () => {
       screen.getByRole('checkbox', { name: 'Mostrar Avisos' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('checkbox', { name: 'Mostrar Centros' }),
+      screen.getByRole('checkbox', { name: 'Mostrar Red de ayudas' }),
     ).toBeInTheDocument()
   })
 })

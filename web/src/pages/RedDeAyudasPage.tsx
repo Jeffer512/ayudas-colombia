@@ -2,45 +2,72 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import AcopioCard from '../components/AcopioCard'
-import type { AcopioCenter } from '../lib/types'
+import HelpOrgCard from '../components/HelpOrgCard'
+import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
+import type { HelpOrg, HelpOrgCategory } from '../lib/types'
 
 const selectClass =
   'rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700 focus:border-teal-500 focus:outline-none'
 
-export default function AcopiosPage() {
+const CATEGORIES: (HelpOrgCategory | '')[] = [
+  '',
+  'acopio',
+  'psicologia',
+  'voluntarios',
+  'albergue',
+  'other',
+]
+
+export default function RedDeAyudasPage() {
   const [city, setCity] = useState('')
+  const [category, setCategory] = useState<HelpOrgCategory | ''>('')
 
   const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
   const cities = citiesQuery.data?.cities ?? []
 
-  const acopiosQuery = useQuery({
-    queryKey: ['acopios', { city: city || undefined }],
-    queryFn: () => api.acopios({ ...(city ? { city } : {}) }),
+  const orgsQuery = useQuery({
+    queryKey: ['help-orgs', { city: city || undefined, category: category || undefined }],
+    queryFn: () =>
+      api.helpOrgs({
+        ...(city ? { city } : {}),
+        ...(category ? { category } : {}),
+      }),
   })
 
-  const acopios: AcopioCenter[] = acopiosQuery.data?.acopios ?? []
+  const orgs: HelpOrg[] = orgsQuery.data?.helpOrgs ?? []
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Centros de acopio
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">Red de ayudas</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Lugares donde llevar o recoger donaciones durante la emergencia.
+            Centros de acopio, albergues, grupos de voluntarios y apoyo
+            psicológico que operan durante la emergencia.
           </p>
         </div>
         <Link
           to="/nuevo-centro"
           className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
         >
-          Publicar un centro
+          Publicar una organización
         </Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as HelpOrgCategory | '')}
+          aria-label="Filtrar por categoría"
+          className={selectClass}
+        >
+          <option value="">Todas las categorías</option>
+          {CATEGORIES.filter(Boolean).map((c) => (
+            <option key={c} value={c}>
+              {HELP_ORG_CATEGORY_LABELS[c as HelpOrgCategory]}
+            </option>
+          ))}
+        </select>
         <select
           value={city}
           onChange={(e) => setCity(e.target.value)}
@@ -55,11 +82,11 @@ export default function AcopiosPage() {
           ))}
         </select>
         <span className="ml-auto text-sm text-slate-600">
-          {acopiosQuery.data ? (
+          {orgsQuery.data ? (
             <>
-              {acopiosQuery.data.total} centro(s)
-              {acopiosQuery.data.total > 0 &&
-                ` (se muestran los últimos ${Math.min(acopiosQuery.data.total, acopiosQuery.data.limit)})`}
+              {orgsQuery.data.total} organización(es)
+              {orgsQuery.data.total > 0 &&
+                ` (se muestran las últimas ${Math.min(orgsQuery.data.total, orgsQuery.data.limit)})`}
             </>
           ) : (
             'Cargando…'
@@ -68,33 +95,33 @@ export default function AcopiosPage() {
       </div>
 
       <div className="mt-4">
-        {acopiosQuery.isPending && (
+        {orgsQuery.isPending && (
           <p className="py-8 text-center text-slate-500" role="status">
-            Cargando centros…
+            Cargando organizaciones…
           </p>
         )}
-        {acopiosQuery.isError && (
+        {orgsQuery.isError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-700">
-            <p className="font-medium">No pudimos cargar los centros</p>
+            <p className="font-medium">No pudimos cargar la red de ayudas</p>
           </div>
         )}
-        {!acopiosQuery.isPending && !acopiosQuery.isError && acopios.length > 0 && (
+        {!orgsQuery.isPending && !orgsQuery.isError && orgs.length > 0 && (
           <ul className="grid gap-3 sm:grid-cols-2">
-            {acopios.map((acopio) => (
-              <li key={acopio.id}>
-                <AcopioCard acopio={acopio} />
+            {orgs.map((org) => (
+              <li key={org.id}>
+                <HelpOrgCard org={org} />
               </li>
             ))}
           </ul>
         )}
-        {!acopiosQuery.isPending && !acopiosQuery.isError && acopios.length === 0 && (
+        {!orgsQuery.isPending && !orgsQuery.isError && orgs.length === 0 && (
           <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-            <p className="font-medium">Todavía no hay centros de acopio</p>
+            <p className="font-medium">Todavía no hay organizaciones en esta red</p>
             <Link
               to="/nuevo-centro"
               className="mt-2 inline-block text-sm font-medium text-teal-700 hover:underline"
             >
-              Publicar el primero
+              Publicar la primera
             </Link>
           </div>
         )}

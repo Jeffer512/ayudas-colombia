@@ -12,8 +12,11 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'Inicio' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Pedir ayuda' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ofrecer ayuda' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Centros de acopio' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Red de ayudas' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Informar' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Mi organización' }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Ayuda en Pereira' }),
     ).toBeInTheDocument()

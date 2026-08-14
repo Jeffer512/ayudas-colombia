@@ -22,6 +22,10 @@ export type Urgency = 'critical' | 'high' | 'medium' | 'low'
 export type RequestStatus = 'open' | 'in_progress' | 'resolved' | 'duplicate' | 'invalid'
 export type OfferStatus = 'open' | 'fulfilled' | 'unavailable'
 export type AvisoStatus = 'open' | 'closed'
+export type HelpOrgCategory = 'acopio' | 'psicologia' | 'voluntarios' | 'albergue' | 'other'
+export type HelpOrgType = 'ciudadano' | 'oficial'
+export type HelpOrgStatus = 'open' | 'closed'
+export type HelpOrgItemKind = 'available' | 'needed'
 
 export interface City {
   id: number
@@ -71,6 +75,7 @@ export interface Request {
   lng: number | null
   city: CityRef
   reporter: Reporter
+  organization?: { id: string; name: string; category: HelpOrgCategory }
   helpers: number
   helperList?: RequestHelper[]
   resolvedAt: string | null
@@ -156,6 +161,7 @@ export interface RequestFilters extends BaseFilters {
   type?: RequestType
   status?: RequestStatus | 'active'
   urgency?: Urgency
+  org?: string
 }
 
 export interface OfferFilters extends BaseFilters {
@@ -218,12 +224,10 @@ export type StatusUpdate = {
   actorName?: string
 }
 
-export type AcopioType = 'ciudadano' | 'oficial'
-export type AcopioStatus = 'open' | 'closed'
-
-export interface AcopioCenter {
+export interface HelpOrg {
   id: string
-  type: AcopioType
+  type: HelpOrgType
+  category: HelpOrgCategory
   name: string
   description: string | null
   address: string | null
@@ -234,33 +238,81 @@ export interface AcopioCenter {
   contactPhone: string | null
   hours: string | null
   accepts: string | null
-  status: AcopioStatus
+  status: HelpOrgStatus
+  items?: HelpOrgItem[]
   createdAt: string
   updatedAt: string
 }
 
-export interface AcopioListResponse {
-  acopios: AcopioCenter[]
+export interface HelpOrgItem {
+  id: string
+  orgId: string
+  kind: HelpOrgItemKind
+  name: string
+  quantity: number | null
+  unit: string | null
+  updatedBy: string | null
+  updatedAt: string
+  createdAt: string
+}
+
+export type HelpOrgItemInput = {
+  kind: HelpOrgItemKind
+  name: string
+  quantity?: number | null
+  unit?: string | null
+}
+
+export interface HelpOrgListResponse {
+  helpOrgs: HelpOrg[]
   total: number
   limit: number
   offset: number
 }
 
-export interface AcopioFilters {
+export interface HelpOrgFilters {
   city?: string
-  type?: AcopioType
-  status?: AcopioStatus
+  category?: HelpOrgCategory
+  type?: HelpOrgType
+  status?: HelpOrgStatus
 }
 
-export type NewAcopio = {
+export type NewHelpOrg = {
   name: string
   description?: string
   address?: string
   lat: number
   lng: number
   cityCode: string
+  category: HelpOrgCategory
   contactName?: string
   contactPhone?: string
   hours?: string
   accepts?: string
+}
+
+export interface Staff {
+  id: string
+  userId: string
+  email: string
+  name: string
+  role: 'manager' | 'member'
+  orgId: string
+  status: 'active' | 'pending'
+}
+
+export interface RegisterResult {
+  verificationUrl?: string | null
+}
+
+export type NewOrgRequest = {
+  type: RequestType
+  urgency?: Urgency
+  transport?: TransportOption
+  title: string
+  description: string
+  address?: string
+  lat?: number
+  lng?: number
+  cityCode: string
 }

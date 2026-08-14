@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
-import { MARKER_COLORS } from '../lib/constants'
-import type { AcopioCenter, Aviso, Offer, Request } from '../lib/types'
+import { HELP_ORG_CATEGORY_LABELS, MARKER_COLORS } from '../lib/constants'
+import type { Aviso, HelpOrg, Offer, Request } from '../lib/types'
 import { L } from './leaflet'
 
 function divIcon(color: string) {
@@ -18,24 +18,24 @@ interface HomeMapProps {
   requests: Request[]
   offers: Offer[]
   avisos: Aviso[]
-  acopios: AcopioCenter[]
+  helpOrgs: HelpOrg[]
   center: { lat: number; lng: number }
   showNeeds: boolean
   showOffers: boolean
   showAvisos: boolean
-  showAcopios: boolean
+  showOrgs: boolean
 }
 
 export default function HomeMap({
   requests,
   offers,
   avisos,
-  acopios,
+  helpOrgs,
   center,
   showNeeds,
   showOffers,
   showAvisos,
-  showAcopios,
+  showOrgs,
 }: HomeMapProps) {
   return (
     <MapContainer
@@ -105,20 +105,20 @@ export default function HomeMap({
           ) : null,
         )}
 
-      {showAcopios &&
-        acopios.map((acopio) =>
-          acopio.lat !== null && acopio.lng !== null ? (
+      {showOrgs &&
+        helpOrgs.map((org) =>
+          org.lat !== null && org.lng !== null ? (
             <Marker
-              key={`acopio-${acopio.id}`}
-              position={[acopio.lat, acopio.lng]}
-              icon={divIcon(MARKER_COLORS.acopios)}
+              key={`org-${org.id}`}
+              position={[org.lat, org.lng]}
+              icon={divIcon(MARKER_COLORS.helpOrgs)}
             >
               <Popup>
                 <span className="text-xs font-medium text-slate-500">
-                  Centro de acopio
+                  {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category} · {org.city.name}
                 </span>
-                <p className="font-semibold">{acopio.name}</p>
-                <Link to={`/centro/${acopio.id}`}>Ver detalles →</Link>
+                <p className="font-semibold">{org.name}</p>
+                <Link to={`/organizacion/${org.id}`}>Ver detalles →</Link>
               </Popup>
             </Marker>
           ) : null,

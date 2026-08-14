@@ -27,11 +27,14 @@ export default function Layout() {
             <NavLink to="/ofrecer-ayuda" className={navClass}>
               Ofrecer ayuda
             </NavLink>
-            <NavLink to="/centros-de-acopio" className={navClass}>
-              Centros de acopio
+            <NavLink to="/red-de-ayudas" className={navClass}>
+              Red de ayudas
             </NavLink>
             <NavLink to="/informar" className={navClass}>
               Informar
+            </NavLink>
+            <NavLink to="/mi-organizacion" className={navClass}>
+              Mi organización
             </NavLink>
           </nav>
         </div>

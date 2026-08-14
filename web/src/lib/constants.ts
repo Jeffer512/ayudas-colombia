@@ -1,4 +1,4 @@
-import type { TransportOption } from './types'
+import type { HelpOrgItemKind, TransportOption } from './types'
 
 export const REQUEST_TYPE_LABELS: Record<string, string> = {
   missing_person: 'Persona desaparecida',
@@ -61,15 +61,36 @@ export const MARKER_COLORS = {
   needs: '#dc2626',
   offers: '#16a34a',
   avisos: '#2563eb',
-  acopios: '#0d9488',
+  helpOrgs: '#0d9488',
 }
 
-export const ACOPIO_TYPE_LABELS: Record<string, string> = {
-  ciudadano: 'Centro ciudadano',
-  oficial: 'Centro oficial',
+export const HELP_ORG_TYPE_LABELS: Record<string, string> = {
+  ciudadano: 'Comunitaria',
+  oficial: 'Coordinada por la red',
 }
 
-export const ACOPIO_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
+export const HELP_ORG_CATEGORY_LABELS: Record<string, string> = {
+  acopio: 'Centro de acopio',
+  psicologia: 'Apoyo psicológico',
+  voluntarios: 'Voluntarios',
+  albergue: 'Albergue',
+  other: 'Otra ayuda',
+}
+
+export const HELP_ORG_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
   open: { label: 'Abierto', badgeClass: 'bg-green-100 text-green-800' },
   closed: { label: 'Cerrado', badgeClass: 'bg-gray-200 text-gray-700' },
+}
+
+export const HELP_ORG_ITEM_KIND_LABELS: Record<HelpOrgItemKind, string> = {
+  available: 'Tenemos disponible',
+  needed: 'Necesitamos',
+}
+
+export const HELP_ORG_ITEM_KIND_BADGE: Record<
+  HelpOrgItemKind,
+  { badgeClass: string; textClass: string }
+> = {
+  available: { badgeClass: 'bg-emerald-100', textClass: 'text-emerald-800' },
+  needed: { badgeClass: 'bg-rose-100', textClass: 'text-rose-800' },
 }

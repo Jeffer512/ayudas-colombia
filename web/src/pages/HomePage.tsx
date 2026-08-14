@@ -10,7 +10,7 @@ import OfferFiltersUi from '../components/OfferFilters'
 import RequestCard from '../components/RequestCard'
 import RequestFiltersUi from '../components/RequestFilters'
 import type {
-  AcopioCenter,
+  HelpOrg,
   Aviso,
   AvisoFilters,
   City,
@@ -223,7 +223,7 @@ export default function HomePage() {
   const [showNeeds, setShowNeeds] = useState(true)
   const [showOffers, setShowOffers] = useState(true)
   const [showAvisos, setShowAvisos] = useState(true)
-  const [showAcopios, setShowAcopios] = useState(true)
+  const [showOrgs, setShowOrgs] = useState(true)
 
   const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
 
@@ -239,16 +239,16 @@ export default function HomePage() {
     queryKey: ['avisos', { status: 'active' }],
     queryFn: () => api.avisos({ status: 'active' }),
   })
-  const acopiosQuery = useQuery({
-    queryKey: ['acopios', { status: 'open' }],
-    queryFn: () => api.acopios({ status: 'open' }),
+  const orgsQuery = useQuery({
+    queryKey: ['help-orgs', { status: 'open' }],
+    queryFn: () => api.helpOrgs({ status: 'open' }),
   })
 
   const cities: City[] = citiesQuery.data?.cities ?? []
   const requests: Request[] = needsQuery.data?.requests ?? []
   const offers: Offer[] = offersQuery.data?.offers ?? []
   const avisos: Aviso[] = avisosQuery.data?.avisos ?? []
-  const acopios: AcopioCenter[] = acopiosQuery.data?.acopios ?? []
+  const orgs: HelpOrg[] = orgsQuery.data?.helpOrgs ?? []
 
   const mapCenter = {
     lat: cities[0]?.centerLat ?? 4.8133,
@@ -259,14 +259,14 @@ export default function HomePage() {
     { key: 'needs', label: 'Necesito ayuda', dot: 'bg-rose-600', checked: showNeeds },
     { key: 'offers', label: 'Ofrecer', dot: 'bg-emerald-600', checked: showOffers },
     { key: 'avisos', label: 'Avisos', dot: 'bg-sky-600', checked: showAvisos },
-    { key: 'acopios', label: 'Centros', dot: 'bg-teal-600', checked: showAcopios },
+    { key: 'helpOrgs', label: 'Red de ayudas', dot: 'bg-teal-600', checked: showOrgs },
   ]
 
   const setToggle = (key: string, checked: boolean) => {
     if (key === 'needs') setShowNeeds(checked)
     if (key === 'offers') setShowOffers(checked)
     if (key === 'avisos') setShowAvisos(checked)
-    if (key === 'acopios') setShowAcopios(checked)
+    if (key === 'helpOrgs') setShowOrgs(checked)
   }
 
   return (
@@ -274,7 +274,7 @@ export default function HomePage() {
       <div className="mb-3">
         <h1 className="text-2xl font-bold tracking-tight">Ayuda en Pereira</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Mapa de la ayuda: pedidos, ofertas, avisos y centros de acopio.
+          Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
         </p>
       </div>
 
@@ -282,12 +282,12 @@ export default function HomePage() {
         requests={requests}
         offers={offers}
         avisos={avisos}
-        acopios={acopios}
+        helpOrgs={orgs}
         center={mapCenter}
         showNeeds={showNeeds}
         showOffers={showOffers}
         showAvisos={showAvisos}
-        showAcopios={showAcopios}
+        showOrgs={showOrgs}
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">

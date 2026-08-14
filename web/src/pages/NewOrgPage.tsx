@@ -4,12 +4,15 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
+import type { HelpOrgCategory } from '../lib/types'
 
-interface CenterForm {
+interface OrgForm {
   name: string
   description: string
   address: string
   cityCode: string
+  category: HelpOrgCategory
   lat: number | null
   lng: number | null
   contactName: string
@@ -18,11 +21,12 @@ interface CenterForm {
   accepts: string
 }
 
-const initialForm: CenterForm = {
+const initialForm: OrgForm = {
   name: '',
   description: '',
   address: '',
   cityCode: '',
+  category: 'acopio',
   lat: null,
   lng: null,
   contactName: '',
@@ -36,9 +40,17 @@ const inputClass =
 
 const labelClass = 'text-sm font-medium text-slate-700'
 
-export default function NewCenterPage() {
+const CATEGORY_OPTIONS: HelpOrgCategory[] = [
+  'acopio',
+  'albergue',
+  'psicologia',
+  'voluntarios',
+  'other',
+]
+
+export default function NewOrgPage() {
   const navigate = useNavigate()
-  const [form, setForm] = useState<CenterForm>(initialForm)
+  const [form, setForm] = useState<OrgForm>(initialForm)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,24 +63,25 @@ export default function NewCenterPage() {
     }
   }, [cities, form.cityCode])
 
-  const patch = (partial: Partial<CenterForm>) =>
+  const patch = (partial: Partial<OrgForm>) =>
     setForm((f) => ({ ...f, ...partial }))
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (form.lat === null || form.lng === null) {
-      setError('Marca en el mapa el punto donde está el centro de acopio.')
+      setError('Marca en el mapa el punto donde opera la organización.')
       return
     }
     setSubmitting(true)
     setError(null)
 
     api
-      .createAcopio({
+      .createHelpOrg({
         name: form.name.trim(),
         cityCode: form.cityCode,
         lat: form.lat,
         lng: form.lng,
+        category: form.category,
         ...(form.description.trim() ? { description: form.description.trim() } : {}),
         ...(form.address.trim() ? { address: form.address.trim() } : {}),
         ...(form.contactName.trim() ? { contactName: form.contactName.trim() } : {}),
@@ -76,12 +89,12 @@ export default function NewCenterPage() {
         ...(form.hours.trim() ? { hours: form.hours.trim() } : {}),
         ...(form.accepts.trim() ? { accepts: form.accepts.trim() } : {}),
       })
-      .then((center) => navigate(`/centro/${center.id}`))
+      .then((org) => navigate(`/organizacion/${org.id}`))
       .catch((err: unknown) => {
         setError(
           err instanceof Error
             ? err.message
-            : 'No se pudo crear el centro. Inténtalo de nuevo.',
+            : 'No se pudo crear la organización. Inténtalo de nuevo.',
         )
         setSubmitting(false)
       })
@@ -90,12 +103,12 @@ export default function NewCenterPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="text-2xl font-bold tracking-tight">
-        Publicar un centro de acopio
+        Publicar una organización de ayuda
       </h1>
       <p className="mt-1 text-sm text-slate-600">
-        Centros donde la comunidad puede llevar o recoger donaciones. Aparecerá
-        como <strong>centro ciudadano</strong> en el mapa junto a los demás
-        reportes; los centros oficiales los marca la coordinación de la red.
+        Centros de acopio, albergues, grupos de voluntarios o equipos de apoyo.
+        Aparecerá en la <strong>Red de ayudas</strong>; las organizaciones
+        oficiales las marca la coordinación de la emergencia.
       </p>
 
       {error && (
@@ -110,13 +123,13 @@ export default function NewCenterPage() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <fieldset className="rounded-lg border border-slate-200 bg-white p-4">
           <legend className="px-1 text-sm font-semibold text-slate-700">
-            El centro
+            La organización
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="name" className={labelClass}>
-                Nombre del centro
+                Nombre
               </label>
               <input
                 id="name"
@@ -131,18 +144,39 @@ export default function NewCenterPage() {
             </div>
 
             <div>
-              <label htmlFor="contactPhone" className={labelClass}>
-                Teléfono de contacto
+              <label htmlFor="category" className={labelClass}>
+                Categoría
               </label>
-              <input
-                id="contactPhone"
-                maxLength={30}
-                placeholder="Ej: 310 555 2222"
-                value={form.contactPhone}
-                onChange={(e) => patch({ contactPhone: e.target.value })}
+              <select
+                id="category"
+                required
+                value={form.category}
+                onChange={(e) =>
+                  patch({ category: e.target.value as HelpOrgCategory })
+                }
                 className={`mt-1 ${inputClass}`}
-              />
+              >
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {HELP_ORG_CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="contactPhone" className={labelClass}>
+              Teléfono de contacto
+            </label>
+            <input
+              id="contactPhone"
+              maxLength={30}
+              placeholder="Ej: 310 555 2222"
+              value={form.contactPhone}
+              onChange={(e) => patch({ contactPhone: e.target.value })}
+              className={`mt-1 ${inputClass}`}
+            />
           </div>
 
           <div className="mt-4">
@@ -153,7 +187,7 @@ export default function NewCenterPage() {
               id="description"
               maxLength={2000}
               rows={3}
-              placeholder="Qué se recibe, para quién, condiciones de acceso…"
+              placeholder="Qué hacen, a quién ayudan, condiciones de acceso…"
               value={form.description}
               onChange={(e) => patch({ description: e.target.value })}
               className={`mt-1 ${inputClass}`}
@@ -162,7 +196,7 @@ export default function NewCenterPage() {
 
           <div className="mt-4">
             <label htmlFor="accepts" className={labelClass}>
-              ¿Qué reciben? (opcional)
+              ¿Qué reciben o necesitan? (opcional)
             </label>
             <textarea
               id="accepts"
@@ -231,7 +265,7 @@ export default function NewCenterPage() {
           </div>
 
           <p className="mt-4 text-sm text-slate-600">
-            Haz clic en el mapa para marcar el punto exacto del centro
+            Haz clic en el mapa para marcar el punto exacto donde opera
             (obligatorio).
           </p>
           <div className="mt-2">
@@ -266,7 +300,7 @@ export default function NewCenterPage() {
               <input
                 id="contactName"
                 maxLength={120}
-                placeholder="Quién lo administra"
+                placeholder="Quién la administra"
                 value={form.contactName}
                 onChange={(e) => patch({ contactName: e.target.value })}
                 className={`mt-1 ${inputClass}`}
@@ -278,7 +312,7 @@ export default function NewCenterPage() {
         <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => navigate('/centros-de-acopio')}
+            onClick={() => navigate('/red-de-ayudas')}
             className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Cancelar
@@ -288,7 +322,7 @@ export default function NewCenterPage() {
             disabled={submitting}
             className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
           >
-            {submitting ? 'Publicando…' : 'Publicar centro'}
+            {submitting ? 'Publicando…' : 'Publicar organización'}
           </button>
         </div>
       </form>

@@ -1,7 +1,9 @@
 import type {
-  AcopioCenter,
-  AcopioFilters,
-  AcopioListResponse,
+  HelpOrg,
+  HelpOrgFilters,
+  HelpOrgItem,
+  HelpOrgItemInput,
+  HelpOrgListResponse,
   Aviso,
   AvisoFilters,
   AvisoListResponse,
@@ -9,20 +11,36 @@ import type {
   CreatedAviso,
   CreatedOffer,
   CreatedRequest,
-  NewAcopio,
+  NewHelpOrg,
   NewAviso,
   NewOffer,
+  NewOrgRequest,
   NewRequest,
   Offer,
   OfferFilters,
   OfferListResponse,
+  RegisterResult,
   Request,
   RequestFilters,
   RequestListResponse,
+  Staff,
   StatusUpdate,
 } from '../lib/types'
 
 const API_BASE = '/api'
+
+export class ApiError extends Error {
+  code?: string
+
+  constructor(
+    message: string,
+    code?: string,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+    this.code = code
+  }
+}
 
 async function http<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -32,13 +50,15 @@ async function http<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     let message = `Error del servidor (${res.status})`
+    let code: string | undefined
     try {
       const body = await res.json()
       if (body?.error) message = body.error
+      if (typeof body?.code === 'string') code = body.code
     } catch {
       /* respuesta no JSON */
     }
-    throw new Error(message)
+    throw new ApiError(message, code)
   }
 
   return res.json() as Promise<T>
@@ -132,15 +152,102 @@ export const api = {
 
   markerId,
 
-  acopios(filters: AcopioFilters = {}): Promise<AcopioListResponse> {
-    return http(`/acopios${buildQuery(filters)}`)
+  helpOrgs(filters: HelpOrgFilters = {}): Promise<HelpOrgListResponse> {
+    return http(`/help-orgs${buildQuery(filters)}`)
   },
 
-  acopio(id: string): Promise<AcopioCenter> {
-    return http(`/acopios/${id}`)
+  helpOrg(id: string): Promise<HelpOrg> {
+    return http(`/help-orgs/${id}`)
   },
 
-  createAcopio(body: NewAcopio): Promise<AcopioCenter> {
-    return http('/acopios', { method: 'POST', body: JSON.stringify(body) })
+  createHelpOrg(body: NewHelpOrg): Promise<HelpOrg> {
+    return http('/help-orgs', { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  orgMembers(id: string): Promise<{ members: Staff[] }> {
+    return http(`/help-orgs/${id}/members`)
+  },
+
+  approveOrgMember(id: string, memberId: string): Promise<{ member: Staff }> {
+    return http(`/help-orgs/${id}/members/${memberId}/approve`, {
+      method: 'POST',
+    })
+  },
+
+  rejectOrgMember(id: string, memberId: string): Promise<{ ok: boolean }> {
+    return http(`/help-orgs/${id}/members/${memberId}/reject`, {
+      method: 'POST',
+    })
+  },
+
+  createOrgRequest(id: string, body: NewOrgRequest): Promise<CreatedRequest> {
+    return http(`/help-orgs/${id}/requests`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  orgItems(orgId: string): Promise<{ items: HelpOrgItem[] }> {
+    return http(`/help-orgs/${orgId}/items`)
+  },
+
+  createOrgItem(
+    orgId: string,
+    body: HelpOrgItemInput,
+  ): Promise<{ item: HelpOrgItem }> {
+    return http(`/help-orgs/${orgId}/items`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  updateOrgItem(
+    orgId: string,
+    itemId: string,
+    body: HelpOrgItemInput,
+  ): Promise<{ item: HelpOrgItem }> {
+    return http(`/help-orgs/${orgId}/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    })
+  },
+
+  deleteOrgItem(orgId: string, itemId: string): Promise<{ ok: boolean }> {
+    return http(`/help-orgs/${orgId}/items/${itemId}`, { method: 'DELETE' })
+  },
+
+  register(body: {
+    email: string
+    password: string
+    name: string
+    orgId?: string
+  }): Promise<RegisterResult> {
+    return http('/auth/register', { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  verifyEmail(token: string): Promise<{ ok: boolean }> {
+    return http('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    })
+  },
+
+  resendVerification(email: string): Promise<{ ok: boolean }> {
+    return http('/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+  },
+
+  login(body: { email: string; password: string }): Promise<{ staff: Staff | null }> {
+    return http('/auth/login', { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  logout(): Promise<{ ok: boolean }> {
+    return http('/auth/logout', { method: 'POST' })
+  },
+
+  me(): Promise<{ staff: Staff | null }> {
+    return http('/auth/me')
   },
 }
