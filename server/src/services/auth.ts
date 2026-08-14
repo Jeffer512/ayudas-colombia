@@ -1,7 +1,12 @@
 import bcrypt from 'bcryptjs'
 import { env } from '../config.js'
 import { prisma } from '../db.js'
-import { sendVerificationEmail, buildVerificationUrl } from '../lib/email.js'
+import {
+  sendVerificationEmail,
+  buildVerificationUrl,
+  sendResetPasswordEmail,
+  buildResetPasswordUrl,
+} from '../lib/email.js'
 import { ApiError } from '../lib/errors.js'
 import {
   generateVerifyToken,
@@ -9,9 +14,11 @@ import {
   VERIFY_TOKEN_TTL_MS,
 } from '../lib/verification.js'
 import type {
+  ForgotPasswordInput,
   LoginInput,
   RegisterInput,
   ResendVerificationInput,
+  ResetPasswordInput,
   VerifyEmailInput,
 } from '../validators/auth.js'
 
@@ -205,4 +212,50 @@ export async function getSessionUser(userId: string) {
     name: user.name,
     staff: membership ? serializeStaff(membership) : null,
   }
+}
+
+export async function requestPasswordReset(input: ForgotPasswordInput) {
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+  })
+  if (!user) return { ok: true, resetUrl: null }
+
+  const resetToken = generateVerifyToken()
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetTokenHash: hashVerifyToken(resetToken),
+      resetTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
+    },
+  })
+  await sendResetPasswordEmail({
+    to: user.email,
+    name: user.name,
+    token: resetToken,
+  })
+  return {
+    ok: true,
+    resetUrl: env.production ? null : buildResetPasswordUrl(resetToken),
+  }
+}
+
+export async function resetPassword(input: ResetPasswordInput) {
+  const tokenHash = hashVerifyToken(input.token)
+  const user = await prisma.user.findFirst({
+    where: { resetTokenHash: tokenHash },
+  })
+  if (!user || !user.resetTokenExpiresAt || user.resetTokenExpiresAt < new Date()) {
+    throw new ApiError(400, 'El enlace no es válido o expiró')
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, ROUNDS)
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      resetTokenHash: null,
+      resetTokenExpiresAt: null,
+    },
+  })
+  return { ok: true }
 }

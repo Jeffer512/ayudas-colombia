@@ -5,6 +5,10 @@ export function buildVerificationUrl(token: string): string {
   return `${env.frontendUrl}/verificar-correo?token=${token}`
 }
 
+export function buildResetPasswordUrl(token: string): string {
+  return `${env.frontendUrl}/restablecer-contrasena?token=${token}`
+}
+
 const transport = env.smtpUrl
   ? nodemailer.createTransport(env.smtpUrl)
   : nodemailer.createTransport({ streamTransport: true, newline: 'unix', buffer: true })
@@ -36,5 +40,35 @@ export async function sendVerificationEmail(opts: {
   })
   if (!env.smtpUrl) {
     console.log(`[email:dev] verificacion de ${opts.to} -> ${url}`)
+  }
+}
+
+export async function sendResetPasswordEmail(opts: {
+  to: string
+  name: string
+  token: string
+}) {
+  const url = buildResetPasswordUrl(opts.token)
+  await transport.sendMail({
+    from: env.mailFrom,
+    to: opts.to,
+    subject: 'Restablece tu contraseña — Red de ayudas',
+    text: [
+      `Hola ${opts.name},`,
+      '',
+      'Recibimos una solicitud para restablecer tu contraseña. Abre este enlace:',
+      url,
+      '',
+      'El enlace es válido por 24 horas. Si no lo solicitaste, ignora este correo.',
+    ].join('\n'),
+    html: [
+      `<p>Hola <strong>${opts.name}</strong>,</p>`,
+      '<p>Recibimos una solicitud para restablecer tu contraseña. Abre este enlace:</p>',
+      `<p><a href="${url}">Restablecer mi contraseña</a></p>`,
+      '<p>El enlace es válido por 24 horas. Si no lo solicitaste, ignora este correo.</p>',
+    ].join('\n'),
+  })
+  if (!env.smtpUrl) {
+    console.log(`[email:dev] restablecer contrasena de ${opts.to} -> ${url}`)
   }
 }

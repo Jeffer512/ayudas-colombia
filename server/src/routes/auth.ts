@@ -9,13 +9,17 @@ import {
   getSessionUser,
   loginUser,
   registerUser,
+  requestPasswordReset,
   resendVerification,
+  resetPassword,
   verifyEmail,
 } from '../services/auth.js'
 import {
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resendVerificationSchema,
+  resetPasswordSchema,
   verifyEmailSchema,
 } from '../validators/auth.js'
 
@@ -32,6 +36,22 @@ const registerLimiter = rateLimit({
 })
 
 const resendLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: env.production ? 5 : 10_000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes, intenta más tarde' },
+})
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: env.production ? 5 : 10_000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes, intenta más tarde' },
+})
+
+const resetPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
@@ -95,6 +115,24 @@ authRouter.post(
   }),
 )
 
+authRouter.post(
+  '/forgot-password',
+  forgotPasswordLimiter,
+  asyncHandler(async (req, res) => {
+    const input = forgotPasswordSchema.parse(req.body)
+    res.json(await requestPasswordReset(input))
+  }),
+)
+
+authRouter.post(
+  '/reset-password',
+  resetPasswordLimiter,
+  asyncHandler(async (req, res) => {
+    const input = resetPasswordSchema.parse(req.body)
+    res.json(await resetPassword(input))
+  }),
+)
+
 authRouter.post('/logout', (_req, res) => {
   res.clearCookie(SESSION_COOKIE, { path: '/' })
   res.json({ ok: true })
@@ -110,6 +148,11 @@ authRouter.get(
       res.status(401).json({ error: 'Sesión expirada' })
       return
     }
-    res.json({ authenticated: true, staff: sessionUser.staff })
+    res.json({
+      authenticated: true,
+      name: sessionUser.name,
+      email: sessionUser.email,
+      staff: sessionUser.staff,
+    })
   }),
 )

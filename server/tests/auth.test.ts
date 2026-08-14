@@ -278,6 +278,98 @@ describe('GET /api/auth/me', () => {
     const res = await request(app).get('/api/auth/me')
     expect(res.status).toBe(401)
   })
+
+  it('incluye el nombre y el correo del usuario autenticado', async () => {
+    const { token } = await register()
+    const agent = await verifyAndLogin(
+      'gerente@fundacion.org',
+      'contrasena-segura',
+      token!,
+    )
+
+    const res = await agent.get('/api/auth/me')
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({
+      authenticated: true,
+      name: 'Gerente Prueba',
+      email: 'gerente@fundacion.org',
+    })
+  })
+})
+
+describe('POST /api/auth/forgot-password', () => {
+  it('no revela si el correo no existe', async () => {
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'nadie@correo.org' })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ ok: true, resetUrl: null })
+  })
+
+  it('envía un enlace y guarda el token cifrado cuando el correo existe', async () => {
+    await register()
+
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'gerente@fundacion.org' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.resetUrl).toContain('restablecer-contrasena?token=')
+
+    const user = await prisma.user.findUnique({
+      where: { email: 'gerente@fundacion.org' },
+    })
+    expect(user!.resetTokenHash).not.toBeNull()
+    expect(user!.resetTokenExpiresAt).not.toBeNull()
+  })
+})
+
+describe('POST /api/auth/reset-password', () => {
+  it('cambia la contraseña y la anterior deja de servir', async () => {
+    const { token } = await register()
+    await verifyAndLogin('gerente@fundacion.org', 'contrasena-segura', token!)
+
+    const forgot = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'gerente@fundacion.org' })
+    const resetUrl = new URL(forgot.body.resetUrl, 'http://localhost')
+    const resetToken = resetUrl.searchParams.get('token')!
+
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: resetToken, password: 'nueva-contrasena' })
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+
+    const oldLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'gerente@fundacion.org', password: 'contrasena-segura' })
+    expect(oldLogin.status).toBe(401)
+
+    const newLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'gerente@fundacion.org', password: 'nueva-contrasena' })
+    expect(newLogin.status).toBe(200)
+  })
+
+  it('rechaza un token inválido', async () => {
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'f'.repeat(64), password: 'nueva-contrasena' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('El enlace no es válido o expiró')
+  })
+
+  it('rechaza una contraseña corta', async () => {
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'un-token-de-reset-válido', password: 'corta' })
+
+    expect(res.status).toBe(400)
+  })
 })
 
 describe('POST /api/auth/logout', () => {
