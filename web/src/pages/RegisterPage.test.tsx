@@ -131,4 +131,39 @@ describe('RegisterPage', () => {
       screen.getByText(/pendiente de aprobación/),
     ).toBeInTheDocument()
   })
+
+  it('con el tipo "Cuenta personal" registra sin organización', async () => {
+    mockedRegister.mockResolvedValue({})
+
+    renderPage()
+    await screen.findByText('Centro La Florida')
+
+    await userEvent.click(
+      screen.getByLabelText(/Cuenta personal/),
+    )
+    expect(
+      screen.queryByLabelText('¿A qué organización perteneces?'),
+    ).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText('Nombre'), 'Ciudadana')
+    await userEvent.type(screen.getByLabelText('Correo'), 'ciudadana@correo.org')
+    await userEvent.type(
+      screen.getByLabelText('Contraseña (mínimo 8 caracteres)'),
+      'contrasena-segura',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Revisa tu correo' }),
+    ).toBeInTheDocument()
+    expect(mockedRegister).toHaveBeenCalledWith({
+      name: 'Ciudadana',
+      email: 'ciudadana@correo.org',
+      password: 'contrasena-segura',
+      orgId: undefined,
+    })
+    expect(
+      screen.queryByText(/pendiente de aprobación/),
+    ).not.toBeInTheDocument()
+  })
 })
