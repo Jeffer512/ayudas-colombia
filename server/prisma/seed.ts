@@ -189,9 +189,10 @@ const sampleAvisos: Omit<SampleEntry, 'status'>[] = [
   },
 ]
 
-const sampleAcopios = [
+const sampleOrgs = [
   {
     type: 'oficial',
+    category: 'acopio',
     name: 'Centro de acopio central (Coliseo)',
     description:
       'Centro principal coordinado por la red de emergencias. Recibe agua, alimentos no perecederos, ropa, kits de aseo y medicamentos no vencidos.',
@@ -206,6 +207,7 @@ const sampleAcopios = [
   },
   {
     type: 'ciudadano',
+    category: 'acopio',
     name: 'Centro ciudadano La Florida',
     description:
       'Recolecta donaciones para las familias de la zona sur. Organizado por la junta de acción comunal.',
@@ -220,6 +222,7 @@ const sampleAcopios = [
   },
   {
     type: 'ciudadano',
+    category: 'acopio',
     name: 'Bodega vecinal Villa Verde',
     description:
       'Punto de acopio pequeño en el conjunto residencial. Preferible coordinar antes de llevar cargas grandes.',
@@ -234,17 +237,48 @@ const sampleAcopios = [
   },
   {
     type: 'ciudadano',
-    name: 'Centro de acopio Barrio Cuba',
+    category: 'albergue',
+    name: 'Albergue temporal Barrio Cuba',
     description:
-      'Centro temporal montado en el salón comunal mientras dure la emergencia.',
+      'Albergue temporal montado en el salón comunal mientras dure la emergencia. Recibe familias evacuadas y voluntarios para cocina y limpieza.',
     address: 'Salón comunal, barrio Cuba',
     lat: 4.82,
     lng: -75.7099,
     contactName: 'Laura Cifuentes',
     contactPhone: '3100000000',
     hours: 'Por confirmar cada día',
-    accepts: 'Víveres y kits de aseo',
-    status: 'closed',
+    accepts: 'Colchonetas, cobijas, kits de aseo',
+    status: 'open',
+  },
+  {
+    type: 'ciudadano',
+    category: 'psicologia',
+    name: 'Equipo de apoyo psicosocial',
+    description:
+      'Profesionales en psicología ofrecen atención en crisis y contención emocional a familias afectadas por la emergencia.',
+    address: 'Consultorio 3, edificio Galería',
+    lat: 4.8115,
+    lng: -75.7008,
+    contactName: 'Dora Londoño',
+    contactPhone: '3105551004',
+    hours: '9am - 5pm',
+    accepts: 'Citas de primera atención en el punto fijo',
+    status: 'open',
+  },
+  {
+    type: 'ciudadano',
+    category: 'voluntarios',
+    name: 'Red de voluntarios Jóvenes al rescate',
+    description:
+      'Grupo de 40 voluntarios disponibles para evacuaciones, reparto de donaciones y apoyo logístico.',
+    address: 'Casa de la juventud, carrera 8 #22-10',
+    lat: 4.8188,
+    lng: -75.7051,
+    contactName: 'Óscar Prieto',
+    contactPhone: '3105551007',
+    hours: '8am - 8pm',
+    accepts: 'Inscripción de voluntarios',
+    status: 'open',
   },
 ]
 
@@ -291,7 +325,8 @@ async function main() {
   await prisma.aviso.deleteMany()
   await prisma.offer.deleteMany()
   await prisma.reporter.deleteMany()
-  await prisma.acopioCenter.deleteMany()
+  await prisma.helpOrgStaff.deleteMany()
+  await prisma.helpOrg.deleteMany()
 
   for (const [type, sample] of Object.entries(sampleRequests)) {
     const reporter = await createReporter(sample)
@@ -358,11 +393,35 @@ async function main() {
     console.log(`Aviso (info/${aviso.status}): ${aviso.title.slice(0, 40)}`)
   }
 
-  for (const acopio of sampleAcopios) {
-    const created = await prisma.acopioCenter.create({
-      data: { ...acopio, cityId: city.id, resolveCode: '1234' },
+  for (const org of sampleOrgs) {
+    const created = await prisma.helpOrg.create({
+      data: { ...org, cityId: city.id, resolveCode: '1234' },
     })
-    console.log(`Centro de acopio (${created.type}/${created.status}): ${created.name}`)
+    console.log(
+      `Red de ayudas (${created.category}/${created.type}/${created.status}): ${created.name}`,
+    )
+  }
+
+  await prisma.helpOrgItem.deleteMany()
+  const [coliseo] = await prisma.helpOrg.findMany({
+    where: { cityId: city.id },
+    orderBy: { name: 'asc' },
+  })
+  if (coliseo) {
+    const sampleItems = [
+      { kind: 'available', name: 'Agua embotellada', quantity: 200, unit: 'botellas' },
+      { kind: 'available', name: 'Kits de aseo', quantity: 60, unit: 'kits' },
+      { kind: 'available', name: 'Ropa de abrigo', quantity: 0, unit: 'prendas' },
+      { kind: 'needed', name: 'Colchonetas', quantity: 40, unit: 'unidades' },
+      { kind: 'needed', name: 'Cobijas', quantity: 25, unit: 'unidades' },
+      { kind: 'needed', name: 'Voluntarios para reparto', quantity: 10, unit: 'personas' },
+    ]
+    for (const item of sampleItems) {
+      await prisma.helpOrgItem.create({
+        data: { orgId: coliseo.id, ...item },
+      })
+    }
+    console.log(`Inventario sembrado para: ${coliseo.name}`)
   }
 }
 

@@ -21,5 +21,8 @@ export function errorHandler(
     status >= 500
       ? 'Error interno del servidor'
       : ((err as { message?: string }).message ?? 'Error')
-  res.status(status).json({ error: message })
+  const body: { error: string; code?: string } = { error: message }
+  const code = (err as { code?: string }).code
+  if (code) body.code = code
+  res.status(status).json(body)
 }

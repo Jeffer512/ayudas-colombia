@@ -29,7 +29,7 @@ export default async function globalSetup() {
   }
 
   process.env.DATABASE_URL = env.databaseUrl
-  execSync('npx prisma db push --skip-generate', {
+  execSync('npx prisma db push --skip-generate --accept-data-loss', {
     stdio: 'inherit',
     env: { ...process.env, DATABASE_URL: env.databaseUrl },
   })

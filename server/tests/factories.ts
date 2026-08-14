@@ -1,5 +1,5 @@
 import type {
-  AcopioCenterUncheckedCreateInput,
+  HelpOrgUncheckedCreateInput,
   AvisoUncheckedCreateInput,
   OfferUncheckedCreateInput,
   RequestUncheckedCreateInput,
@@ -100,13 +100,14 @@ export async function createAviso(avisoData: Partial<AvisoUncheckedCreateInput> 
   })
 }
 
-export async function createAcopio(
-  data: Partial<AcopioCenterUncheckedCreateInput> = {},
+export async function createHelpOrg(
+  data: Partial<HelpOrgUncheckedCreateInput> = {},
 ) {
   const city = await ensureCity()
-  return prisma.acopioCenter.create({
+  return prisma.helpOrg.create({
     data: {
       type: 'ciudadano',
+      category: 'acopio',
       name: 'Centro cívico de ayuda',
       lat: 4.8133,
       lng: -75.6961,

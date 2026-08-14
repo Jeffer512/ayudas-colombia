@@ -31,6 +31,7 @@ export const requestFiltersSchema = z.object({
     .optional(),
   urgency: z.enum(URGENCIES).optional(),
   city: z.string().trim().optional(),
+  org: z.string().trim().optional(),
   q: z.string().trim().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   offset: z.coerce.number().int().min(0).optional(),

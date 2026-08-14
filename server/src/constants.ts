@@ -44,10 +44,26 @@ export type AvisoStatus = (typeof AVISO_STATUSES)[number]
 export const ACOPIO_STATUSES = ['open', 'closed'] as const
 export type AcopioStatus = (typeof ACOPIO_STATUSES)[number]
 
-export const CONTACT_TYPES = ['individual', 'organization'] as const
-export type ContactType = (typeof CONTACT_TYPES)[number]
+export const HELP_ORG_CATEGORIES = [
+  'acopio',
+  'psicologia',
+  'voluntarios',
+  'albergue',
+  'other',
+] as const
+export type HelpOrgCategory = (typeof HELP_ORG_CATEGORIES)[number]
+
+export const HELP_ORG_TYPES = ['ciudadano', 'oficial'] as const
+export type HelpOrgType = (typeof HELP_ORG_TYPES)[number]
+
+export const HELP_ORG_STATUSES = ['open', 'closed'] as const
+export type HelpOrgStatus = (typeof HELP_ORG_STATUSES)[number]
+
+export const HELP_ORG_ITEM_KINDS = ['available', 'needed'] as const
+export type HelpOrgItemKind = (typeof HELP_ORG_ITEM_KINDS)[number]
 
 export const ORGANIZATION_TYPES = [
+  'acopio_center',
   'shelter',
   'volunteer_group',
   'government',
@@ -56,3 +72,11 @@ export const ORGANIZATION_TYPES = [
   'other',
 ] as const
 export type OrganizationType = (typeof ORGANIZATION_TYPES)[number]
+
+export const CATEGORY_TO_ORG_TYPE: Record<HelpOrgCategory, OrganizationType> = {
+  acopio: 'acopio_center',
+  psicologia: 'ngo',
+  voluntarios: 'volunteer_group',
+  albergue: 'shelter',
+  other: 'other',
+}

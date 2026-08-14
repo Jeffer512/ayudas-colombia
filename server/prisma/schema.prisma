@@ -7,6 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                   String           @id @default(uuid())
+  email                String           @unique
+  name                 String
+  passwordHash         String           @map("password_hash")
+  emailVerifiedAt      DateTime?        @map("email_verified_at")
+  verifyTokenHash      String?          @map("verify_token_hash")
+  verifyTokenExpiresAt DateTime?        @map("verify_token_expires_at")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  memberships HelpOrgStaff[]
+
+  @@map("users")
+}
+
 model City {
   id        Int      @id @default(autoincrement())
   code      String   @unique
@@ -19,7 +35,7 @@ model City {
   requests  Request[]
   offers    Offer[]
   avisos    Aviso[]
-  acopios   AcopioCenter[]
+  helpOrgs  HelpOrg[]
 
   @@map("cities")
 }
@@ -53,6 +69,7 @@ model Request {
   lng         Float?
   cityId      Int      @map("city_id")
   reporterId  String   @map("reporter_id")
+  helpOrgId   String?  @map("help_org_id")
   resolveCode String   @default("0000") @map("resolve_code")
   resolvedAt  DateTime? @map("resolved_at")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -60,11 +77,13 @@ model Request {
 
   city     City           @relation(fields: [cityId], references: [id])
   reporter Reporter       @relation(fields: [reporterId], references: [id])
+  org      HelpOrg?       @relation(fields: [helpOrgId], references: [id], onDelete: SetNull)
   events   RequestEvent[]
   helpers  RequestHelper[]
 
   @@index([cityId, status])
   @@index([type])
+  @@index([helpOrgId])
   @@map("requests")
 }
 
@@ -157,9 +176,10 @@ model AvisoMark {
   @@map("avisos_marks")
 }
 
-model AcopioCenter {
+model HelpOrg {
   id           String   @id @default(uuid())
   type         String   @default("ciudadano")
+  category     String   @default("acopio")
   name         String
   description  String?
   address      String?
@@ -175,25 +195,48 @@ model AcopioCenter {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  city City @relation(fields: [cityId], references: [id])
-  staff AcopioStaff[]
+  city     City            @relation(fields: [cityId], references: [id])
+  staff    HelpOrgStaff[]
+  requests Request[]
+  items    HelpOrgItem[]
 
   @@index([cityId, status])
-  @@map("acopio_centers")
+  @@index([category])
+  @@map("help_orgs")
 }
 
-model AcopioStaff {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  name         String
-  passwordHash String   @map("password_hash")
-  role         String   @default("manager")
-  orgId        String   @map("org_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+model HelpOrgItem {
+  id          String        @id @default(uuid())
+  orgId       String        @map("org_id")
+  kind        String        @default("available")
+  name        String
+  quantity    Int?
+  unit        String?
+  updatedById String?       @map("updated_by_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  org AcopioCenter @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org       HelpOrg       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  updatedBy HelpOrgStaff? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([orgId, kind])
+  @@map("help_org_items")
+}
+
+model HelpOrgStaff {
+  id         String    @id @default(uuid())
+  userId     String    @unique @map("user_id")
+  orgId      String    @map("org_id")
+  role       String    @default("manager")
+  status     String    @default("active")
+  approvedAt DateTime? @map("approved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  org  HelpOrg      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedItems HelpOrgItem[]
 
   @@index([orgId])
-  @@map("acopio_staff")
+  @@map("help_org_staff")
 }

@@ -7,6 +7,7 @@ export interface SessionPayload {
   sub: string
   orgId: string
   role: string
+  membershipId?: string
 }
 
 export function signSession(payload: SessionPayload) {
@@ -23,7 +24,15 @@ export function verifySession(token: string): SessionPayload | null {
       typeof decoded.orgId === 'string' &&
       typeof decoded.role === 'string'
     ) {
-      return { sub: decoded.sub, orgId: decoded.orgId, role: decoded.role }
+      const payload: SessionPayload = {
+        sub: decoded.sub,
+        orgId: decoded.orgId,
+        role: decoded.role,
+      }
+      if (typeof decoded.membershipId === 'string') {
+        payload.membershipId = decoded.membershipId
+      }
+      return payload
     }
     return null
   } catch {

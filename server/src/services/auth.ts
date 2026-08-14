@@ -1,74 +1,208 @@
 import bcrypt from 'bcryptjs'
+import { env } from '../config.js'
 import { prisma } from '../db.js'
+import { sendVerificationEmail, buildVerificationUrl } from '../lib/email.js'
 import { ApiError } from '../lib/errors.js'
-import type { LoginInput, RegisterInput } from '../validators/auth.js'
+import {
+  generateVerifyToken,
+  hashVerifyToken,
+  VERIFY_TOKEN_TTL_MS,
+} from '../lib/verification.js'
+import type {
+  LoginInput,
+  RegisterInput,
+  ResendVerificationInput,
+  VerifyEmailInput,
+} from '../validators/auth.js'
 
 const ROUNDS = 10
 
-type StaffRecord = {
+type MembershipWithUser = {
   id: string
-  email: string
-  name: string
+  userId: string
   role: string
   orgId: string
+  status: string
+  user: { email: string; name: string }
 }
 
-export function serializeStaff(staff: StaffRecord) {
+export function serializeStaff(membership: MembershipWithUser) {
   return {
-    id: staff.id,
-    email: staff.email,
-    name: staff.name,
-    role: staff.role,
-    orgId: staff.orgId,
+    id: membership.id,
+    userId: membership.userId,
+    email: membership.user.email,
+    name: membership.user.name,
+    role: membership.role,
+    orgId: membership.orgId,
+    status: membership.status,
   }
 }
 
-export async function registerStaff(input: RegisterInput) {
-  const existing = await prisma.acopioStaff.findUnique({
+export async function registerUser(input: RegisterInput) {
+  const existing = await prisma.user.findUnique({
     where: { email: input.email },
   })
   if (existing) {
     throw new ApiError(409, 'Ya existe una cuenta con este correo')
   }
 
-  const org = await prisma.acopioCenter.findUnique({ where: { id: input.orgId } })
-  if (!org) {
-    throw new ApiError(404, 'Organización no encontrada')
+  let org: { id: string } | null = null
+  if (input.orgId) {
+    org = await prisma.helpOrg.findUnique({
+      where: { id: input.orgId },
+      select: { id: true },
+    })
+    if (!org) {
+      throw new ApiError(404, 'Organización no encontrada')
+    }
   }
-
-  const staffCount = await prisma.acopioStaff.count({
-    where: { orgId: input.orgId },
-  })
 
   const passwordHash = await bcrypt.hash(input.password, ROUNDS)
-  const staff = await prisma.acopioStaff.create({
-    data: {
-      email: input.email,
-      name: input.name,
-      passwordHash,
-      role: staffCount === 0 ? 'manager' : 'member',
-      orgId: input.orgId,
-    },
+  const verifyToken = generateVerifyToken()
+
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email: input.email,
+        name: input.name,
+        passwordHash,
+        verifyTokenHash: hashVerifyToken(verifyToken),
+        verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
+      },
+      select: { id: true },
+    })
+
+    if (org) {
+      const activeCount = await tx.helpOrgStaff.count({
+        where: { orgId: org.id, status: 'active' },
+      })
+      const isFirst = activeCount === 0
+      await tx.helpOrgStaff.create({
+        data: {
+          userId: user.id,
+          orgId: org.id,
+          role: isFirst ? 'manager' : 'member',
+          status: isFirst ? 'active' : 'pending',
+          approvedAt: isFirst ? new Date() : null,
+        },
+      })
+    }
   })
-  return { staff: serializeStaff(staff) }
+
+  await sendVerificationEmail({
+    to: input.email,
+    name: input.name,
+    token: verifyToken,
+  })
+
+  return {
+    verificationUrl: env.production ? null : buildVerificationUrl(verifyToken),
+  }
 }
 
-export async function loginStaff(input: LoginInput) {
-  const staff = await prisma.acopioStaff.findUnique({
+export async function verifyEmail(input: VerifyEmailInput) {
+  const tokenHash = hashVerifyToken(input.token)
+  const user = await prisma.user.findFirst({
+    where: { verifyTokenHash: tokenHash },
+  })
+  if (
+    !user ||
+    !user.verifyTokenExpiresAt ||
+    user.verifyTokenExpiresAt < new Date()
+  ) {
+    throw new ApiError(400, 'El enlace de verificación no es válido o expiró')
+  }
+  if (!user.emailVerifiedAt) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerifiedAt: new Date(),
+        verifyTokenHash: null,
+        verifyTokenExpiresAt: null,
+      },
+    })
+  }
+  return { ok: true }
+}
+
+export async function resendVerification(input: ResendVerificationInput) {
+  const user = await prisma.user.findUnique({
     where: { email: input.email },
   })
-  if (!staff) {
+  if (!user || user.emailVerifiedAt) {
+    return { ok: true }
+  }
+
+  const verifyToken = generateVerifyToken()
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      verifyTokenHash: hashVerifyToken(verifyToken),
+      verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
+    },
+  })
+  await sendVerificationEmail({
+    to: user.email,
+    name: user.name,
+    token: verifyToken,
+  })
+  return { ok: true }
+}
+
+export async function loginUser(input: LoginInput) {
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+  })
+  if (!user) {
     throw new ApiError(401, 'Correo o contraseña incorrectos')
   }
-  const ok = await bcrypt.compare(input.password, staff.passwordHash)
+  const ok = await bcrypt.compare(input.password, user.passwordHash)
   if (!ok) {
     throw new ApiError(401, 'Correo o contraseña incorrectos')
   }
-  return { staff: serializeStaff(staff) }
+  if (!user.emailVerifiedAt) {
+    throw new ApiError(
+      403,
+      'Debes verificar tu correo antes de ingresar',
+      'email_unverified',
+    )
+  }
+
+  const membership = await prisma.helpOrgStaff.findUnique({
+    where: { userId: user.id },
+    include: { user: true },
+  })
+
+  if (membership && membership.status !== 'active') {
+    throw new ApiError(
+      403,
+      'Tu solicitud de vinculación está pendiente de aprobación',
+      'membership_pending',
+    )
+  }
+
+  return {
+    user,
+    membership,
+    staff: membership ? serializeStaff(membership) : null,
+  }
 }
 
-export async function getStaffById(id: string) {
-  const staff = await prisma.acopioStaff.findUnique({ where: { id } })
-  if (!staff) return null
-  return serializeStaff(staff)
+export async function getSessionUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      memberships: { include: { user: true } },
+    },
+  })
+  if (!user) return null
+  const membership =
+    user.memberships.find((m) => m.status === 'active') ??
+    user.memberships[0] ??
+    null
+  return {
+    email: user.email,
+    name: user.name,
+    staff: membership ? serializeStaff(membership) : null,
+  }
 }

@@ -5,12 +5,12 @@ import cors from 'cors'
 import express from 'express'
 import { env } from './config.js'
 import { notFound, errorHandler } from './middleware/error.js'
-import { acopiosRouter } from './routes/acopios.js'
 import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
 import { avisosRouter } from './routes/avisos.js'
 import { citiesRouter } from './routes/cities.js'
 import { healthRouter } from './routes/health.js'
+import { helpOrgsRouter } from './routes/helpOrgs.js'
 import { offersRouter } from './routes/offers.js'
 import { requestsRouter } from './routes/requests.js'
 
@@ -38,7 +38,7 @@ export function createApp() {
   app.use('/api/requests', requestsRouter)
   app.use('/api/offers', offersRouter)
   app.use('/api/avisos', avisosRouter)
-  app.use('/api/acopios', acopiosRouter)
+  app.use('/api/help-orgs', helpOrgsRouter)
   app.use('/api/admin', adminRouter)
 
   if (servesWeb) {

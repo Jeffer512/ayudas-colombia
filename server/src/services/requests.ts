@@ -1,4 +1,4 @@
-import type { City, Reporter, Request, RequestEvent } from '@prisma/client'
+import type { City, HelpOrg, Reporter, Request, RequestEvent } from '@prisma/client'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type {
@@ -12,6 +12,7 @@ type SerializedRequest = Request & {
   city: City
   reporter: Reporter
   events?: RequestEvent[]
+  org?: HelpOrg | null
 }
 
 const TRANSITIONS: Record<string, string[]> = {
@@ -54,6 +55,9 @@ export function serializeRequest(
       whatsapp: request.reporter.whatsapp ?? null,
       email: request.reporter.email ?? null,
     },
+    organization: request.org
+      ? { id: request.org.id, name: request.org.name, category: request.org.category }
+      : null,
     helpers: helperCount,
     helperList: helperList
       ? helperList.map((helper) => ({
@@ -87,6 +91,7 @@ export async function listRequests(filters: RequestFilters) {
   }
   if (filters.urgency) where.urgency = filters.urgency
   if (filters.city) where.city = { code: filters.city }
+  if (filters.org) where.helpOrgId = filters.org
   if (filters.q) {
     where.OR = [
       { title: { contains: filters.q, mode: 'insensitive' } },
@@ -104,7 +109,7 @@ export async function listRequests(filters: RequestFilters) {
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
-      include: { city: true, reporter: true },
+      include: { city: true, reporter: true, org: true },
     }),
     prisma.request.count({ where }),
     prisma.requestHelper.groupBy({
@@ -137,6 +142,7 @@ export async function getRequest(id: string) {
       include: {
         city: true,
         reporter: true,
+        org: true,
         events: { orderBy: { createdAt: 'asc' } },
       },
     }),
