@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { prisma } from '../src/db.js'
 import { createRequest, ensureCity } from './factories.js'
+import { closeStaleRequests } from '../src/services/requests.js'
 
 const app = createApp()
 
@@ -265,6 +266,16 @@ describe('POST /api/requests/:id/status', () => {
     expect(res.body.resolvedAt).toBeNull()
   })
 
+  it('rechaza reabrir sin el código de cierre', async () => {
+    const created = await createRequest({ status: 'resolved', resolvedAt: new Date() })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/status`)
+      .send({ status: 'open', note: 'Reabierto' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Código de cierre incorrecto')
+  })
+
   it('rechaza una transición no permitida', async () => {
     const created = await createRequest({ status: 'resolved', resolvedAt: new Date() })
     const res = await request(app)
@@ -272,6 +283,49 @@ describe('POST /api/requests/:id/status', () => {
       .send({ status: 'in_progress' })
 
     expect(res.status).toBe(400)
+  })
+})
+
+describe('cierre automático por inactividad', () => {
+  it('cierra solicitudes abiertas sin actividad por más de 3 días', async () => {
+    const stale = await createRequest({
+      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    })
+    await closeStaleRequests()
+
+    const res = await request(app).get(`/api/requests/${stale.id}`)
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('resolved')
+    expect(res.body.resolvedAt).not.toBeNull()
+    expect(
+      res.body.events.some(
+        (e: { note: string | null }) => e.note === 'Cerrada automáticamente por inactividad',
+      ),
+    ).toBe(true)
+  })
+
+  it('no cierra solicitudes con actividad reciente', async () => {
+    const fresh = await createRequest({
+      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    })
+    await closeStaleRequests()
+
+    const res = await request(app).get(`/api/requests/${fresh.id}`)
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('open')
+  })
+
+  it('el cierre automático conserva el código para reabrir', async () => {
+    const stale = await createRequest({
+      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    })
+    await closeStaleRequests()
+
+    const res = await request(app)
+      .post(`/api/requests/${stale.id}/status`)
+      .send({ status: 'open', resolveCode: '1234' })
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('open')
   })
 })
 

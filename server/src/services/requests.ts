@@ -25,6 +25,10 @@ const TRANSITIONS: Record<string, string[]> = {
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+const STALE_REQUEST_MS = 3 * 24 * 60 * 60 * 1000
+const AUTO_CLOSE_NOTE = 'Cerrada automáticamente por inactividad'
+const CLOSED_STATES = ['resolved', 'duplicate', 'invalid']
+
 function generateResolveCode(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
@@ -268,6 +272,13 @@ export async function updateRequestStatus(
     }
     resolvedAt = request.resolvedAt ?? new Date()
   } else if (input.status === 'open') {
+    if (
+      !isAdmin &&
+      CLOSED_STATES.includes(from) &&
+      (!request.resolveCode || (input.resolveCode ?? '').trim() !== request.resolveCode)
+    ) {
+      throw new ApiError(403, 'Código de cierre incorrecto')
+    }
     resolvedAt = null
   }
 
@@ -287,4 +298,34 @@ export async function updateRequestStatus(
   ])
 
   return getRequest(id)
+}
+
+export async function closeStaleRequests() {
+  const stale = await prisma.request.findMany({
+    where: {
+      status: { in: ['open', 'in_progress'] },
+      updatedAt: { lt: new Date(Date.now() - STALE_REQUEST_MS) },
+    },
+    select: { id: true },
+  })
+
+  for (const { id } of stale) {
+    await prisma.$transaction([
+      prisma.request.update({
+        where: { id },
+        data: { status: 'resolved', resolvedAt: new Date() },
+      }),
+      prisma.requestEvent.create({
+        data: {
+          requestId: id,
+          status: 'resolved',
+          note: AUTO_CLOSE_NOTE,
+          actorName: 'Sistema',
+        },
+      }),
+    ])
+    console.log(`[auto-close] request ${id}`)
+  }
+
+  return stale.length
 }
