@@ -23,8 +23,6 @@ export type RequestStatus = 'open' | 'in_progress' | 'resolved' | 'duplicate' | 
 export type OfferStatus = 'open' | 'fulfilled' | 'unavailable'
 export type AvisoStatus = 'open' | 'closed'
 
-export type ContactType = 'individual' | 'organization'
-
 export interface City {
   id: number
   code: string
@@ -43,11 +41,10 @@ export interface RequestEvent {
 }
 
 export interface Reporter {
-  contactType: ContactType
   name: string
-  organizationName: string | null
-  organizationType: string | null
   phone: string | null
+  whatsapp: string | null
+  email: string | null
 }
 
 export interface CityRef {
@@ -200,11 +197,9 @@ export type NewAviso = {
 }
 
 type ReporterInput = {
-  contactType: ContactType
   name: string
-  organizationName?: string
-  organizationType?: string
-  phone: string
+  phone?: string
+  whatsapp?: string
   email?: string
 }
 

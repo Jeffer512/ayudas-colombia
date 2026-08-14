@@ -6,9 +6,6 @@ function navClass({ isActive }: { isActive: boolean }) {
     : 'rounded px-3 py-1 text-sky-100 hover:bg-sky-700/60'
 }
 
-const tertiaryClass =
-  'rounded px-3 py-1 text-sky-200/80 underline underline-offset-4 decoration-sky-300/60 hover:text-white'
-
 export default function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -33,7 +30,7 @@ export default function Layout() {
             <NavLink to="/centros-de-acopio" className={navClass}>
               Centros de acopio
             </NavLink>
-            <NavLink to="/informar" className={tertiaryClass}>
+            <NavLink to="/informar" className={navClass}>
               Informar
             </NavLink>
           </nav>

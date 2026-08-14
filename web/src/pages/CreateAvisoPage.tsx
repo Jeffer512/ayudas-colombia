@@ -7,7 +7,7 @@ import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { URGENCY_META } from '../lib/constants'
-import type { ContactType, CreatedAviso, NewAviso, Urgency } from '../lib/types'
+import type { CreatedAviso, NewAviso, Urgency } from '../lib/types'
 
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
@@ -22,21 +22,17 @@ interface LocationState {
 }
 
 interface ReporterState {
-  contactType: ContactType
   name: string
-  organizationName: string
-  organizationType: string
   phone: string
+  whatsapp: string
   email: string
 }
 
 const initialLocation: LocationState = { cityCode: '', address: '', lat: null, lng: null }
 const initialReporter: ReporterState = {
-  contactType: 'individual',
   name: '',
-  organizationName: '',
-  organizationType: '',
   phone: '',
+  whatsapp: '',
   email: '',
 }
 
@@ -65,7 +61,17 @@ export default function CreateAvisoPage() {
     setSubmitting(true)
     setError(null)
 
-    const isOrganization = reporter.contactType === 'organization'
+    const phone = reporter.phone.trim()
+    const whatsapp = reporter.whatsapp.trim()
+    const email = reporter.email.trim()
+    if (!phone && !whatsapp && !email) {
+      setError(
+        'Deja al menos un medio de contacto: teléfono, WhatsApp o correo.',
+      )
+      setSubmitting(false)
+      return
+    }
+
     const body: NewAviso = {
       urgency,
       title: title.trim(),
@@ -76,16 +82,10 @@ export default function CreateAvisoPage() {
         ? { lat: location.lat, lng: location.lng }
         : {}),
       reporter: {
-        contactType: reporter.contactType,
         name: reporter.name.trim(),
-        ...(isOrganization
-          ? {
-              organizationName: reporter.organizationName.trim(),
-              organizationType: reporter.organizationType || undefined,
-            }
-          : {}),
-        phone: reporter.phone.trim(),
-        ...(reporter.email.trim() ? { email: reporter.email.trim() } : {}),
+        ...(phone ? { phone } : {}),
+        ...(whatsapp ? { whatsapp } : {}),
+        ...(email ? { email } : {}),
       },
     }
 
@@ -215,11 +215,9 @@ export default function CreateAvisoPage() {
         />
 
         <ReporterSection
-          contactType={reporter.contactType}
           name={reporter.name}
-          organizationName={reporter.organizationName}
-          organizationType={reporter.organizationType}
           phone={reporter.phone}
+          whatsapp={reporter.whatsapp}
           email={reporter.email}
           codeHint="Es público para coordinar la ayuda."
           onPatch={setReporter}

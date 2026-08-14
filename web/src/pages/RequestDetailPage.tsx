@@ -3,10 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import {
-  CONTACT_TYPE_LABELS,
-  ORGANIZATION_TYPE_LABELS,
   REQUEST_STATUS_META,
   REQUEST_TYPE_LABELS,
   TRANSPORT_LABELS,
@@ -119,32 +118,7 @@ export default function RequestDetailPage() {
           <dt className="font-medium text-slate-500">Publicado</dt>
           <dd className="text-slate-800">{formatDate(request.createdAt)}</dd>
         </div>
-        <div>
-          <dt className="font-medium text-slate-500">Reporta</dt>
-          <dd className="text-slate-800">
-            {request.reporter.organizationName ?? request.reporter.name}
-            <span className="ml-1 text-slate-500">
-              ({CONTACT_TYPE_LABELS[request.reporter.contactType]})
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-500">Teléfono de contacto</dt>
-          <dd className="text-slate-800">
-            <a href={`tel:${request.reporter.phone}`} className="text-sky-700">
-              {request.reporter.phone}
-            </a>
-          </dd>
-        </div>
-        {request.reporter.organizationType && (
-          <div>
-            <dt className="font-medium text-slate-500">Tipo de organización</dt>
-            <dd className="text-slate-800">
-              {ORGANIZATION_TYPE_LABELS[request.reporter.organizationType] ??
-                request.reporter.organizationType}
-            </dd>
-          </div>
-        )}
+        <ReporterContact reporter={request.reporter} nameLabel="Reporta" />
       </dl>
 
       {request.lat !== null && request.lng !== null && (

@@ -14,7 +14,6 @@ const validRequest = {
   address: 'Calle 12 #4-50',
   cityCode: 'pereira',
   reporter: {
-    contactType: 'individual',
     name: 'María Gómez',
     phone: '3158765432',
   },
@@ -44,7 +43,6 @@ describe('GET /api/requests', () => {
     const first = res.body.requests[0]
     expect(first.city).toEqual({ code: 'pereira', name: 'Pereira' })
     expect(first.reporter.name).toBe('Juan Pérez')
-    expect(first.reporter.contactType).toBe('individual')
     expect(first.status).toBe('open')
     expect(first.transport).toBeNull()
     expect(first.resolveCode).toBeUndefined()
@@ -164,6 +162,42 @@ describe('POST /api/requests', () => {
       .send({ ...validRequest, urgency: undefined })
     expect(res.status).toBe(201)
     expect(res.body.urgency).toBe('medium')
+  })
+
+  it('acepta correo o whatsapp como único medio de contacto', async () => {
+    const emailOnly = await request(app)
+      .post('/api/requests')
+      .send({
+        ...validRequest,
+        reporter: { name: 'Ana Torres', email: 'ana@correo.com' },
+      })
+    expect(emailOnly.status).toBe(201)
+    expect(emailOnly.body.reporter).toMatchObject({
+      name: 'Ana Torres',
+      email: 'ana@correo.com',
+      phone: null,
+      whatsapp: null,
+    })
+
+    const whatsappOnly = await request(app)
+      .post('/api/requests')
+      .send({
+        ...validRequest,
+        reporter: { name: 'Andrés Mora', whatsapp: '3115550000' },
+      })
+    expect(whatsappOnly.status).toBe(201)
+    expect(whatsappOnly.body.reporter).toMatchObject({
+      whatsapp: '3115550000',
+      phone: null,
+      email: null,
+    })
+  })
+
+  it('rechaza publicar sin ningún medio de contacto', async () => {
+    const res = await request(app)
+      .post('/api/requests')
+      .send({ ...validRequest, reporter: { name: 'Ana Torres' } })
+    expect(res.status).toBe(400)
   })
 
   it('rechaza coordenadas fuera de rango y datos inválidos', async () => {

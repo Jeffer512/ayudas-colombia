@@ -21,7 +21,7 @@ type SampleEntry = {
   lat: number | null
   lng: number | null
   transport?: 'can_transport' | 'needs_transport'
-  reporter: { name: string; phone: string; org?: string; orgType?: string }
+  reporter: { name: string; phone: string }
 }
 
 const sampleRequests: Record<string, SampleEntry> = {
@@ -69,8 +69,6 @@ const sampleRequests: Record<string, SampleEntry> = {
     lat: 4.82,
     lng: -75.71,
     reporter: {
-      org: 'JAC Barrio Cuba',
-      orgType: 'government',
       name: 'Laura Cifuentes',
       phone: '3100000000',
     },
@@ -123,8 +121,6 @@ const sampleOffers: SampleEntry[] = [
     lng: -75.7205,
     transport: 'can_transport',
     reporter: {
-      org: 'Distrisalud',
-      orgType: 'business',
       name: 'Carmen Vila',
       phone: '3105551006',
     },
@@ -139,8 +135,6 @@ const sampleOffers: SampleEntry[] = [
     lat: 4.8156,
     lng: -75.705,
     reporter: {
-      org: 'Brigada Rápida',
-      orgType: 'volunteer_group',
       name: 'Óscar Prieto',
       phone: '3105551007',
     },
@@ -189,8 +183,6 @@ const sampleAvisos: Omit<SampleEntry, 'status'>[] = [
     lat: 4.8135,
     lng: -75.6965,
     reporter: {
-      org: 'Alcaldía de Pereira',
-      orgType: 'government',
       name: 'Nataly Trujillo',
       phone: '3105551011',
     },
@@ -259,10 +251,7 @@ const sampleAcopios = [
 async function createReporter(entry: SampleEntry) {
   return prisma.reporter.create({
     data: {
-      contactType: entry.reporter.org ? 'organization' : 'individual',
       name: entry.reporter.name,
-      organizationName: entry.reporter.org ?? null,
-      organizationType: entry.reporter.orgType ?? null,
       phone: entry.reporter.phone,
     },
   })

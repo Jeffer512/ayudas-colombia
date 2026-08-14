@@ -25,11 +25,10 @@ export function serializeAviso(aviso: SerializedAviso, marks = 0) {
       name: aviso.city.name,
     },
     reporter: {
-      contactType: aviso.reporter.contactType,
       name: aviso.reporter.name,
-      organizationName: aviso.reporter.organizationName ?? null,
-      organizationType: aviso.reporter.organizationType ?? null,
       phone: aviso.reporter.phone ?? null,
+      whatsapp: aviso.reporter.whatsapp ?? null,
+      email: aviso.reporter.email ?? null,
     },
     marks,
     createdAt: aviso.createdAt,
@@ -112,11 +111,9 @@ export async function createAviso(input: CreateAvisoInput) {
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
-        contactType: input.reporter.contactType,
         name: input.reporter.name,
-        organizationName: input.reporter.organizationName ?? null,
-        organizationType: input.reporter.organizationType ?? null,
-        phone: input.reporter.phone,
+        phone: input.reporter.phone ?? null,
+        whatsapp: input.reporter.whatsapp ?? null,
         email: input.reporter.email || null,
       },
     })

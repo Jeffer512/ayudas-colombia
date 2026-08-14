@@ -44,11 +44,10 @@ export function serializeRequest(request: SerializedRequest) {
       name: request.city.name,
     },
     reporter: {
-      contactType: request.reporter.contactType,
       name: request.reporter.name,
-      organizationName: request.reporter.organizationName ?? null,
-      organizationType: request.reporter.organizationType ?? null,
       phone: request.reporter.phone ?? null,
+      whatsapp: request.reporter.whatsapp ?? null,
+      email: request.reporter.email ?? null,
     },
     resolvedAt: request.resolvedAt,
     createdAt: request.createdAt,
@@ -134,11 +133,9 @@ export async function createRequest(input: CreateRequestInput) {
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
-        contactType: input.reporter.contactType,
         name: input.reporter.name,
-        organizationName: input.reporter.organizationName ?? null,
-        organizationType: input.reporter.organizationType ?? null,
-        phone: input.reporter.phone,
+        phone: input.reporter.phone ?? null,
+        whatsapp: input.reporter.whatsapp ?? null,
         email: input.reporter.email || null,
       },
     })

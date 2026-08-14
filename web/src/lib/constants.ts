@@ -73,17 +73,3 @@ export const ACOPIO_STATUS_META: Record<string, { label: string; badgeClass: str
   open: { label: 'Abierto', badgeClass: 'bg-green-100 text-green-800' },
   closed: { label: 'Cerrado', badgeClass: 'bg-gray-200 text-gray-700' },
 }
-
-export const CONTACT_TYPE_LABELS: Record<string, string> = {
-  individual: 'Persona',
-  organization: 'Organización',
-}
-
-export const ORGANIZATION_TYPE_LABELS: Record<string, string> = {
-  shelter: 'Refugio',
-  volunteer_group: 'Grupo de voluntarios',
-  government: 'Gobierno / entidad oficial',
-  ngo: 'ONG',
-  business: 'Empresa / comercio',
-  other: 'Otra',
-}

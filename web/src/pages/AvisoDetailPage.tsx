@@ -2,12 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import {
   AVISO_STATUS_META,
   AVISO_TYPE_LABELS,
-  CONTACT_TYPE_LABELS,
-  ORGANIZATION_TYPE_LABELS,
   URGENCY_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
@@ -95,32 +94,7 @@ export default function AvisoDetailPage() {
           <dt className="font-medium text-slate-500">Publicado</dt>
           <dd className="text-slate-800">{formatDate(aviso.createdAt)}</dd>
         </div>
-        <div>
-          <dt className="font-medium text-slate-500">Informa</dt>
-          <dd className="text-slate-800">
-            {aviso.reporter.organizationName ?? aviso.reporter.name}
-            <span className="ml-1 text-slate-500">
-              ({CONTACT_TYPE_LABELS[aviso.reporter.contactType]})
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-500">Teléfono de contacto</dt>
-          <dd className="text-slate-800">
-            <a href={`tel:${aviso.reporter.phone}`} className="text-sky-700">
-              {aviso.reporter.phone}
-            </a>
-          </dd>
-        </div>
-        {aviso.reporter.organizationType && (
-          <div>
-            <dt className="font-medium text-slate-500">Tipo de organización</dt>
-            <dd className="text-slate-800">
-              {ORGANIZATION_TYPE_LABELS[aviso.reporter.organizationType] ??
-                aviso.reporter.organizationType}
-            </dd>
-          </div>
-        )}
+        <ReporterContact reporter={aviso.reporter} nameLabel="Informa" />
       </dl>
 
       {aviso.lat !== null && aviso.lng !== null && (

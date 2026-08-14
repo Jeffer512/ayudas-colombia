@@ -8,7 +8,6 @@ import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { OFFER_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS } from '../lib/constants'
 import type {
-  ContactType,
   CreatedOffer,
   NewOffer,
   OfferType,
@@ -28,21 +27,17 @@ interface LocationState {
 }
 
 interface ReporterState {
-  contactType: ContactType
   name: string
-  organizationName: string
-  organizationType: string
   phone: string
+  whatsapp: string
   email: string
 }
 
 const initialLocation: LocationState = { cityCode: '', address: '', lat: null, lng: null }
 const initialReporter: ReporterState = {
-  contactType: 'individual',
   name: '',
-  organizationName: '',
-  organizationType: '',
   phone: '',
+  whatsapp: '',
   email: '',
 }
 
@@ -74,7 +69,17 @@ export default function CreateOfferPage() {
     setSubmitting(true)
     setError(null)
 
-    const isOrganization = reporter.contactType === 'organization'
+    const phone = reporter.phone.trim()
+    const whatsapp = reporter.whatsapp.trim()
+    const email = reporter.email.trim()
+    if (!phone && !whatsapp && !email) {
+      setError(
+        'Deja al menos un medio de contacto: teléfono, WhatsApp o correo.',
+      )
+      setSubmitting(false)
+      return
+    }
+
     const body: NewOffer = {
       type: type as OfferType,
       ...(canTransport && transport ? { transport } : {}),
@@ -86,16 +91,10 @@ export default function CreateOfferPage() {
         ? { lat: location.lat, lng: location.lng }
         : {}),
       reporter: {
-        contactType: reporter.contactType,
         name: reporter.name.trim(),
-        ...(isOrganization
-          ? {
-              organizationName: reporter.organizationName.trim(),
-              organizationType: reporter.organizationType || undefined,
-            }
-          : {}),
-        phone: reporter.phone.trim(),
-        ...(reporter.email.trim() ? { email: reporter.email.trim() } : {}),
+        ...(phone ? { phone } : {}),
+        ...(whatsapp ? { whatsapp } : {}),
+        ...(email ? { email } : {}),
       },
     }
 
@@ -253,11 +252,9 @@ export default function CreateOfferPage() {
         />
 
         <ReporterSection
-          contactType={reporter.contactType}
           name={reporter.name}
-          organizationName={reporter.organizationName}
-          organizationType={reporter.organizationType}
           phone={reporter.phone}
+          whatsapp={reporter.whatsapp}
           email={reporter.email}
           onPatch={setReporter}
         />

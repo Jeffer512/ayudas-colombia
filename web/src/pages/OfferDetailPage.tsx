@@ -3,12 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import {
-  CONTACT_TYPE_LABELS,
   OFFER_STATUS_META,
   OFFER_TYPE_LABELS,
-  ORGANIZATION_TYPE_LABELS,
   TRANSPORT_LABELS,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
@@ -103,32 +102,7 @@ export default function OfferDetailPage() {
           <dt className="font-medium text-slate-500">Publicado</dt>
           <dd className="text-slate-800">{formatDate(offer.createdAt)}</dd>
         </div>
-        <div>
-          <dt className="font-medium text-slate-500">Ofrece</dt>
-          <dd className="text-slate-800">
-            {offer.reporter.organizationName ?? offer.reporter.name}
-            <span className="ml-1 text-slate-500">
-              ({CONTACT_TYPE_LABELS[offer.reporter.contactType]})
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-500">Teléfono de contacto</dt>
-          <dd className="text-slate-800">
-            <a href={`tel:${offer.reporter.phone}`} className="text-sky-700">
-              {offer.reporter.phone}
-            </a>
-          </dd>
-        </div>
-        {offer.reporter.organizationType && (
-          <div>
-            <dt className="font-medium text-slate-500">Tipo de organización</dt>
-            <dd className="text-slate-800">
-              {ORGANIZATION_TYPE_LABELS[offer.reporter.organizationType] ??
-                offer.reporter.organizationType}
-            </dd>
-          </div>
-        )}
+        <ReporterContact reporter={offer.reporter} nameLabel="Ofrece" />
       </dl>
 
       {offer.lat !== null && offer.lng !== null && (

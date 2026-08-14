@@ -35,11 +35,10 @@ const baseRequest: Request = {
   lng: -75.6961,
   city: { code: 'pereira', name: 'Pereira' },
   reporter: {
-    contactType: 'individual',
     name: 'María Gómez',
-    organizationName: null,
-    organizationType: null,
     phone: '3158765432',
+    whatsapp: null,
+    email: null,
   },
   resolvedAt: null,
   createdAt: '2026-08-13T12:00:00Z',

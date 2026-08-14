@@ -26,11 +26,11 @@ model City {
 
 model Reporter {
   id               String   @id @default(uuid())
-  contactType      String   @map("contact_type")
   name             String
   organizationName String?  @map("organization_name")
   organizationType String?  @map("organization_type")
   phone            String?
+  whatsapp         String?
   email            String?
   createdAt        DateTime @default(now()) @map("created_at")
   requests         Request[]

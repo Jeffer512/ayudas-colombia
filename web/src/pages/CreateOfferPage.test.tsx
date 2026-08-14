@@ -87,7 +87,7 @@ describe('CreateOfferPage', () => {
       'Puedo ayudar a repartir comida y a evacuar durante el fin de semana.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
-    await user.type(screen.getByLabelText('Teléfono de contacto'), '3105552222')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
 
     await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
 
@@ -132,7 +132,7 @@ describe('CreateOfferPage', () => {
       'Entrego kits de aseo en cualquier punto de la ciudad.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
-    await user.type(screen.getByLabelText('Teléfono de contacto'), '3105552222')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
 
     await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
 

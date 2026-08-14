@@ -8,7 +8,6 @@ import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { REQUEST_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS, URGENCY_META } from '../lib/constants'
 import type {
-  ContactType,
   CreatedRequest,
   NewRequest,
   RequestType,
@@ -29,21 +28,17 @@ interface LocationState {
 }
 
 interface ReporterState {
-  contactType: ContactType
   name: string
-  organizationName: string
-  organizationType: string
   phone: string
+  whatsapp: string
   email: string
 }
 
 const initialLocation: LocationState = { cityCode: '', address: '', lat: null, lng: null }
 const initialReporter: ReporterState = {
-  contactType: 'individual',
   name: '',
-  organizationName: '',
-  organizationType: '',
   phone: '',
+  whatsapp: '',
   email: '',
 }
 
@@ -74,7 +69,17 @@ export default function CreateRequestPage() {
     setSubmitting(true)
     setError(null)
 
-    const isOrganization = reporter.contactType === 'organization'
+    const phone = reporter.phone.trim()
+    const whatsapp = reporter.whatsapp.trim()
+    const email = reporter.email.trim()
+    if (!phone && !whatsapp && !email) {
+      setError(
+        'Deja al menos un medio de contacto: teléfono, WhatsApp o correo.',
+      )
+      setSubmitting(false)
+      return
+    }
+
     const body: NewRequest = {
       type: type as RequestType,
       urgency,
@@ -87,16 +92,10 @@ export default function CreateRequestPage() {
         ? { lat: location.lat, lng: location.lng }
         : {}),
       reporter: {
-        contactType: reporter.contactType,
         name: reporter.name.trim(),
-        ...(isOrganization
-          ? {
-              organizationName: reporter.organizationName.trim(),
-              organizationType: reporter.organizationType || undefined,
-            }
-          : {}),
-        phone: reporter.phone.trim(),
-        ...(reporter.email.trim() ? { email: reporter.email.trim() } : {}),
+        ...(phone ? { phone } : {}),
+        ...(whatsapp ? { whatsapp } : {}),
+        ...(email ? { email } : {}),
       },
     }
 
@@ -273,11 +272,9 @@ export default function CreateRequestPage() {
         />
 
         <ReporterSection
-          contactType={reporter.contactType}
           name={reporter.name}
-          organizationName={reporter.organizationName}
-          organizationType={reporter.organizationType}
           phone={reporter.phone}
+          whatsapp={reporter.whatsapp}
           email={reporter.email}
           onPatch={setReporter}
         />

@@ -34,11 +34,10 @@ const baseOffer: Offer = {
   lng: -75.7205,
   city: { code: 'pereira', name: 'Pereira' },
   reporter: {
-    contactType: 'individual',
     name: 'Carmen Vila',
-    organizationName: null,
-    organizationType: null,
     phone: '3105552222',
+    whatsapp: null,
+    email: null,
   },
   resolvedAt: null,
   createdAt: '2026-08-13T12:00:00Z',

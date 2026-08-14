@@ -31,11 +31,10 @@ export function serializeOffer(offer: SerializedOffer) {
       name: offer.city.name,
     },
     reporter: {
-      contactType: offer.reporter.contactType,
       name: offer.reporter.name,
-      organizationName: offer.reporter.organizationName ?? null,
-      organizationType: offer.reporter.organizationType ?? null,
       phone: offer.reporter.phone ?? null,
+      whatsapp: offer.reporter.whatsapp ?? null,
+      email: offer.reporter.email ?? null,
     },
     resolvedAt: offer.resolvedAt,
     createdAt: offer.createdAt,
@@ -107,11 +106,9 @@ export async function createOffer(input: CreateOfferInput) {
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
-        contactType: input.reporter.contactType,
         name: input.reporter.name,
-        organizationName: input.reporter.organizationName ?? null,
-        organizationType: input.reporter.organizationType ?? null,
-        phone: input.reporter.phone,
+        phone: input.reporter.phone ?? null,
+        whatsapp: input.reporter.whatsapp ?? null,
         email: input.reporter.email || null,
       },
     })

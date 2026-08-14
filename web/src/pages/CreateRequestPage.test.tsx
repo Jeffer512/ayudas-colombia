@@ -76,7 +76,7 @@ describe('CreateRequestPage', () => {
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
-    await user.type(screen.getByLabelText('Teléfono de contacto'), '3158765432')
+    await user.type(screen.getByLabelText('Teléfono'), '3158765432')
     await user.type(screen.getByLabelText('Dirección o referencia'), 'Calle 12 #4-50')
 
     await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
@@ -89,7 +89,6 @@ describe('CreateRequestPage', () => {
           title: 'Necesitamos agua potable hoy',
           cityCode: 'pereira',
           reporter: expect.objectContaining({
-            contactType: 'individual',
             name: 'María Gómez',
             phone: '3158765432',
           }),
@@ -125,7 +124,7 @@ describe('CreateRequestPage', () => {
       'Necesitamos agua y que tenga forma de llegar hasta el barrio alto.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
-    await user.type(screen.getByLabelText('Teléfono de contacto'), '3158765432')
+    await user.type(screen.getByLabelText('Teléfono'), '3158765432')
 
     await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
 
@@ -136,7 +135,7 @@ describe('CreateRequestPage', () => {
     )
   })
 
-  it('muestra error del servidor si falla la publicación', async () => {
+it('muestra error del servidor si falla la publicación', async () => {
     mockedCreate.mockRejectedValue(new Error('Ciudad no encontrada: pereira'))
     const user = userEvent.setup()
     renderPage()
@@ -148,7 +147,7 @@ describe('CreateRequestPage', () => {
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
-    await user.type(screen.getByLabelText('Teléfono de contacto'), '3158765432')
+    await user.type(screen.getByLabelText('Teléfono'), '3158765432')
 
     await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
 
@@ -156,5 +155,57 @@ describe('CreateRequestPage', () => {
       'Ciudad no encontrada: pereira',
     )
     expect(screen.queryByText('Pedido publicado')).not.toBeInTheDocument()
+  })
+
+  it('envía WhatsApp o correo como medio de contacto alternativo', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-4',
+      resolveCode: '1234',
+    } as unknown as CreatedRequest)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
+    await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Las familias del sector requieren agua para cocinar y beber.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Ana Torres')
+    await user.type(screen.getByLabelText('WhatsApp (número o usuario)'), '3115550000')
+    await user.type(screen.getByLabelText('Correo'), 'ana@correo.com')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reporter: expect.objectContaining({
+            whatsapp: '3115550000',
+            email: 'ana@correo.com',
+          }),
+        }),
+      ),
+    )
+  })
+
+  it('pide al menos un medio de contacto', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
+    await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Las familias del sector requieren agua para cocinar y beber.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'medio de contacto',
+    )
+    expect(mockedCreate).not.toHaveBeenCalled()
   })
 })

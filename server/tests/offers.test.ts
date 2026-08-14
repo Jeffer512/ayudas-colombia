@@ -15,7 +15,6 @@ const validOffer = {
   lng: -75.6961,
   cityCode: 'pereira',
   reporter: {
-    contactType: 'individual',
     name: 'Carmen Vila',
     phone: '3105552222',
   },

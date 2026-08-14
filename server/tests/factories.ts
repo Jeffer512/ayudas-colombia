@@ -26,7 +26,6 @@ export async function createReporter(
 ) {
   return prisma.reporter.create({
     data: {
-      contactType: 'individual',
       name: 'Juan Pérez',
       phone: '3105551234',
       ...overrides,

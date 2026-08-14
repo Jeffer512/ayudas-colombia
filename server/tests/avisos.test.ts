@@ -12,7 +12,6 @@ const validAviso = {
   urgency: 'medium',
   cityCode: 'pereira',
   reporter: {
-    contactType: 'individual',
     name: 'Rosalba Duque',
     phone: '3105553333',
   },

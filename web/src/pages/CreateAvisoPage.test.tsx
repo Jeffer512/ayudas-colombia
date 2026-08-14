@@ -77,7 +77,7 @@ describe('CreateAvisoPage', () => {
       'El parque principal reparte agua desde las 7am, llevar recipientes.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Nataly Trujillo')
-    await user.type(screen.getByLabelText('Teléfono de contacto'), '3105551011')
+    await user.type(screen.getByLabelText('Teléfono'), '3105551011')
 
     await user.click(screen.getByRole('button', { name: 'Publicar aviso' }))
 

@@ -35,11 +35,10 @@ const baseAviso: Aviso = {
   lng: -75.6965,
   city: { code: 'pereira', name: 'Pereira' },
   reporter: {
-    contactType: 'individual',
     name: 'Nataly Trujillo',
-    organizationName: null,
-    organizationType: null,
     phone: '3105551011',
+    whatsapp: null,
+    email: null,
   },
   marks: 1,
   createdAt: '2026-08-13T12:00:00Z',
