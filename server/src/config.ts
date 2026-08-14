@@ -11,4 +11,5 @@ export const env = {
       ? process.env.DATABASE_URL_TEST ??
         'postgresql://ayudas:ayudas@localhost:5432/ayudas_test'
       : process.env.DATABASE_URL ?? 'postgresql://ayudas:ayudas@localhost:5432/ayudas',
+  jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-no-usar-en-produccion',
 }

@@ -176,7 +176,24 @@ model AcopioCenter {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   city City @relation(fields: [cityId], references: [id])
+  staff AcopioStaff[]
 
   @@index([cityId, status])
   @@map("acopio_centers")
+}
+
+model AcopioStaff {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  role         String   @default("manager")
+  orgId        String   @map("org_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  org AcopioCenter @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("acopio_staff")
 }

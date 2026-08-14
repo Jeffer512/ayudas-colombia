@@ -7,6 +7,7 @@ import { env } from './config.js'
 import { notFound, errorHandler } from './middleware/error.js'
 import { acopiosRouter } from './routes/acopios.js'
 import { adminRouter } from './routes/admin.js'
+import { authRouter } from './routes/auth.js'
 import { avisosRouter } from './routes/avisos.js'
 import { citiesRouter } from './routes/cities.js'
 import { healthRouter } from './routes/health.js'
@@ -32,6 +33,7 @@ export function createApp() {
   }
 
   app.use('/api/health', healthRouter)
+  app.use('/api/auth', authRouter)
   app.use('/api/cities', citiesRouter)
   app.use('/api/requests', requestsRouter)
   app.use('/api/offers', offersRouter)
