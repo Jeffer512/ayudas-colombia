@@ -15,7 +15,12 @@ export default function TransportHubPage() {
     queryFn: () => api.offers({ forTransport: true }),
   })
 
-  const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me })
+  const meQuery = useQuery({
+    queryKey: ['me'],
+    queryFn: api.me,
+    retry: false,
+    staleTime: 60_000,
+  })
 
   const claimMutation = useMutation({
     mutationFn: (id: string) => api.claimOffer(id),
@@ -33,8 +38,9 @@ export default function TransportHubPage() {
   })
 
   const offers: Offer[] = offersQuery.data?.offers ?? []
-  const loggedIn = !!meQuery.data?.authenticated
-  const loading = offersQuery.isPending || meQuery.isPending
+  const loginKnown = meQuery.isSuccess || meQuery.isError
+  const loggedIn = meQuery.data?.authenticated === true
+  const loading = offersQuery.isPending
 
   return (
     <div>
@@ -97,6 +103,7 @@ export default function TransportHubPage() {
                   </div>
                 </div>
                 {offer.canClaim &&
+                  loginKnown &&
                   (loggedIn ? (
                     <button
                       onClick={() => claimMutation.mutate(offer.id)}
