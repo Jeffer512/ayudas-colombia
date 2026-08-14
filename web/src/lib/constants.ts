@@ -1,34 +1,6 @@
-import type { Direction } from './types'
+import type { TransportOption } from './types'
 
-export const DIRECTION_LABELS: Record<Direction, string> = {
-  need: 'Necesito ayuda',
-  offer: 'Ofrezco ayuda',
-  info: 'Información',
-}
-
-export const DIRECTION_META: Record<Direction, { label: string; color: string }> = {
-  need: { label: 'Necesito ayuda', color: '#dc2626' },
-  offer: { label: 'Ofrezco ayuda', color: '#16a34a' },
-  info: { label: 'Información', color: '#2563eb' },
-}
-
-export const TYPE_DIRECTION: Record<string, Direction> = {
-  missing_person: 'need',
-  missing_pet: 'need',
-  supplies_request: 'need',
-  volunteers_request: 'need',
-  shelter_request: 'need',
-  medical_request: 'need',
-  transport_request: 'need',
-  supplies_offered: 'offer',
-  volunteers_offered: 'offer',
-  shelter_offered: 'offer',
-  transport_offered: 'offer',
-  damage_report: 'info',
-  info: 'info',
-}
-
-export const REPORT_TYPE_LABELS: Record<string, string> = {
+export const REQUEST_TYPE_LABELS: Record<string, string> = {
   missing_person: 'Persona desaparecida',
   missing_pet: 'Mascota perdida',
   supplies_request: 'Solicitud de suministros',
@@ -36,12 +8,24 @@ export const REPORT_TYPE_LABELS: Record<string, string> = {
   shelter_request: 'Necesito refugio',
   medical_request: 'Asistencia médica',
   transport_request: 'Necesito transporte',
+}
+
+export const OFFER_TYPE_LABELS: Record<string, string> = {
   supplies_offered: 'Ofrezco suministros',
-  volunteers_offered: 'Ofrezco voluntarios',
+  volunteers_offered: 'Me ofrezco como voluntario',
   shelter_offered: 'Refugio ofrecido',
   transport_offered: 'Ofrezco transporte',
-  damage_report: 'Daños en la zona',
-  info: 'Información',
+}
+
+export const AVISO_TYPE_LABELS: Record<string, string> = {
+  info: 'Información / aviso',
+}
+
+export const TRANSPORT_OPTIONS: TransportOption[] = ['can_transport', 'needs_transport']
+
+export const TRANSPORT_LABELS: Record<TransportOption, string> = {
+  can_transport: 'Puedo transportar',
+  needs_transport: 'Necesito transporte',
 }
 
 export const URGENCY_META: Record<string, { label: string; color: string }> = {
@@ -51,7 +35,7 @@ export const URGENCY_META: Record<string, { label: string; color: string }> = {
   low: { label: 'Baja', color: '#16a34a' },
 }
 
-export const STATUS_META: Record<string, { label: string; badgeClass: string }> = {
+export const REQUEST_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
   open: { label: 'Abierto', badgeClass: 'bg-blue-100 text-blue-800' },
   in_progress: {
     label: 'Siendo atendido',
@@ -60,6 +44,24 @@ export const STATUS_META: Record<string, { label: string; badgeClass: string }> 
   resolved: { label: 'Resuelto', badgeClass: 'bg-green-100 text-green-800' },
   duplicate: { label: 'Duplicado', badgeClass: 'bg-gray-200 text-gray-700' },
   invalid: { label: 'Inválido', badgeClass: 'bg-gray-200 text-gray-700' },
+}
+
+export const OFFER_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
+  open: { label: 'Disponible', badgeClass: 'bg-green-100 text-green-800' },
+  fulfilled: { label: 'Entregado', badgeClass: 'bg-blue-100 text-blue-800' },
+  unavailable: { label: 'Ya no disponible', badgeClass: 'bg-gray-200 text-gray-700' },
+}
+
+export const AVISO_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
+  open: { label: 'Vigente', badgeClass: 'bg-blue-100 text-blue-800' },
+  closed: { label: 'Desactualizado', badgeClass: 'bg-gray-200 text-gray-700' },
+}
+
+export const MARKER_COLORS = {
+  needs: '#dc2626',
+  offers: '#16a34a',
+  avisos: '#2563eb',
+  acopios: '#0d9488',
 }
 
 export const ACOPIO_TYPE_LABELS: Record<string, string> = {

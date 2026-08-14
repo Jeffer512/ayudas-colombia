@@ -4,38 +4,28 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api/client'
-import type { Report } from '../lib/types'
-import ReportDetailPage from './ReportDetailPage'
+import type { Request } from '../lib/types'
+import RequestDetailPage from './RequestDetailPage'
 
 vi.mock('../api/client', () => ({
   api: {
-    cities: vi.fn(),
-    reports: vi.fn(),
-    report: vi.fn(),
-    createReport: vi.fn(),
-    updateStatus: vi.fn(),
-    acopios: vi.fn(),
-    acopio: vi.fn(),
-    createAcopio: vi.fn(),
+    request: vi.fn(),
+    updateRequestStatus: vi.fn(),
   },
 }))
 
-vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="map">{children}</div>
-  ),
-  TileLayer: () => null,
-  Marker: () => null,
-  useMapEvents: () => null,
+vi.mock('../components/Map', () => ({
+  __esModule: true,
+  default: () => <div data-testid="map" />,
 }))
 
-const mockedReport = vi.mocked(api.report)
-const mockedUpdateStatus = vi.mocked(api.updateStatus)
+const mockedRequest = vi.mocked(api.request)
+const mockedUpdateStatus = vi.mocked(api.updateRequestStatus)
 
-const baseReport: Report = {
+const baseRequest: Request = {
   id: 'r1',
-  direction: 'need',
   type: 'supplies_request',
+  transport: null,
   urgency: 'high',
   status: 'open',
   title: 'Necesitamos agua potable',
@@ -58,36 +48,36 @@ const baseReport: Report = {
     {
       id: '1',
       status: 'open',
-      note: 'Reporte creado',
+      note: 'Pedido creado',
       actorName: 'María Gómez',
       createdAt: '2026-08-13T12:00:00Z',
     },
   ],
 }
 
-function renderPage(report: Report = baseReport) {
+function renderPage(request: Request = baseRequest) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  mockedReport.mockResolvedValue(report)
+  mockedRequest.mockResolvedValue(request)
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/reporte/r1']}>
+      <MemoryRouter initialEntries={['/pedido/r1']}>
         <Routes>
-          <Route path="/reporte/:id" element={<ReportDetailPage />} />
+          <Route path="/pedido/:id" element={<RequestDetailPage />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   )
 }
 
-describe('ReportDetailPage', () => {
+describe('RequestDetailPage', () => {
   beforeEach(() => {
-    mockedReport.mockReset()
+    mockedRequest.mockReset()
     mockedUpdateStatus.mockReset()
   })
 
-  it('muestra la información completa del reporte', async () => {
+  it('muestra la información completa del pedido', async () => {
     renderPage()
 
     expect(
@@ -98,11 +88,11 @@ describe('ReportDetailPage', () => {
     expect(screen.getByText('Calle 12 #4-50')).toBeInTheDocument()
     expect(screen.getAllByText('Abierto').length).toBeGreaterThan(0)
     expect(screen.getByTestId('map')).toBeInTheDocument()
-    expect(screen.getByText('Reporte creado')).toBeInTheDocument()
+    expect(screen.getByText('Pedido creado')).toBeInTheDocument()
   })
 
   it('marca como siendo atendido y lo reporta al servidor', async () => {
-    mockedUpdateStatus.mockResolvedValue({ ...baseReport, status: 'in_progress' })
+    mockedUpdateStatus.mockResolvedValue({ ...baseRequest, status: 'in_progress' })
     const user = userEvent.setup()
     renderPage()
 
@@ -125,7 +115,7 @@ describe('ReportDetailPage', () => {
   })
 
   it('resuelve ingresando el código de cierre', async () => {
-    mockedUpdateStatus.mockResolvedValue({ ...baseReport, status: 'resolved' })
+    mockedUpdateStatus.mockResolvedValue({ ...baseRequest, status: 'resolved' })
     const user = userEvent.setup()
     renderPage()
 

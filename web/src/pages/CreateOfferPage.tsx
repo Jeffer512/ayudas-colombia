@@ -1,0 +1,284 @@
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { api } from '../api/client'
+import LocationSection from '../components/LocationSection'
+import ReporterSection from '../components/ReporterSection'
+import SuccessScreen from '../components/SuccessScreen'
+import { OFFER_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS } from '../lib/constants'
+import type {
+  ContactType,
+  CreatedOffer,
+  NewOffer,
+  OfferType,
+  TransportOption,
+} from '../lib/types'
+
+const inputClass =
+  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+
+const labelClass = 'text-sm font-medium text-slate-700'
+
+interface LocationState {
+  cityCode: string
+  address: string
+  lat: number | null
+  lng: number | null
+}
+
+interface ReporterState {
+  contactType: ContactType
+  name: string
+  organizationName: string
+  organizationType: string
+  phone: string
+  email: string
+}
+
+const initialLocation: LocationState = { cityCode: '', address: '', lat: null, lng: null }
+const initialReporter: ReporterState = {
+  contactType: 'individual',
+  name: '',
+  organizationName: '',
+  organizationType: '',
+  phone: '',
+  email: '',
+}
+
+export default function CreateOfferPage() {
+  const navigate = useNavigate()
+  const [type, setType] = useState<OfferType | ''>('')
+  const [transport, setTransport] = useState<TransportOption | ''>('')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [location, setLocation] = useState<LocationState>(initialLocation)
+  const [reporter, setReporter] = useState<ReporterState>(initialReporter)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [created, setCreated] = useState<CreatedOffer | null>(null)
+
+  const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
+  const cities = citiesQuery.data?.cities ?? []
+
+  useEffect(() => {
+    if (!location.cityCode && cities.length > 0) {
+      setLocation((prev) => ({ ...prev, cityCode: cities[0].code }))
+    }
+  }, [cities, location.cityCode])
+
+  const canTransport = type === 'supplies_offered'
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+
+    const isOrganization = reporter.contactType === 'organization'
+    const body: NewOffer = {
+      type: type as OfferType,
+      ...(canTransport && transport ? { transport } : {}),
+      title: title.trim(),
+      description: description.trim(),
+      cityCode: location.cityCode,
+      ...(location.address.trim() ? { address: location.address.trim() } : {}),
+      ...(location.lat !== null && location.lng !== null
+        ? { lat: location.lat, lng: location.lng }
+        : {}),
+      reporter: {
+        contactType: reporter.contactType,
+        name: reporter.name.trim(),
+        ...(isOrganization
+          ? {
+              organizationName: reporter.organizationName.trim(),
+              organizationType: reporter.organizationType || undefined,
+            }
+          : {}),
+        phone: reporter.phone.trim(),
+        ...(reporter.email.trim() ? { email: reporter.email.trim() } : {}),
+      },
+    }
+
+    api
+      .createOffer(body)
+      .then((createdOffer) => {
+        setCreated(createdOffer)
+        setSubmitting(false)
+      })
+      .catch((err: unknown) => {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'No se pudo publicar. Inténtalo de nuevo.',
+        )
+        setSubmitting(false)
+      })
+  }
+
+  if (created) {
+    return (
+      <SuccessScreen
+        title="Oferta publicada"
+        intro="Tu oferta ya aparece en el mapa y en la lista. Cuando ya no esté disponible, ciérrala con tu código:"
+        code={created.resolveCode}
+        codeFootnote="Es la única manera de cerrar la oferta, para que otros no te busquen en vano."
+        detailHref={`/oferta/${created.id}`}
+        detailLabel="Ver oferta"
+        onReset={() => {
+          setCreated(null)
+          setType('')
+          setTitle('')
+          setDescription('')
+          setTransport('')
+          setLocation(initialLocation)
+          setReporter(initialReporter)
+        }}
+      />
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <h1 className="text-2xl font-bold tracking-tight">Ofrecer ayuda</h1>
+      <p className="mt-1 text-sm text-slate-600">
+        Diles a los demás qué puedes ofrecer. Cuando alguien se contacte y ya
+        no esté disponible, ciérralo con tu código desde la oferta.
+      </p>
+
+      {error && (
+        <div
+          role="alert"
+          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+        <fieldset className="rounded-lg border border-slate-200 bg-white p-4">
+          <legend className="px-1 text-sm font-semibold text-slate-700">
+            ¿Qué ofreces?
+          </legend>
+
+          <div>
+            <label htmlFor="type" className={labelClass}>
+              Tipo
+            </label>
+            <select
+              id="type"
+              required
+              value={type}
+              onChange={(e) => setType(e.target.value as OfferType)}
+              className={`mt-1 ${inputClass}`}
+            >
+              <option value="" disabled>
+                Selecciona un tipo…
+              </option>
+              {Object.entries(OFFER_TYPE_LABELS).map(([code, label]) => (
+                <option key={code} value={code}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {canTransport && (
+            <div className="mt-4">
+              <label htmlFor="transport" className={labelClass}>
+                Transporte
+              </label>
+              <select
+                id="transport"
+                value={transport}
+                onChange={(e) => setTransport(e.target.value as TransportOption)}
+                className={`mt-1 ${inputClass}`}
+              >
+                <option value="">No aplica</option>
+                {TRANSPORT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {TRANSPORT_LABELS[option]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <label htmlFor="title" className={labelClass}>
+              Título
+            </label>
+            <input
+              id="title"
+              required
+              minLength={5}
+              maxLength={140}
+              placeholder="Ej: Ofrezco 50 kits de aseo para repartir"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={`mt-1 ${inputClass}`}
+            />
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="description" className={labelClass}>
+              Descripción
+            </label>
+            <textarea
+              id="description"
+              required
+              minLength={10}
+              maxLength={4000}
+              rows={4}
+              placeholder="Detalla qué ofreces: cantidades, condiciones, disponibilidad…"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={`mt-1 ${inputClass}`}
+            />
+          </div>
+        </fieldset>
+
+        <LocationSection
+          cities={cities}
+          cityCode={location.cityCode}
+          address={location.address}
+          lat={location.lat}
+          lng={location.lng}
+          addressPlaceholder="Ej: barrio o punto de entrega"
+          addressHint={
+            transport === 'can_transport'
+              ? 'Si vas a transportar todo, no hace falta dar tu dirección exacta.'
+              : undefined
+          }
+          onPatch={setLocation}
+        />
+
+        <ReporterSection
+          contactType={reporter.contactType}
+          name={reporter.name}
+          organizationName={reporter.organizationName}
+          organizationType={reporter.organizationType}
+          phone={reporter.phone}
+          email={reporter.email}
+          onPatch={setReporter}
+        />
+
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+          >
+            {submitting ? 'Publicando…' : 'Publicar oferta'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

@@ -1,6 +1,4 @@
-export type Direction = 'need' | 'offer' | 'info'
-
-export type ReportType =
+export type RequestType =
   | 'missing_person'
   | 'missing_pet'
   | 'supplies_request'
@@ -8,16 +6,22 @@ export type ReportType =
   | 'shelter_request'
   | 'medical_request'
   | 'transport_request'
+
+export type OfferType =
   | 'supplies_offered'
   | 'volunteers_offered'
   | 'shelter_offered'
   | 'transport_offered'
-  | 'damage_report'
-  | 'info'
+
+export type AvisoType = 'info'
+
+export type TransportOption = 'can_transport' | 'needs_transport'
 
 export type Urgency = 'critical' | 'high' | 'medium' | 'low'
 
-export type Status = 'open' | 'in_progress' | 'resolved' | 'duplicate' | 'invalid'
+export type RequestStatus = 'open' | 'in_progress' | 'resolved' | 'duplicate' | 'invalid'
+export type OfferStatus = 'open' | 'fulfilled' | 'unavailable'
+export type AvisoStatus = 'open' | 'closed'
 
 export type ContactType = 'individual' | 'organization'
 
@@ -30,9 +34,9 @@ export interface City {
   centerLng: number | null
 }
 
-export interface ReportEvent {
+export interface RequestEvent {
   id: string
-  status: Status
+  status: RequestStatus
   note: string | null
   actorName: string | null
   createdAt: string
@@ -46,68 +50,166 @@ export interface Reporter {
   phone: string | null
 }
 
-export interface Report {
+export interface CityRef {
+  code: string
+  name: string
+}
+
+export interface Request {
   id: string
-  direction: Direction
-  type: ReportType
+  type: RequestType
+  transport: TransportOption | null
   urgency: Urgency
-  status: Status
+  status: RequestStatus
   title: string
   description: string
   address: string | null
   lat: number | null
   lng: number | null
-  city: { code: string; name: string }
+  city: CityRef
   reporter: Reporter
   resolvedAt: string | null
   createdAt: string
   updatedAt: string
-  events?: ReportEvent[]
+  events?: RequestEvent[]
 }
 
-export interface CreatedReport extends Report {
+export interface Offer {
+  id: string
+  type: OfferType
+  transport: TransportOption | null
+  status: OfferStatus
+  title: string
+  description: string
+  address: string | null
+  lat: number | null
+  lng: number | null
+  city: CityRef
+  reporter: Reporter
+  resolvedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Aviso {
+  id: string
+  type: AvisoType
+  urgency: Urgency
+  status: AvisoStatus
+  title: string
+  description: string
+  address: string | null
+  lat: number | null
+  lng: number | null
+  city: CityRef
+  reporter: Reporter
+  marks: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreatedRequest extends Request {
   resolveCode: string
 }
 
-export interface ReportListResponse {
-  reports: Report[]
+export interface CreatedOffer extends Offer {
+  resolveCode: string
+}
+
+export interface CreatedAviso extends Aviso {}
+
+export interface RequestListResponse {
+  requests: Request[]
   total: number
   limit: number
   offset: number
 }
 
-export interface ReportFilters {
-  direction?: Direction
-  type?: ReportType
-  status?: Status | 'active'
-  urgency?: Urgency
+export interface OfferListResponse {
+  offers: Offer[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface AvisoListResponse {
+  avisos: Aviso[]
+  total: number
+  limit: number
+  offset: number
+}
+
+interface BaseFilters {
+  status?: string
   city?: string
   q?: string
   limit?: number
   offset?: number
 }
 
-export type NewReport = {
-  type: ReportType
+export interface RequestFilters extends BaseFilters {
+  type?: RequestType
+  status?: RequestStatus | 'active'
   urgency?: Urgency
+}
+
+export interface OfferFilters extends BaseFilters {
+  type?: OfferType
+  status?: OfferStatus | 'active'
+}
+
+export interface AvisoFilters extends BaseFilters {
+  status?: AvisoStatus | 'active'
+  urgency?: Urgency
+}
+
+export type NewRequest = {
+  type: RequestType
+  urgency: Urgency
+  transport?: TransportOption
   title: string
   description: string
   address?: string
   lat?: number
   lng?: number
   cityCode: string
-  reporter: {
-    contactType: ContactType
-    name: string
-    organizationName?: string
-    organizationType?: string
-    phone: string
-    email?: string
-  }
+  reporter: ReporterInput
+}
+
+export type NewOffer = {
+  type: OfferType
+  transport?: TransportOption
+  title: string
+  description: string
+  address?: string
+  lat?: number
+  lng?: number
+  cityCode: string
+  reporter: ReporterInput
+}
+
+export type NewAviso = {
+  urgency: Urgency
+  title: string
+  description: string
+  address?: string
+  lat?: number
+  lng?: number
+  cityCode: string
+  reporter: ReporterInput
+}
+
+type ReporterInput = {
+  contactType: ContactType
+  name: string
+  organizationName?: string
+  organizationType?: string
+  phone: string
+  email?: string
 }
 
 export type StatusUpdate = {
-  status: Status
+  status: string
   resolveCode?: string
   note?: string
   actorName?: string
@@ -124,7 +226,7 @@ export interface AcopioCenter {
   address: string | null
   lat: number | null
   lng: number | null
-  city: { code: string; name: string }
+  city: CityRef
   contactName: string | null
   contactPhone: string | null
   hours: string | null

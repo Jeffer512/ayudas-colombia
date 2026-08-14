@@ -7,7 +7,9 @@ import StatusBadge from '../components/StatusBadge'
 import {
   CONTACT_TYPE_LABELS,
   ORGANIZATION_TYPE_LABELS,
-  REPORT_TYPE_LABELS,
+  REQUEST_STATUS_META,
+  REQUEST_TYPE_LABELS,
+  TRANSPORT_LABELS,
   URGENCY_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
@@ -18,7 +20,7 @@ const inputClass =
 
 type ActionMode = 'attend' | 'resolve' | null
 
-export default function ReportDetailPage() {
+export default function RequestDetailPage() {
   const { id = '' } = useParams()
   const queryClient = useQueryClient()
   const [mode, setMode] = useState<ActionMode>(null)
@@ -26,16 +28,16 @@ export default function ReportDetailPage() {
   const [note, setNote] = useState('')
   const [resolveCode, setResolveCode] = useState('')
 
-  const { data: report, isPending, isError } = useQuery({
-    queryKey: ['report', id],
-    queryFn: () => api.report(id),
+  const { data: request, isPending, isError } = useQuery({
+    queryKey: ['request', id],
+    queryFn: () => api.request(id),
   })
 
   const mutation = useMutation({
-    mutationFn: (body: StatusUpdate) => api.updateStatus(id, body),
+    mutationFn: (body: StatusUpdate) => api.updateRequestStatus(id, body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report', id] })
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: ['request', id] })
+      queryClient.invalidateQueries({ queryKey: ['requests'] })
       setMode(null)
       setActorName('')
       setNote('')
@@ -44,13 +46,13 @@ export default function ReportDetailPage() {
   })
 
   if (isPending) {
-    return <p role="status">Cargando reporte…</p>
+    return <p role="status">Cargando pedido…</p>
   }
 
-  if (isError || !report) {
+  if (isError || !request) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-700">
-        <p className="font-medium">No encontramos este reporte</p>
+        <p className="font-medium">No encontramos este pedido</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
         </Link>
@@ -58,14 +60,14 @@ export default function ReportDetailPage() {
     )
   }
 
-  const urgency = URGENCY_META[report.urgency] ?? {
-    label: report.urgency,
+  const urgency = URGENCY_META[request.urgency] ?? {
+    label: request.urgency,
     color: '#64748b',
   }
-  const typeLabel = REPORT_TYPE_LABELS[report.type] ?? report.type
+  const typeLabel = REQUEST_TYPE_LABELS[request.type] ?? request.type
   const canBeMarkedActive =
-    report.status === 'open' || report.status === 'in_progress'
-  const canReopen = report.status !== 'open'
+    request.status === 'open' || request.status === 'in_progress'
+  const canReopen = request.status !== 'open'
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -74,9 +76,9 @@ export default function ReportDetailPage() {
       </Link>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <StatusBadge status={report.status} />
+        <StatusBadge status={request.status} meta={REQUEST_STATUS_META} />
         <span className="text-sm text-slate-500">
-          {typeLabel} · {report.city.name}
+          {typeLabel} · {request.city.name}
         </span>
         <span
           className="ml-auto inline-flex items-center gap-1 text-sm font-medium"
@@ -91,62 +93,65 @@ export default function ReportDetailPage() {
       </div>
 
       <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-        {report.title}
+        {request.title}
       </h1>
 
       <p className="mt-3 whitespace-pre-line text-slate-700">
-        {report.description}
+        {request.description}
       </p>
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-        {report.address && (
+        {request.transport && (
+          <div>
+            <dt className="font-medium text-slate-500">Transporte</dt>
+            <dd className="text-slate-800">
+              {TRANSPORT_LABELS[request.transport]}
+            </dd>
+          </div>
+        )}
+        {request.address && (
           <div>
             <dt className="font-medium text-slate-500">Dirección</dt>
-            <dd className="text-slate-800">{report.address}</dd>
+            <dd className="text-slate-800">{request.address}</dd>
           </div>
         )}
         <div>
           <dt className="font-medium text-slate-500">Publicado</dt>
-          <dd className="text-slate-800">{formatDate(report.createdAt)}</dd>
+          <dd className="text-slate-800">{formatDate(request.createdAt)}</dd>
         </div>
         <div>
           <dt className="font-medium text-slate-500">Reporta</dt>
           <dd className="text-slate-800">
-            {report.reporter.organizationName ?? report.reporter.name}
+            {request.reporter.organizationName ?? request.reporter.name}
             <span className="ml-1 text-slate-500">
-              ({CONTACT_TYPE_LABELS[report.reporter.contactType]})
+              ({CONTACT_TYPE_LABELS[request.reporter.contactType]})
             </span>
           </dd>
         </div>
         <div>
           <dt className="font-medium text-slate-500">Teléfono de contacto</dt>
           <dd className="text-slate-800">
-            <a href={`tel:${report.reporter.phone}`} className="text-sky-700">
-              {report.reporter.phone}
+            <a href={`tel:${request.reporter.phone}`} className="text-sky-700">
+              {request.reporter.phone}
             </a>
           </dd>
         </div>
-        {report.reporter.organizationType && (
+        {request.reporter.organizationType && (
           <div>
-            <dt className="font-medium text-slate-500">
-              Tipo de organización
-            </dt>
+            <dt className="font-medium text-slate-500">Tipo de organización</dt>
             <dd className="text-slate-800">
-              {ORGANIZATION_TYPE_LABELS[report.reporter.organizationType] ??
-                report.reporter.organizationType}
+              {ORGANIZATION_TYPE_LABELS[request.reporter.organizationType] ??
+                request.reporter.organizationType}
             </dd>
           </div>
         )}
       </dl>
 
-      {report.lat !== null && report.lng !== null && (
+      {request.lat !== null && request.lng !== null && (
         <div className="mt-4">
           <Map
-            center={{
-              lat: report.lat,
-              lng: report.lng,
-            }}
-            marker={{ lat: report.lat, lng: report.lng }}
+            center={{ lat: request.lat, lng: request.lng }}
+            marker={{ lat: request.lat, lng: request.lng }}
           />
         </div>
       )}
@@ -156,14 +161,14 @@ export default function ReportDetailPage() {
           Acciones para coordinar la ayuda
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          {report.status === 'open' &&
+          {request.status === 'open' &&
             '¿Estás atendiendo esta situación? Avísales a los demás para que dirijan sus esfuerzos a otra zona.'}
-          {report.status === 'in_progress' &&
-            'Este reporte ya tiene quién lo atiende. Si terminaron, márquenlo como resuelto.'}
-          {report.status === 'resolved' &&
-            'Este reporte fue resuelto. Si sigue pendiente, reábrelo.'}
-          {(report.status === 'duplicate' || report.status === 'invalid') &&
-            'Este reporte se descartó. Si crees que es un error, reábrelo.'}
+          {request.status === 'in_progress' &&
+            'Este pedido ya tiene quién lo atiende. Si terminaron, márquenlo como resuelto.'}
+          {request.status === 'resolved' &&
+            'Este pedido fue resuelto. Si sigue pendiente, reábrelo.'}
+          {(request.status === 'duplicate' || request.status === 'invalid') &&
+            'Este pedido se descartó. Si crees que es un error, reábrelo.'}
         </p>
 
         {mutation.isError && (
@@ -274,7 +279,7 @@ export default function ReportDetailPage() {
                 className={`mt-1 ${inputClass}`}
               />
               <p className="mt-1 text-xs text-slate-500">
-                Se entregó al publicar el reporte. Con él se confirma que la
+                Se entregó al publicar el pedido. Con él se confirma que la
                 situación terminó y evita cierres por error.
               </p>
             </div>
@@ -311,27 +316,29 @@ export default function ReportDetailPage() {
 
         {canReopen && (
           <button
-            onClick={() => mutation.mutate({ status: 'open', note: 'Reabierto' })}
+            onClick={() =>
+              mutation.mutate({ status: 'open', note: 'Reabierto' })
+            }
             disabled={mutation.isPending}
             className="mt-3 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
           >
-            Reabrir reporte
+            Reabrir pedido
           </button>
         )}
       </section>
 
-      {report.events && report.events.length > 0 && (
+      {request.events && request.events.length > 0 && (
         <section className="mt-6">
           <h2 className="text-sm font-semibold text-slate-700">
-            Historial del reporte
+            Historial del pedido
           </h2>
           <ol className="mt-2 space-y-2">
-            {report.events.map((event) => (
+            {request.events.map((event) => (
               <li
                 key={event.id}
                 className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm"
               >
-                <StatusBadge status={event.status} />
+                <StatusBadge status={event.status} meta={REQUEST_STATUS_META} />
                 <div className="min-w-0 flex-1">
                   {event.note && <p className="text-slate-800">{event.note}</p>}
                   <p className="text-xs text-slate-500">

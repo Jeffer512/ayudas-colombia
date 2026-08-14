@@ -2,13 +2,23 @@ import type {
   AcopioCenter,
   AcopioFilters,
   AcopioListResponse,
+  Aviso,
+  AvisoFilters,
+  AvisoListResponse,
   City,
-  CreatedReport,
+  CreatedAviso,
+  CreatedOffer,
+  CreatedRequest,
   NewAcopio,
-  NewReport,
-  Report,
-  ReportFilters,
-  ReportListResponse,
+  NewAviso,
+  NewOffer,
+  NewRequest,
+  Offer,
+  OfferFilters,
+  OfferListResponse,
+  Request,
+  RequestFilters,
+  RequestListResponse,
   StatusUpdate,
 } from '../lib/types'
 
@@ -43,29 +53,77 @@ function buildQuery(filters: object): string {
   return qs ? `?${qs}` : ''
 }
 
+function markerId(): string | undefined {
+  if (typeof window === 'undefined') return undefined
+  const KEY = 'ayudas_marker_id'
+  let id = window.localStorage.getItem(KEY)
+  if (!id) {
+    id = crypto.randomUUID()
+    window.localStorage.setItem(KEY, id)
+  }
+  return id
+}
+
 export const api = {
   cities(): Promise<{ cities: City[] }> {
     return http('/cities')
   },
 
-  reports(filters: ReportFilters): Promise<ReportListResponse> {
-    return http(`/reports${buildQuery(filters)}`)
+  requests(filters: RequestFilters): Promise<RequestListResponse> {
+    return http(`/requests${buildQuery(filters)}`)
   },
 
-  report(id: string): Promise<Report> {
-    return http(`/reports/${id}`)
+  request(id: string): Promise<Request> {
+    return http(`/requests/${id}`)
   },
 
-  createReport(body: NewReport): Promise<CreatedReport> {
-    return http('/reports', { method: 'POST', body: JSON.stringify(body) })
+  createRequest(body: NewRequest): Promise<CreatedRequest> {
+    return http('/requests', { method: 'POST', body: JSON.stringify(body) })
   },
 
-  updateStatus(id: string, body: StatusUpdate): Promise<Report> {
-    return http(`/reports/${id}/status`, {
+  updateRequestStatus(id: string, body: StatusUpdate): Promise<Request> {
+    return http(`/requests/${id}/status`, {
       method: 'POST',
       body: JSON.stringify(body),
     })
   },
+
+  offers(filters: OfferFilters): Promise<OfferListResponse> {
+    return http(`/offers${buildQuery(filters)}`)
+  },
+
+  offer(id: string): Promise<Offer> {
+    return http(`/offers/${id}`)
+  },
+
+  createOffer(body: NewOffer): Promise<CreatedOffer> {
+    return http('/offers', { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  updateOfferStatus(id: string, body: StatusUpdate): Promise<Offer> {
+    return http(`/offers/${id}/status`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  avisos(filters: AvisoFilters): Promise<AvisoListResponse> {
+    return http(`/avisos${buildQuery(filters)}`)
+  },
+
+  aviso(id: string): Promise<Aviso> {
+    return http(`/avisos/${id}`)
+  },
+
+  createAviso(body: NewAviso): Promise<CreatedAviso> {
+    return http('/avisos', { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  markAviso(id: string, body: { markerId?: string }): Promise<Aviso> {
+    return http(`/avisos/${id}/mark`, { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  markerId,
 
   acopios(filters: AcopioFilters = {}): Promise<AcopioListResponse> {
     return http(`/acopios${buildQuery(filters)}`)

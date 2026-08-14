@@ -15,7 +15,7 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'Centros de acopio' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Informar' })).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Reportes de ayuda' }),
+      screen.getByRole('heading', { name: 'Ayuda en Pereira' }),
     ).toBeInTheDocument()
   })
 })
