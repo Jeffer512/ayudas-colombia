@@ -24,6 +24,18 @@ type SampleEntry = {
   reporter: { name: string; phone: string }
 }
 
+type SampleOffer = {
+  type: 'supplies_offered' | 'volunteers_offered' | 'shelter_offered' | 'transport_offered'
+  status: 'open' | 'in_transit' | 'fulfilled' | 'unavailable'
+  title: string
+  description: string
+  address: string
+  lat: number | null
+  lng: number | null
+  transport?: 'can_transport' | 'needs_transport'
+  reporter: { name: string; phone: string }
+}
+
 const sampleRequests: Record<string, SampleEntry> = {
   missing_person: {
     title: 'Se busca a Carlos Ramírez, 62 años',
@@ -109,13 +121,13 @@ const sampleRequests: Record<string, SampleEntry> = {
   },
 }
 
-const sampleOffers: SampleEntry[] = [
+const sampleOffers: SampleOffer[] = [
   {
+    type: 'supplies_offered',
+    status: 'open',
     title: 'Ofrezco 100 kits de aseo para repartir',
     description:
       'Una bodega local puso a disposición 100 kits de aseo básico. Se coordina la entrega con los centros de acopio. Cuento con vehículo para entregarlos.',
-    status: 'open',
-    urgency: 'medium',
     address: 'Bodega Distrisalud, km 5',
     lat: 4.8203,
     lng: -75.7205,
@@ -126,11 +138,47 @@ const sampleOffers: SampleEntry[] = [
     },
   },
   {
+    type: 'supplies_offered',
+    status: 'open',
+    title: '50 cobijas y colchonetas listas en el barrio Kennedy',
+    description:
+      'Reunimos 50 cobijas y 30 colchonetas para entregar a las familias de la zona alta. Ya están empacadas, solo falta quién las lleve al punto de entrega.',
+    address: 'Barrio Kennedy, bodega comunal calle 25',
+    lat: 4.8002,
+    lng: -75.7201,
+    transport: 'needs_transport',
+    reporter: { name: 'Lucía Ramírez', phone: '3105551001' },
+  },
+  {
+    type: 'supplies_offered',
+    status: 'open',
+    title: '40 mercados de comida para repartir',
+    description:
+      'Una empresa donó 40 mercados completos con granos, aceite y enlatados. Están en la bodega de la fundación y necesitan transporte hasta los barrios afectados.',
+    address: 'Fundación Manos Abiertas, carrera 18 #32-14',
+    lat: 4.8067,
+    lng: -75.704,
+    transport: 'needs_transport',
+    reporter: { name: 'Pedro Salazar', phone: '3105551003' },
+  },
+  {
+    type: 'supplies_offered',
+    status: 'open',
+    title: 'Donación de agua embotellada en el Centro',
+    description:
+      '12 estibas de agua embotellada esperan traslado desde la plaza de mercado hasta los puntos de distribución del parque principal.',
+    address: 'Plaza de mercado, costado norte',
+    lat: 4.8112,
+    lng: -75.699,
+    transport: 'needs_transport',
+    reporter: { name: 'María Gómez', phone: '3158765432' },
+  },
+  {
+    type: 'volunteers_offered',
+    status: 'open',
     title: 'Grupo de brigadistas disponible el fin de semana',
     description:
       '10 brigadistas de primeros auxilios pueden apoyar jornadas de evacuación y atención este fin de semana. Traemos nuestro propio equipo.',
-    status: 'open',
-    urgency: 'medium',
     address: 'Base operativa, zona industrial',
     lat: 4.8156,
     lng: -75.705,
@@ -140,22 +188,22 @@ const sampleOffers: SampleEntry[] = [
     },
   },
   {
+    type: 'shelter_offered',
+    status: 'open',
     title: 'Dispongo de casa para acoger 5 personas',
     description:
       'Ofrezco mi casa en las afueras para alojar hasta 5 personas por tiempo indefinido. Hay cocina, baño y espacio para dos familias.',
-    status: 'open',
-    urgency: 'low',
     address: 'Vereda Yarumal, finca La Esperanza',
     lat: 4.79,
     lng: -75.66,
     reporter: { name: 'Héctor Uribe', phone: '3105551008' },
   },
   {
+    type: 'transport_offered',
+    status: 'fulfilled',
     title: 'Camioneta disponible para traslados de carga',
     description:
       'Una camioneta con estacas puede ayudar a mover donaciones entre centros de acopio. Sin costo para la comunidad.',
-    status: 'open',
-    urgency: 'low',
     address: 'Barrio Providencia, parqueadero público',
     lat: 4.8088,
     lng: -75.7033,
@@ -282,7 +330,7 @@ const sampleOrgs = [
   },
 ]
 
-async function createReporter(entry: SampleEntry) {
+async function createReporter(entry: { reporter: { name: string; phone: string } }) {
   return prisma.reporter.create({
     data: {
       name: entry.reporter.name,
@@ -323,6 +371,7 @@ async function main() {
   await prisma.request.deleteMany()
   await prisma.avisoMark.deleteMany()
   await prisma.aviso.deleteMany()
+  await prisma.offerClaim.deleteMany()
   await prisma.offer.deleteMany()
   await prisma.reporter.deleteMany()
   await prisma.helpOrgStaff.deleteMany()
@@ -351,14 +400,13 @@ async function main() {
     console.log(`Solicitud (${type}/${sample.status}): ${request.title.slice(0, 40)}`)
   }
 
-  for (const [i, sample] of sampleOffers.entries()) {
+  for (const sample of sampleOffers) {
     const reporter = await createReporter(sample)
-    const fulfilled = i === 3
     const offer = await prisma.offer.create({
       data: {
-        type: ['supplies_offered', 'volunteers_offered', 'shelter_offered', 'transport_offered'][i],
+        type: sample.type,
         transport: sample.transport ?? null,
-        status: fulfilled ? 'fulfilled' : 'open',
+        status: sample.status,
         title: sample.title,
         description: sample.description,
         address: sample.address,
@@ -367,7 +415,7 @@ async function main() {
         cityId: city.id,
         reporterId: reporter.id,
         resolveCode: '1234',
-        resolvedAt: fulfilled ? new Date() : null,
+        resolvedAt: sample.status === 'fulfilled' ? new Date() : null,
       },
     })
     console.log(`Oferta (${offer.type}/${offer.status}): ${offer.title.slice(0, 40)}`)
