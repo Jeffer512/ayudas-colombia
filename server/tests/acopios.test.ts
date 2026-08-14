@@ -22,7 +22,7 @@ describe('/api/acopios', () => {
     await prisma.acopioCenter.deleteMany()
   })
 
-  it('crea un centro público como tipo ciudadano', async () => {
+  it('crea un centro público como tipo ciudadano y devuelve el código', async () => {
     const res = await requestPOST().send(validAcopio)
 
     expect(res.status).toBe(201)
@@ -33,6 +33,7 @@ describe('/api/acopios', () => {
       status: 'open',
     })
     expect(res.body.lat).toBe(4.8133)
+    expect(res.body.resolveCode).toMatch(/^\d{4}$/)
   })
 
   it('crea un centro tipo oficial cuando se envía el token de administrador', async () => {
@@ -93,6 +94,54 @@ describe('/api/acopios', () => {
 
     const missing = await request(app).get('/api/acopios/no-existe-id')
     expect(missing.status).toBe(404)
+  })
+})
+
+describe('POST /api/acopios/:id/status', () => {
+  beforeEach(async () => {
+    await ensureCity()
+    await prisma.acopioCenter.deleteMany()
+  })
+
+  it('cierra un centro con el código del creador', async () => {
+    const center = await createAcopio()
+    const res = await request(app)
+      .post(`/api/acopios/${center.id}/status`)
+      .send({ status: 'closed', resolveCode: '1234', note: 'Cierre temporal' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('closed')
+  })
+
+  it('rechaza cerrar con código incorrecto', async () => {
+    const center = await createAcopio()
+    const res = await request(app)
+      .post(`/api/acopios/${center.id}/status`)
+      .send({ status: 'closed', resolveCode: '9999' })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('admite que el administrador cierre cualquier centro', async () => {
+    const center = await createAcopio()
+    process.env.ADMIN_TOKEN = 'test-admin-token'
+    const res = await request(app)
+      .post(`/api/acopios/${center.id}/status`)
+      .set('x-admin-token', 'test-admin-token')
+      .send({ status: 'closed', note: 'Moderación' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('closed')
+  })
+
+  it('reabre un centro cerrado', async () => {
+    const center = await createAcopio({ status: 'closed' })
+    const res = await request(app)
+      .post(`/api/acopios/${center.id}/status`)
+      .send({ status: 'open', resolveCode: '1234' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('open')
   })
 })
 

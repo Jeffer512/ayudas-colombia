@@ -4,11 +4,16 @@ import { ApiError } from '../lib/errors.js'
 import type {
   AcopioFilters,
   CreateAcopioInput,
+  UpdateAcopioStatusInput,
 } from '../validators/acopio.js'
 
 type AcopioWithCity = AcopioCenter & { city: City }
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function generateResolveCode(): string {
+  return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
+}
 
 export function serializeAcopio(center: AcopioWithCity) {
   return {
@@ -92,9 +97,40 @@ export async function createAcopio(
       contactPhone: input.contactPhone ?? null,
       hours: input.hours ?? null,
       accepts: input.accepts ?? null,
+      resolveCode: generateResolveCode(),
     },
     include: { city: true },
   })
 
-  return serializeAcopio(center)
+  return { ...serializeAcopio(center), resolveCode: center.resolveCode }
+}
+
+export async function updateAcopioStatus(
+  id: string,
+  input: UpdateAcopioStatusInput,
+  isAdmin = false,
+) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Centro no encontrado')
+
+  const center = await prisma.acopioCenter.findUnique({
+    where: { id },
+    include: { city: true },
+  })
+  if (!center) throw new ApiError(404, 'Centro no encontrado')
+
+  if (center.status === input.status) {
+    return serializeAcopio(center)
+  }
+
+  const code = (input.resolveCode ?? '').trim()
+  if (!isAdmin && (!center.resolveCode || code !== center.resolveCode)) {
+    throw new ApiError(403, 'Código de cierre incorrecto')
+  }
+
+  const updated = await prisma.acopioCenter.update({
+    where: { id },
+    data: { status: input.status },
+    include: { city: true },
+  })
+  return serializeAcopio(updated)
 }

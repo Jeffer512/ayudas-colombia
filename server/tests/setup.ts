@@ -2,6 +2,7 @@ import { beforeEach } from 'vitest'
 import { prisma } from '../src/db.js'
 
 beforeEach(async () => {
-  // report_events must be truncated before reports (FK). CASCADE handles order.
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE report_events, reports, reporters, cities CASCADE')
+  await prisma.$executeRawUnsafe(
+    'TRUNCATE TABLE request_events, requests, offers, avisos_marks, avisos, acopio_centers, reporters, cities CASCADE',
+  )
 })

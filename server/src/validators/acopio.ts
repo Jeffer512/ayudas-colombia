@@ -24,3 +24,11 @@ export const acopioFiltersSchema = z.object({
 })
 
 export type AcopioFilters = z.infer<typeof acopioFiltersSchema>
+
+export const updateAcopioStatusSchema = z.object({
+  status: z.enum(['open', 'closed']),
+  resolveCode: z.string().trim().min(4).max(6).optional(),
+  note: z.string().trim().max(2000).optional(),
+})
+
+export type UpdateAcopioStatusInput = z.infer<typeof updateAcopioStatusSchema>

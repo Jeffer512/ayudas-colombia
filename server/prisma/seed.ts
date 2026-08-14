@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client'
-import { TYPE_DIRECTION } from '../src/constants.js'
 
 const prisma = new PrismaClient()
 
@@ -13,35 +12,19 @@ const cities = [
   },
 ]
 
-const reportTypes = [
-  'missing_person',
-  'missing_pet',
-  'supplies_request',
-  'volunteers_request',
-  'shelter_request',
-  'medical_request',
-  'transport_request',
-  'supplies_offered',
-  'volunteers_offered',
-  'shelter_offered',
-  'transport_offered',
-  'damage_report',
-  'info',
-] as const
+type SampleEntry = {
+  title: string
+  description: string
+  status: 'open' | 'in_progress' | 'resolved'
+  urgency: 'critical' | 'high' | 'medium' | 'low'
+  address: string
+  lat: number | null
+  lng: number | null
+  transport?: 'can_transport' | 'needs_transport'
+  reporter: { name: string; phone: string; org?: string; orgType?: string }
+}
 
-const sampleReports: Record<
-  string,
-  {
-    title: string
-    description: string
-    status: string
-    urgency: string
-    address: string
-    lat: number
-    lng: number
-    reporter: { name: string; phone: string; org?: string; orgType?: string }
-  }
-> = {
+const sampleRequests: Record<string, SampleEntry> = {
   missing_person: {
     title: 'Se busca a Carlos Ramírez, 62 años',
     description:
@@ -67,12 +50,13 @@ const sampleReports: Record<
   supplies_request: {
     title: 'Necesitamos agua potable en el Centro',
     description:
-      'Las familias de la cuadra de la iglesia requieren agua para cocinar y beber. Hay más de 20 familias afectadas desde el corte del suministro.',
+      'Las familias de la cuadra de la iglesia requieren agua para cocinar y beber. Hay más de 20 familias afectadas desde el corte del suministro. Podemos recogerla si hay forma de transportarla.',
     status: 'open',
     urgency: 'high',
     address: 'Centro, calle 12 #4-50 junto a la iglesia',
     lat: 4.8102,
     lng: -75.698,
+    transport: 'needs_transport',
     reporter: { name: 'María Gómez', phone: '3158765432' },
   },
   volunteers_request: {
@@ -84,7 +68,12 @@ const sampleReports: Record<
     address: 'Barrio Cuba, salón comunal',
     lat: 4.82,
     lng: -75.71,
-    reporter: { org: 'JAC Barrio Cuba', orgType: 'government', name: 'Laura Cifuentes', phone: '3100000000' },
+    reporter: {
+      org: 'JAC Barrio Cuba',
+      orgType: 'government',
+      name: 'Laura Cifuentes',
+      phone: '3100000000',
+    },
   },
   shelter_request: {
     title: 'Familia requiere refugio tras colapso de vivienda',
@@ -116,21 +105,31 @@ const sampleReports: Record<
     urgency: 'medium',
     address: 'Hospital San Jorge, bodega 2',
     lat: 4.8112,
-    lng: -75.6990,
+    lng: -75.699,
+    transport: 'needs_transport',
     reporter: { name: 'Jairo Mejía', phone: '3105551005' },
   },
-  supplies_offered: {
+}
+
+const sampleOffers: SampleEntry[] = [
+  {
     title: 'Ofrezco 100 kits de aseo para repartir',
     description:
-      'Una bodega local puso a disposición 100 kits de aseo básico. Se coordina la entrega con los centros de acopio.',
+      'Una bodega local puso a disposición 100 kits de aseo básico. Se coordina la entrega con los centros de acopio. Cuento con vehículo para entregarlos.',
     status: 'open',
     urgency: 'medium',
     address: 'Bodega Distrisalud, km 5',
     lat: 4.8203,
     lng: -75.7205,
-    reporter: { org: 'Distrisalud', orgType: 'business', name: 'Carmen Vila', phone: '3105551006' },
+    transport: 'can_transport',
+    reporter: {
+      org: 'Distrisalud',
+      orgType: 'business',
+      name: 'Carmen Vila',
+      phone: '3105551006',
+    },
   },
-  volunteers_offered: {
+  {
     title: 'Grupo de brigadistas disponible el fin de semana',
     description:
       '10 brigadistas de primeros auxilios pueden apoyar jornadas de evacuación y atención este fin de semana. Traemos nuestro propio equipo.',
@@ -138,10 +137,15 @@ const sampleReports: Record<
     urgency: 'medium',
     address: 'Base operativa, zona industrial',
     lat: 4.8156,
-    lng: -75.7050,
-    reporter: { org: 'Brigada Rápida', orgType: 'volunteer_group', name: 'Óscar Prieto', phone: '3105551007' },
+    lng: -75.705,
+    reporter: {
+      org: 'Brigada Rápida',
+      orgType: 'volunteer_group',
+      name: 'Óscar Prieto',
+      phone: '3105551007',
+    },
   },
-  shelter_offered: {
+  {
     title: 'Dispongo de casa para acoger 5 personas',
     description:
       'Ofrezco mi casa en las afueras para alojar hasta 5 personas por tiempo indefinido. Hay cocina, baño y espacio para dos familias.',
@@ -152,7 +156,7 @@ const sampleReports: Record<
     lng: -75.66,
     reporter: { name: 'Héctor Uribe', phone: '3105551008' },
   },
-  transport_offered: {
+  {
     title: 'Camioneta disponible para traslados de carga',
     description:
       'Una camioneta con estacas puede ayudar a mover donaciones entre centros de acopio. Sin costo para la comunidad.',
@@ -163,29 +167,35 @@ const sampleReports: Record<
     lng: -75.7033,
     reporter: { name: 'Rubén Castaño', phone: '3105551009' },
   },
-  damage_report: {
+]
+
+const sampleAvisos: Omit<SampleEntry, 'status'>[] = [
+  {
     title: 'Daños en la vía de acceso a la vereda El Tigre',
     description:
       'El deslizamiento bloqueó parte de la vía principal y hay riesgo en dos viviendas cercanas. Se recomienda no transitar de noche.',
-    status: 'open',
     urgency: 'high',
     address: 'Vereda El Tigre, km 3',
     lat: 4.84,
     lng: -75.73,
     reporter: { name: 'Rosalba Duque', phone: '3105551010' },
   },
-  info: {
+  {
     title: 'Punto de distribución de agua funcionando',
     description:
       'El parque principal está funcionando como punto de distribución de agua desde las 7am. Llevar recipientes. Capacidad limitada.',
-    status: 'resolved',
     urgency: 'medium',
     address: 'Parque principal, costado oriental',
     lat: 4.8135,
     lng: -75.6965,
-    reporter: { org: 'Alcaldía de Pereira', orgType: 'government', name: 'Nataly Trujillo', phone: '3105551011' },
+    reporter: {
+      org: 'Alcaldía de Pereira',
+      orgType: 'government',
+      name: 'Nataly Trujillo',
+      phone: '3105551011',
+    },
   },
-}
+]
 
 const sampleAcopios = [
   {
@@ -233,7 +243,8 @@ const sampleAcopios = [
   {
     type: 'ciudadano',
     name: 'Centro de acopio Barrio Cuba',
-    description: 'Centro temporal montado en el salón comunal mientras dure la emergencia.',
+    description:
+      'Centro temporal montado en el salón comunal mientras dure la emergencia.',
     address: 'Salón comunal, barrio Cuba',
     lat: 4.82,
     lng: -75.7099,
@@ -245,6 +256,38 @@ const sampleAcopios = [
   },
 ]
 
+async function createReporter(entry: SampleEntry) {
+  return prisma.reporter.create({
+    data: {
+      contactType: entry.reporter.org ? 'organization' : 'individual',
+      name: entry.reporter.name,
+      organizationName: entry.reporter.org ?? null,
+      organizationType: entry.reporter.orgType ?? null,
+      phone: entry.reporter.phone,
+    },
+  })
+}
+
+function eventsFor(type: 'request', status: string, actorName: string) {
+  const events: { status: string; actorName: string; note: string }[] = [
+    { status: 'open', actorName, note: 'Solicitud creada' },
+  ]
+  if (status === 'in_progress') {
+    events.push({
+      status: 'in_progress',
+      actorName: 'Voluntario asignado',
+      note: 'Ya se está coordinando la ayuda',
+    })
+  }
+  if (status === 'resolved') {
+    events.push(
+      { status: 'in_progress', actorName: 'Coordinación de ayuda', note: 'Se empezó a atender el caso' },
+      { status: 'resolved', actorName, note: 'Se resolvió con el código de cierre' },
+    )
+  }
+  return events
+}
+
 async function main() {
   const city = await prisma.city.upsert({
     where: { code: cities[0].code },
@@ -253,31 +296,20 @@ async function main() {
   })
   console.log(`Ciudad sembrada: ${city.name}`)
 
-  await prisma.reportEvent.deleteMany()
-  await prisma.report.deleteMany()
+  await prisma.requestEvent.deleteMany()
+  await prisma.request.deleteMany()
+  await prisma.avisoMark.deleteMany()
+  await prisma.aviso.deleteMany()
+  await prisma.offer.deleteMany()
   await prisma.reporter.deleteMany()
   await prisma.acopioCenter.deleteMany()
 
-  for (const type of reportTypes) {
-    const sample = sampleReports[type]
-    const direction = TYPE_DIRECTION[type] ?? 'info'
-    const resolvedAt =
-      sample.status === 'resolved' ? new Date() : null
-
-    const reporter = await prisma.reporter.create({
-      data: {
-        contactType: sample.reporter.org ? 'organization' : 'individual',
-        name: sample.reporter.name,
-        organizationName: sample.reporter.org ?? null,
-        organizationType: sample.reporter.orgType ?? null,
-        phone: sample.reporter.phone,
-      },
-    })
-
-    const report = await prisma.report.create({
+  for (const [type, sample] of Object.entries(sampleRequests)) {
+    const reporter = await createReporter(sample)
+    const request = await prisma.request.create({
       data: {
         type,
-        direction,
+        transport: sample.transport ?? null,
         urgency: sample.urgency,
         status: sample.status,
         title: sample.title,
@@ -288,50 +320,58 @@ async function main() {
         cityId: city.id,
         reporterId: reporter.id,
         resolveCode: '1234',
-        resolvedAt,
-        events: {
-          create: [
-            {
-              status: 'open',
-              actorName: sample.reporter.name,
-              note: 'Reporte creado',
-            },
-            ...(sample.status === 'in_progress'
-              ? [
-                  {
-                    status: 'in_progress' as const,
-                    actorName: 'Voluntario asignado',
-                    note: 'Ya se está coordinando la ayuda',
-                  },
-                ]
-              : []),
-            ...(sample.status === 'resolved'
-              ? [
-                  {
-                    status: 'in_progress' as const,
-                    actorName: 'Coordinación de ayuda',
-                    note: 'Se empezó a atender el caso',
-                  },
-                  {
-                    status: 'resolved' as const,
-                    actorName: sample.reporter.name,
-                    note: 'Se resolvió con el código de cierre',
-                  },
-                ]
-              : []),
-          ],
-        },
+        resolvedAt: sample.status === 'resolved' ? new Date() : null,
+        events: { create: eventsFor('request', sample.status, sample.reporter.name) },
       },
     })
-    console.log(`Reporte (${direction}/${type}/${sample.status}): ${report.title.slice(0, 40)}`)
+    console.log(`Solicitud (${type}/${sample.status}): ${request.title.slice(0, 40)}`)
+  }
+
+  for (const [i, sample] of sampleOffers.entries()) {
+    const reporter = await createReporter(sample)
+    const fulfilled = i === 3
+    const offer = await prisma.offer.create({
+      data: {
+        type: ['supplies_offered', 'volunteers_offered', 'shelter_offered', 'transport_offered'][i],
+        transport: sample.transport ?? null,
+        status: fulfilled ? 'fulfilled' : 'open',
+        title: sample.title,
+        description: sample.description,
+        address: sample.address,
+        lat: sample.lat,
+        lng: sample.lng,
+        cityId: city.id,
+        reporterId: reporter.id,
+        resolveCode: '1234',
+        resolvedAt: fulfilled ? new Date() : null,
+      },
+    })
+    console.log(`Oferta (${offer.type}/${offer.status}): ${offer.title.slice(0, 40)}`)
+  }
+
+  for (const [i, sample] of sampleAvisos.entries()) {
+    const reporter = await createReporter(sample as unknown as SampleEntry)
+    const aviso = await prisma.aviso.create({
+      data: {
+        type: 'info',
+        urgency: sample.urgency,
+        status: i === 0 ? 'closed' : 'open',
+        title: sample.title,
+        description: sample.description,
+        address: sample.address,
+        lat: sample.lat,
+        lng: sample.lng,
+        cityId: city.id,
+        reporterId: reporter.id,
+        marks: { create: i === 0 ? [{ markerId: 'seed-1' }, { markerId: 'seed-2' }, { markerId: 'seed-3' }] : [] },
+      },
+    })
+    console.log(`Aviso (info/${aviso.status}): ${aviso.title.slice(0, 40)}`)
   }
 
   for (const acopio of sampleAcopios) {
     const created = await prisma.acopioCenter.create({
-      data: {
-        ...acopio,
-        cityId: city.id,
-      },
+      data: { ...acopio, cityId: city.id, resolveCode: '1234' },
     })
     console.log(`Centro de acopio (${created.type}/${created.status}): ${created.name}`)
   }

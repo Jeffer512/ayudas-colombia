@@ -1,17 +1,16 @@
-import type { City, Report, ReportEvent, Reporter } from '@prisma/client'
-import { TYPE_DIRECTION } from '../constants.js'
+import type { City, Reporter, Request, RequestEvent } from '@prisma/client'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type {
-  CreateReportInput,
-  ReportFilters,
-  UpdateStatusInput,
-} from '../validators/report.js'
+  CreateRequestInput,
+  RequestFilters,
+  UpdateRequestStatusInput,
+} from '../validators/request.js'
 
-type SerializedReport = Report & {
+type SerializedRequest = Request & {
   city: City
   reporter: Reporter
-  events?: ReportEvent[]
+  events?: RequestEvent[]
 }
 
 const TRANSITIONS: Record<string, string[]> = {
@@ -28,34 +27,34 @@ function generateResolveCode(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
 
-export function serializeReport(report: SerializedReport) {
+export function serializeRequest(request: SerializedRequest) {
   return {
-    id: report.id,
-    type: report.type,
-    direction: report.direction,
-    urgency: report.urgency,
-    status: report.status,
-    title: report.title,
-    description: report.description,
-    address: report.address ?? null,
-    lat: report.lat ?? null,
-    lng: report.lng ?? null,
+    id: request.id,
+    type: request.type,
+    transport: request.transport ?? null,
+    urgency: request.urgency,
+    status: request.status,
+    title: request.title,
+    description: request.description,
+    address: request.address ?? null,
+    lat: request.lat ?? null,
+    lng: request.lng ?? null,
     city: {
-      code: report.city.code,
-      name: report.city.name,
+      code: request.city.code,
+      name: request.city.name,
     },
     reporter: {
-      contactType: report.reporter.contactType,
-      name: report.reporter.name,
-      organizationName: report.reporter.organizationName ?? null,
-      organizationType: report.reporter.organizationType ?? null,
-      phone: report.reporter.phone ?? null,
+      contactType: request.reporter.contactType,
+      name: request.reporter.name,
+      organizationName: request.reporter.organizationName ?? null,
+      organizationType: request.reporter.organizationType ?? null,
+      phone: request.reporter.phone ?? null,
     },
-    resolvedAt: report.resolvedAt,
-    createdAt: report.createdAt,
-    updatedAt: report.updatedAt,
-    events: report.events
-      ? report.events.map((e) => ({
+    resolvedAt: request.resolvedAt,
+    createdAt: request.createdAt,
+    updatedAt: request.updatedAt,
+    events: request.events
+      ? request.events.map((e) => ({
           id: e.id.toString(),
           status: e.status,
           note: e.note ?? null,
@@ -66,7 +65,7 @@ export function serializeReport(report: SerializedReport) {
   }
 }
 
-export async function listReports(filters: ReportFilters) {
+export async function listRequests(filters: RequestFilters) {
   const where: Record<string, unknown> = {}
   if (filters.type) where.type = filters.type
   if (filters.status === 'active') {
@@ -87,29 +86,29 @@ export async function listReports(filters: ReportFilters) {
   const limit = filters.limit ?? 50
   const offset = filters.offset ?? 0
 
-  const [reports, total] = await prisma.$transaction([
-    prisma.report.findMany({
+  const [requests, total] = await prisma.$transaction([
+    prisma.request.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
       include: { city: true, reporter: true },
     }),
-    prisma.report.count({ where }),
+    prisma.request.count({ where }),
   ])
 
   return {
-    reports: reports.map(serializeReport),
+    requests: requests.map(serializeRequest),
     total,
     limit,
     offset,
   }
 }
 
-export async function getReport(id: string) {
-  if (!isUuid.test(id)) throw new ApiError(404, 'Reporte no encontrado')
+export async function getRequest(id: string) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const report = await prisma.report.findUnique({
+  const request = await prisma.request.findUnique({
     where: { id },
     include: {
       city: true,
@@ -117,18 +116,22 @@ export async function getReport(id: string) {
       events: { orderBy: { createdAt: 'asc' } },
     },
   })
-  if (!report) throw new ApiError(404, 'Reporte no encontrado')
-  return serializeReport(report)
+  if (!request) throw new ApiError(404, 'Solicitud no encontrada')
+  return serializeRequest(request)
 }
 
-export async function createReport(input: CreateReportInput) {
+export async function createRequest(input: CreateRequestInput) {
   const city = await prisma.city.findUnique({ where: { code: input.cityCode } })
   if (!city) throw new ApiError(400, `Ciudad no encontrada: ${input.cityCode}`)
 
-  const direction = TYPE_DIRECTION[input.type]
-  if (!direction) throw new ApiError(400, `Tipo de reporte inválido: ${input.type}`)
+  if (input.transport && input.type !== 'supplies_request') {
+    throw new ApiError(
+      400,
+      'El campo de transporte solo aplica a solicitudes de suministros',
+    )
+  }
 
-  const report = await prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
         contactType: input.reporter.contactType,
@@ -140,10 +143,10 @@ export async function createReport(input: CreateReportInput) {
       },
     })
 
-    const created = await tx.report.create({
+    return tx.request.create({
       data: {
         type: input.type,
-        direction,
+        transport: input.transport ?? null,
         urgency: input.urgency,
         status: 'open',
         title: input.title,
@@ -158,7 +161,7 @@ export async function createReport(input: CreateReportInput) {
           create: [
             {
               status: 'open',
-              note: 'Reporte creado',
+              note: 'Solicitud creada',
               actorName: input.reporter.name,
             },
           ],
@@ -166,21 +169,20 @@ export async function createReport(input: CreateReportInput) {
       },
       include: { reporter: true, city: true, events: true },
     })
-    return created
   })
 
-  return { ...serializeReport(report), resolveCode: report.resolveCode }
+  return { ...serializeRequest(created), resolveCode: created.resolveCode }
 }
 
-export async function updateReportStatus(id: string, input: UpdateStatusInput) {
-  if (!isUuid.test(id)) throw new ApiError(404, 'Reporte no encontrado')
+export async function updateRequestStatus(id: string, input: UpdateRequestStatusInput) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const report = await prisma.report.findUnique({ where: { id } })
-  if (!report) throw new ApiError(404, 'Reporte no encontrado')
+  const request = await prisma.request.findUnique({ where: { id } })
+  if (!request) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const from = report.status
+  const from = request.status
   if (from === input.status) {
-    return getReport(id)
+    return getRequest(id)
   }
 
   const allowed = TRANSITIONS[from] ?? []
@@ -191,25 +193,25 @@ export async function updateReportStatus(id: string, input: UpdateStatusInput) {
     )
   }
 
-  let resolvedAt = report.resolvedAt
+  let resolvedAt = request.resolvedAt
   if (input.status === 'resolved') {
     const code = (input.resolveCode ?? '').trim()
-    if (!report.resolveCode || code !== report.resolveCode) {
+    if (!request.resolveCode || code !== request.resolveCode) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
-    resolvedAt = report.resolvedAt ?? new Date()
+    resolvedAt = request.resolvedAt ?? new Date()
   } else if (input.status === 'open') {
     resolvedAt = null
   }
 
   await prisma.$transaction([
-    prisma.report.update({
+    prisma.request.update({
       where: { id },
       data: { status: input.status, resolvedAt },
     }),
-    prisma.reportEvent.create({
+    prisma.requestEvent.create({
       data: {
-        reportId: id,
+        requestId: id,
         status: input.status,
         note: input.note ?? null,
         actorName: input.actorName ?? null,
@@ -217,5 +219,5 @@ export async function updateReportStatus(id: string, input: UpdateStatusInput) {
     }),
   ])
 
-  return getReport(id)
+  return getRequest(id)
 }

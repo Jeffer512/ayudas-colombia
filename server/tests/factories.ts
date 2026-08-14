@@ -1,9 +1,10 @@
 import type {
   AcopioCenterUncheckedCreateInput,
-  ReportUncheckedCreateInput,
+  AvisoUncheckedCreateInput,
+  OfferUncheckedCreateInput,
+  RequestUncheckedCreateInput,
   ReporterUncheckedCreateInput,
 } from '@prisma/client'
-import { TYPE_DIRECTION } from '../src/constants.js'
 import { prisma } from '../src/db.js'
 
 export async function ensureCity() {
@@ -33,18 +34,15 @@ export async function createReporter(
   })
 }
 
-export async function createReport(
-  reportData: Partial<ReportUncheckedCreateInput> = {},
+export async function createRequest(
+  requestData: Partial<RequestUncheckedCreateInput> = {},
   reporterData: Partial<ReporterUncheckedCreateInput> = {},
 ) {
   const city = await ensureCity()
   const reporter = await createReporter(reporterData)
-  const type = reportData.type ?? 'volunteers_request'
-  const direction = reportData.direction ?? TYPE_DIRECTION[type] ?? 'info'
-  return prisma.report.create({
+  return prisma.request.create({
     data: {
-      type,
-      direction,
+      type: 'volunteers_request',
       urgency: 'medium',
       status: 'open',
       title: 'Necesitamos voluntarios en el Centro',
@@ -52,16 +50,54 @@ export async function createReport(
       cityId: city.id,
       reporterId: reporter.id,
       resolveCode: '1234',
-      ...reportData,
+      ...requestData,
       events: {
         create: {
           status: 'open',
           actorName: 'Juan Pérez',
-          note: 'Reporte creado',
+          note: 'Solicitud creada',
         },
       },
     },
     include: { city: true, reporter: true, events: true },
+  })
+}
+
+export async function createOffer(
+  offerData: Partial<OfferUncheckedCreateInput> = {},
+) {
+  const city = await ensureCity()
+  const reporter = await createReporter()
+  return prisma.offer.create({
+    data: {
+      type: 'supplies_offered',
+      status: 'open',
+      title: 'Ofrezco suministros para repartir',
+      description: 'Tengo agua y comida para entregar a las familias afectadas.',
+      cityId: city.id,
+      reporterId: reporter.id,
+      resolveCode: '1234',
+      ...offerData,
+    },
+    include: { city: true, reporter: true },
+  })
+}
+
+export async function createAviso(avisoData: Partial<AvisoUncheckedCreateInput> = {}) {
+  const city = await ensureCity()
+  const reporter = await createReporter()
+  return prisma.aviso.create({
+    data: {
+      type: 'info',
+      urgency: 'medium',
+      status: 'open',
+      title: 'Punto de distribución de agua funcionando',
+      description: 'El parque principal reparte agua desde las 7am.',
+      cityId: city.id,
+      reporterId: reporter.id,
+      ...avisoData,
+    },
+    include: { city: true, reporter: true },
   })
 }
 
@@ -76,6 +112,7 @@ export async function createAcopio(
       lat: 4.8133,
       lng: -75.6961,
       cityId: city.id,
+      resolveCode: '1234',
       ...data,
     },
     include: { city: true },
