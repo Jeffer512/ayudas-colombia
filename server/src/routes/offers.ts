@@ -1,7 +1,9 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { requireSession } from '../middleware/requireSession.js'
 import {
+  claimOffer,
   createOffer,
   getOffer,
   listOffers,
@@ -62,5 +64,14 @@ offersRouter.post(
   asyncHandler(async (req, res) => {
     const input = updateOfferStatusSchema.parse(req.body)
     res.json(await updateOfferStatus(String(req.params.id), input))
+  }),
+)
+
+offersRouter.post(
+  '/:id/claim',
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const offer = await claimOffer(String(req.params.id), req.staff!.sub)
+    res.json(offer)
   }),
 )

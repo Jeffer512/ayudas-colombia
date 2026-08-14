@@ -110,6 +110,6 @@ authRouter.get(
       res.status(401).json({ error: 'Sesión expirada' })
       return
     }
-    res.json({ staff: sessionUser.staff })
+    res.json({ authenticated: true, staff: sessionUser.staff })
   }),
 )

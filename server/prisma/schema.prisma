@@ -19,6 +19,7 @@ model User {
   updatedAt            DateTime         @updatedAt @map("updated_at")
 
   memberships HelpOrgStaff[]
+  claims      OfferClaim[]
 
   @@map("users")
 }
@@ -133,12 +134,32 @@ model Offer {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  city     City     @relation(fields: [cityId], references: [id])
-  reporter Reporter @relation(fields: [reporterId], references: [id])
+  city     City          @relation(fields: [cityId], references: [id])
+  reporter Reporter      @relation(fields: [reporterId], references: [id])
+  claims   OfferClaim[]
 
   @@index([cityId, status])
   @@index([type])
   @@map("offers")
+}
+
+model OfferClaim {
+  id         String    @id @default(uuid())
+  offerId    String    @map("offer_id")
+  claimerId  String?   @map("claimer_id")
+  status     String    @default("committed")
+  note       String?
+  claimedAt  DateTime  @default(now()) @map("claimed_at")
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  offer   Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  claimer User? @relation(fields: [claimerId], references: [id], onDelete: SetNull)
+
+  @@index([offerId])
+  @@index([claimerId])
+  @@map("offer_claims")
 }
 
 model Aviso {

@@ -35,7 +35,7 @@ export const REQUEST_STATUSES = [
 ] as const
 export type RequestStatus = (typeof REQUEST_STATUSES)[number]
 
-export const OFFER_STATUSES = ['open', 'fulfilled', 'unavailable'] as const
+export const OFFER_STATUSES = ['open', 'in_transit', 'fulfilled', 'unavailable'] as const
 export type OfferStatus = (typeof OFFER_STATUSES)[number]
 
 export const AVISO_STATUSES = ['open', 'closed'] as const

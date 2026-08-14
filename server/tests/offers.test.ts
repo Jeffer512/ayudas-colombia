@@ -6,6 +6,24 @@ import { createOffer, ensureCity } from './factories.js'
 
 const app = createApp()
 
+function tokenFrom(body: { verificationUrl?: string | null }): string | undefined {
+  if (!body.verificationUrl) return undefined
+  const url = new URL(body.verificationUrl, 'http://localhost')
+  return url.searchParams.get('token') ?? undefined
+}
+
+async function loginCitizen(email = 'voluntaria@correo.org') {
+  const res = await request(app).post('/api/auth/register').send({
+    email,
+    password: 'contrasena-segura',
+    name: 'Voluntaria',
+  })
+  await request(app).post('/api/auth/verify-email').send({ token: tokenFrom(res.body) })
+  const agent = request.agent(app)
+  await agent.post('/api/auth/login').send({ email, password: 'contrasena-segura' })
+  return agent
+}
+
 const validOffer = {
   type: 'supplies_offered',
   title: 'Ofrezco 100 kits de aseo',
@@ -138,5 +156,112 @@ describe('POST /api/offers/:id/status', () => {
       .send({ status: 'open', resolveCode: '1234' })
 
     expect(res.status).toBe(400)
+  })
+})
+
+describe('GET /api/offers con forTransport', () => {
+  it('solo muestra ofertas de suministros que necesitan transporte y están abiertas', async () => {
+    await createOffer({ transport: 'needs_transport' })
+    await createOffer({ transport: 'can_transport' })
+    await createOffer({ type: 'shelter_offered' })
+    await createOffer({ type: 'transport_offered' })
+    await createOffer({ transport: 'needs_transport', status: 'fulfilled', resolvedAt: new Date() })
+
+    const res = await request(app).get('/api/offers').query({ forTransport: 'true' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.offers).toHaveLength(1)
+    expect(res.body.offers[0]).toMatchObject({
+      type: 'supplies_offered',
+      transport: 'needs_transport',
+      status: 'open',
+    })
+  })
+})
+
+describe('POST /api/offers/:id/claim', () => {
+  it('requiere sesión', async () => {
+    const offer = await createOffer({ transport: 'needs_transport' })
+    const res = await request(app).post(`/api/offers/${offer.id}/claim`)
+    expect(res.status).toBe(401)
+  })
+
+  it('solo acepta ofertas de suministros que necesitan transporte', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'can_transport' })
+    const res = await agent.post(`/api/offers/${offer.id}/claim`)
+    expect(res.status).toBe(400)
+  })
+
+  it('reserva la oferta en tránsito con un único compromiso', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+
+    const res = await agent.post(`/api/offers/${offer.id}/claim`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({
+      status: 'in_transit',
+      canClaim: false,
+      claim: {
+        status: 'committed',
+        claimerName: 'Voluntaria',
+      },
+    })
+
+    const twice = await agent.post(`/api/offers/${offer.id}/claim`)
+    expect(twice.status).toBe(409)
+
+    const claims = await prisma.offerClaim.findMany({ where: { offerId: offer.id } })
+    expect(claims).toHaveLength(1)
+    expect(claims[0]).toMatchObject({ status: 'committed', claimerId: claims[0].claimerId })
+  })
+
+  it('marca el compromiso como entregado cuando el donante cierra', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${offer.id}/claim`)
+
+    const closed = await request(app)
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'fulfilled', resolveCode: '1234' })
+
+    expect(closed.status).toBe(200)
+    expect(closed.body.status).toBe('fulfilled')
+    expect(closed.body.claim).toBeNull()
+
+    const claim = await prisma.offerClaim.findFirst({ where: { offerId: offer.id } })
+    expect(claim?.status).toBe('delivered')
+    expect(claim?.resolvedAt).not.toBeNull()
+  })
+
+  it('cancela el compromiso cuando el donante reabre la oferta', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${offer.id}/claim`)
+
+    const reopened = await request(app)
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'open', resolveCode: '1234' })
+
+    expect(reopened.status).toBe(200)
+    expect(reopened.body.status).toBe('open')
+    expect(reopened.body.canClaim).toBe(true)
+
+    const claim = await prisma.offerClaim.findFirst({ where: { offerId: offer.id } })
+    expect(claim?.status).toBe('cancelled')
+  })
+
+  it('la oferta reabierta se ofrece de nuevo en el centro de carga', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${offer.id}/claim`)
+    await request(app)
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'open', resolveCode: '1234' })
+
+    const hub = await request(app).get('/api/offers').query({ forTransport: 'true' })
+    expect(hub.body.offers).toHaveLength(1)
+    expect(hub.body.offers[0].canClaim).toBe(true)
   })
 })

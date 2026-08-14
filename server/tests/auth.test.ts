@@ -201,6 +201,7 @@ describe('POST /api/auth/login', () => {
     const me = await agent.get('/api/auth/me')
     expect(me.status).toBe(200)
     expect(me.body.staff).toBeNull()
+    expect(me.body.authenticated).toBe(true)
   })
 
   it('rechaza una contraseña incorrecta', async () => {

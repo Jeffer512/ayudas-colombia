@@ -1,4 +1,4 @@
-import type { City, Offer, Reporter } from '@prisma/client'
+import type { City, Offer, OfferClaim, Reporter } from '@prisma/client'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type {
@@ -7,7 +7,20 @@ import type {
   UpdateOfferStatusInput,
 } from '../validators/offer.js'
 
-type SerializedOffer = Offer & { city: City; reporter: Reporter }
+type ClaimWithUser = OfferClaim & { claimer: { name: string } | null }
+
+type SerializedOffer = Offer & {
+  city: City
+  reporter: Reporter
+  claims?: ClaimWithUser[]
+}
+
+const OFFER_TRANSITIONS: Record<string, string[]> = {
+  open: ['fulfilled', 'unavailable'],
+  in_transit: ['open', 'fulfilled', 'unavailable'],
+  fulfilled: [],
+  unavailable: ['open'],
+}
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -16,6 +29,8 @@ function generateResolveCode(): string {
 }
 
 export function serializeOffer(offer: SerializedOffer) {
+  const activeClaim = (offer.claims ?? []).find((c) => c.status === 'committed')
+
   return {
     id: offer.id,
     type: offer.type,
@@ -36,19 +51,53 @@ export function serializeOffer(offer: SerializedOffer) {
       whatsapp: offer.reporter.whatsapp ?? null,
       email: offer.reporter.email ?? null,
     },
+    claim: activeClaim
+      ? {
+          id: activeClaim.id,
+          status: activeClaim.status,
+          claimerName: activeClaim.claimer?.name ?? null,
+          note: activeClaim.note ?? null,
+          claimedAt: activeClaim.claimedAt,
+        }
+      : null,
+    canClaim: canClaimOffer(offer),
     resolvedAt: offer.resolvedAt,
     createdAt: offer.createdAt,
     updatedAt: offer.updatedAt,
   }
 }
 
+export function canClaimOffer(offer: SerializedOffer): boolean {
+  return (
+    offer.type === 'supplies_offered' &&
+    offer.transport === 'needs_transport' &&
+    offer.status === 'open' &&
+    !(offer.claims ?? []).some((claim) => claim.status === 'committed')
+  )
+}
+
+const OFFER_INCLUDE = {
+  city: true,
+  reporter: true,
+  claims: {
+    include: { claimer: { select: { name: true } } },
+    orderBy: { claimedAt: 'desc' as const },
+  },
+}
+
 export async function listOffers(filters: OfferFilters) {
   const where: Record<string, unknown> = {}
-  if (filters.type) where.type = filters.type
-  if (filters.status === 'active') {
+  if (filters.forTransport === 'true') {
+    where.type = 'supplies_offered'
+    where.transport = 'needs_transport'
     where.status = 'open'
-  } else if (filters.status) {
-    where.status = filters.status
+  } else {
+    if (filters.type) where.type = filters.type
+    if (filters.status === 'active') {
+      where.status = 'open'
+    } else if (filters.status) {
+      where.status = filters.status
+    }
   }
   if (filters.city) where.city = { code: filters.city }
   if (filters.q) {
@@ -68,7 +117,7 @@ export async function listOffers(filters: OfferFilters) {
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
-      include: { city: true, reporter: true },
+      include: OFFER_INCLUDE,
     }),
     prisma.offer.count({ where }),
   ])
@@ -86,10 +135,44 @@ export async function getOffer(id: string) {
 
   const offer = await prisma.offer.findUnique({
     where: { id },
-    include: { city: true, reporter: true },
+    include: OFFER_INCLUDE,
   })
   if (!offer) throw new ApiError(404, 'Oferta no encontrada')
   return serializeOffer(offer)
+}
+
+export async function claimOffer(id: string, userId: string) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
+
+  const offer = await prisma.offer.findUnique({
+    where: { id },
+    include: {
+      claims: { where: { status: 'committed' }, take: 1 },
+    },
+  })
+  if (!offer) throw new ApiError(404, 'Oferta no encontrada')
+
+  if (offer.type !== 'supplies_offered' || offer.transport !== 'needs_transport') {
+    throw new ApiError(400, 'Esta oferta no necesita transporte')
+  }
+  if (offer.status !== 'open') {
+    throw new ApiError(409, 'Ya hay alguien llevando esta oferta')
+  }
+  if (offer.claims.length > 0) {
+    throw new ApiError(409, 'Alguien ya se comprometió a llevar esta oferta')
+  }
+
+  await prisma.$transaction([
+    prisma.offerClaim.create({
+      data: { offerId: id, claimerId: userId, status: 'committed' },
+    }),
+    prisma.offer.update({
+      where: { id },
+      data: { status: 'in_transit' },
+    }),
+  ])
+
+  return getOffer(id)
 }
 
 export async function createOffer(input: CreateOfferInput) {
@@ -149,12 +232,7 @@ export async function updateOfferStatus(
     return getOffer(id)
   }
 
-  const TRANSITIONS: Record<string, string[]> = {
-    open: ['fulfilled', 'unavailable'],
-    fulfilled: [],
-    unavailable: ['open'],
-  }
-  const allowed = TRANSITIONS[from] ?? []
+  const allowed = OFFER_TRANSITIONS[from] ?? []
   if (!allowed.includes(input.status)) {
     throw new ApiError(
       400,
@@ -170,10 +248,19 @@ export async function updateOfferStatus(
   const resolvedAt =
     input.status === 'fulfilled' ? (offer.resolvedAt ?? new Date()) : null
 
-  await prisma.offer.update({
-    where: { id },
-    data: { status: input.status, resolvedAt },
-  })
+  await prisma.$transaction([
+    prisma.offer.update({
+      where: { id },
+      data: { status: input.status, resolvedAt },
+    }),
+    prisma.offerClaim.updateMany({
+      where: { offerId: id, status: 'committed' },
+      data: {
+        status: input.status === 'fulfilled' ? 'delivered' : 'cancelled',
+        resolvedAt: new Date(),
+      },
+    }),
+  ])
 
   return getOffer(id)
 }
