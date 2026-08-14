@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
 
@@ -11,12 +11,14 @@ const labelClass = 'text-sm font-medium text-slate-700'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   const mutation = useMutation({
     mutationFn: () => api.login({ email, password }),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: ['me'] })
       if (data.staff) navigate('/mi-organizacion')
       else navigate('/')
     },

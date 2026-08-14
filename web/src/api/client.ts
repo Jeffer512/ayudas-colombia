@@ -251,7 +251,12 @@ export const api = {
     return http('/auth/logout', { method: 'POST' })
   },
 
-  me(): Promise<{ authenticated: boolean; staff: Staff | null }> {
+  me(): Promise<{
+    authenticated: boolean
+    name: string | null
+    email: string | null
+    staff: Staff | null
+  }> {
     return http('/auth/me')
   },
 }

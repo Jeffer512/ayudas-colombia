@@ -104,7 +104,12 @@ beforeEach(() => {
   mockedApproveOrgMember.mockReset()
   mockedRejectOrgMember.mockReset()
 
-  mockedMe.mockResolvedValue({ authenticated: true, staff })
+  mockedMe.mockResolvedValue({
+    authenticated: true,
+    name: staff.name,
+    email: staff.email,
+    staff,
+  })
   mockedHelpOrg.mockResolvedValue(org)
   mockedOrgMembers.mockResolvedValue({ members: [] })
   mockedRequests.mockResolvedValue({ requests: [], total: 0, limit: 50, offset: 0 })

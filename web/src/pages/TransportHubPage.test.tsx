@@ -82,6 +82,8 @@ describe('TransportHubPage', () => {
   it('muestra las cargas disponibles con botón para comprometerse', async () => {
     mockedMe.mockResolvedValue({
       authenticated: true,
+      name: 'Voluntaria',
+      email: 'v@correo.org',
       staff: { id: 'm1', userId: 'u1', email: 'v@correo.org', name: 'Voluntaria', role: 'member', orgId: 'org-1', status: 'active' },
     })
     renderHub()
@@ -100,6 +102,8 @@ describe('TransportHubPage', () => {
   it('reserva la oferta al hacer clic en el botón', async () => {
     mockedMe.mockResolvedValue({
       authenticated: true,
+      name: 'Voluntaria',
+      email: 'v@correo.org',
       staff: { id: 'm1', userId: 'u1', email: 'v@correo.org', name: 'Voluntaria', role: 'member', orgId: 'org-1', status: 'active' },
     })
     mockedClaim.mockResolvedValue({ ...transportOffer, status: 'in_transit' })
@@ -114,7 +118,7 @@ describe('TransportHubPage', () => {
   })
 
   it('pide iniciar sesión cuando no hay usuario', async () => {
-    mockedMe.mockResolvedValue({ authenticated: false, staff: null })
+    mockedMe.mockResolvedValue({ authenticated: false, name: null, email: null, staff: null })
     renderHub()
 
     expect(
@@ -126,7 +130,7 @@ describe('TransportHubPage', () => {
   })
 
   it('muestra estado vacío cuando no hay cargas', async () => {
-    mockedMe.mockResolvedValue({ authenticated: false, staff: null })
+    mockedMe.mockResolvedValue({ authenticated: false, name: null, email: null, staff: null })
     mockedOffers.mockResolvedValue({ offers: [], total: 0, limit: 50, offset: 0 })
     renderHub()
 

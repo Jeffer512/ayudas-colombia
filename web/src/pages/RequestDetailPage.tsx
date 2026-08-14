@@ -17,7 +17,7 @@ import type { StatusUpdate } from '../lib/types'
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
 
-type ActionMode = 'resolve' | null
+type ActionMode = 'resolve' | 'reopen' | null
 
 export default function RequestDetailPage() {
   const { id = '' } = useParams()
@@ -180,10 +180,18 @@ export default function RequestDetailPage() {
           </div>
         )}
 
-        {mode === 'resolve' && (
+        {mode !== null && (
           <form
             onSubmit={(e) => {
               e.preventDefault()
+              if (mode === 'reopen') {
+                mutation.mutate({
+                  status: 'open',
+                  resolveCode: resolveCode.trim(),
+                  note: note.trim() || 'Reabierto',
+                })
+                return
+              }
               mutation.mutate({
                 status: 'resolved',
                 resolveCode: resolveCode.trim(),
@@ -208,7 +216,7 @@ export default function RequestDetailPage() {
               />
               <p className="mt-1 text-xs text-slate-500">
                 Se entregó al publicar el pedido. Con él se confirma que la
-                situación terminó y evita cierres por error.
+                situación terminó y evita cierres o reaperturas por error.
               </p>
             </div>
             <div>
@@ -217,7 +225,11 @@ export default function RequestDetailPage() {
               </label>
               <input
                 id="note"
-                placeholder="Ej: se entregó el apoyo requerido"
+                placeholder={
+                  mode === 'reopen'
+                    ? 'Ej: la situación sigue pendiente'
+                    : 'Ej: se entregó el apoyo requerido'
+                }
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className={`mt-1 ${inputClass}`}
@@ -229,7 +241,7 @@ export default function RequestDetailPage() {
                 disabled={mutation.isPending}
                 className="rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
               >
-                Confirmar resolución
+                {mode === 'reopen' ? 'Confirmar reapertura' : 'Confirmar resolución'}
               </button>
               <button
                 type="button"
@@ -242,11 +254,9 @@ export default function RequestDetailPage() {
           </form>
         )}
 
-        {canReopen && (
+        {canReopen && !mode && (
           <button
-            onClick={() =>
-              mutation.mutate({ status: 'open', note: 'Reabierto' })
-            }
+            onClick={() => setMode('reopen')}
             disabled={mutation.isPending}
             className="mt-3 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
           >
