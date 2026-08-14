@@ -61,6 +61,7 @@ export default function OfferDetailPage() {
   const typeLabel = OFFER_TYPE_LABELS[offer.type] ?? offer.type
   const canClose = offer.status === 'open'
   const canReopen = offer.status === 'unavailable'
+  const inTransit = offer.status === 'in_transit'
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -105,6 +106,20 @@ export default function OfferDetailPage() {
         <ReporterContact reporter={offer.reporter} nameLabel="Ofrece" />
       </dl>
 
+      {inTransit && offer.claim && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <h2 className="text-sm font-semibold text-amber-900">
+            Compromiso de entrega
+          </h2>
+          <p className="mt-1 text-sm text-amber-800">
+            {offer.claim.claimerName
+              ? `${offer.claim.claimerName} se comprometió a llevar esta oferta el ${formatDate(offer.claim.claimedAt)}.`
+              : 'Alguien se comprometió a llevar esta oferta.'}{' '}
+            Coordina con esa persona y confirma la entrega cuando esté hecha.
+          </p>
+        </div>
+      )}
+
       {offer.lat !== null && offer.lng !== null && (
         <div className="mt-4">
           <Map
@@ -121,6 +136,8 @@ export default function OfferDetailPage() {
         <p className="mt-1 text-sm text-slate-600">
           {offer.status === 'open' &&
             'Si la oferta ya no está disponible, ciérrala con tu código para que otros no te busquen en vano.'}
+          {offer.status === 'in_transit' &&
+            'La oferta está en camino. Cuando se entregue, confírmalo con tu código; si el compromiso se cayó, reábrela para ofrecerla de nuevo.'}
           {offer.status === 'fulfilled' &&
             'Esta oferta ya se entregó y no se puede reabrir. Gracias por la ayuda.'}
           {offer.status === 'unavailable' &&
@@ -155,6 +172,29 @@ export default function OfferDetailPage() {
               className="rounded-md bg-gray-700 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
             >
               Ya no está disponible
+            </button>
+          </div>
+        )}
+
+        {!mode && inTransit && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                setCloseAs('fulfilled')
+                setMode('close')
+              }}
+              className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+            >
+              Confirmar entrega
+            </button>
+            <button
+              onClick={() => {
+                setCloseAs('open')
+                setMode('close')
+              }}
+              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            >
+              Reabrir oferta
             </button>
           </div>
         )}

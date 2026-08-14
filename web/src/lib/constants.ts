@@ -25,7 +25,7 @@ export const TRANSPORT_OPTIONS: TransportOption[] = ['can_transport', 'needs_tra
 
 export const TRANSPORT_LABELS: Record<TransportOption, string> = {
   can_transport: 'Puedo transportar',
-  needs_transport: 'Necesito transporte',
+  needs_transport: 'Necesita transporte',
 }
 
 export const URGENCY_META: Record<string, { label: string; color: string }> = {
@@ -48,6 +48,7 @@ export const REQUEST_STATUS_META: Record<string, { label: string; badgeClass: st
 
 export const OFFER_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
   open: { label: 'Disponible', badgeClass: 'bg-green-100 text-green-800' },
+  in_transit: { label: 'En camino', badgeClass: 'bg-amber-100 text-amber-800' },
   fulfilled: { label: 'Entregado', badgeClass: 'bg-blue-100 text-blue-800' },
   unavailable: { label: 'Ya no disponible', badgeClass: 'bg-gray-200 text-gray-700' },
 }

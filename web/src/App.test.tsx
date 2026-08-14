@@ -12,6 +12,12 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'Inicio' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Pedir ayuda' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ofrecer ayuda' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Centro de carga' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Llevar suministros (centro de carga)' }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Red de ayudas' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Informar' })).toBeInTheDocument()
     expect(

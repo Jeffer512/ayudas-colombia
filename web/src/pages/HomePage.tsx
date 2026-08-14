@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import AvisoCard from '../components/AvisoCard'
 import AvisoFiltersUi from '../components/AvisoFilters'
@@ -276,6 +277,12 @@ export default function HomePage() {
         <p className="mt-1 text-sm text-slate-600">
           Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
         </p>
+        <Link
+          to="/transporte"
+          className="mt-3 inline-flex items-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800"
+        >
+          Llevar suministros (centro de carga)
+        </Link>
       </div>
 
       <HomeMap

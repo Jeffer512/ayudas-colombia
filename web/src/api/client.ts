@@ -134,6 +134,10 @@ export const api = {
     })
   },
 
+  claimOffer(id: string): Promise<Offer> {
+    return http(`/offers/${id}/claim`, { method: 'POST' })
+  },
+
   avisos(filters: AvisoFilters): Promise<AvisoListResponse> {
     return http(`/avisos${buildQuery(filters)}`)
   },
@@ -247,7 +251,7 @@ export const api = {
     return http('/auth/logout', { method: 'POST' })
   },
 
-  me(): Promise<{ staff: Staff | null }> {
+  me(): Promise<{ authenticated: boolean; staff: Staff | null }> {
     return http('/auth/me')
   },
 }

@@ -20,7 +20,7 @@ export type TransportOption = 'can_transport' | 'needs_transport'
 export type Urgency = 'critical' | 'high' | 'medium' | 'low'
 
 export type RequestStatus = 'open' | 'in_progress' | 'resolved' | 'duplicate' | 'invalid'
-export type OfferStatus = 'open' | 'fulfilled' | 'unavailable'
+export type OfferStatus = 'open' | 'in_transit' | 'fulfilled' | 'unavailable'
 export type AvisoStatus = 'open' | 'closed'
 export type HelpOrgCategory = 'acopio' | 'psicologia' | 'voluntarios' | 'albergue' | 'other'
 export type HelpOrgType = 'ciudadano' | 'oficial'
@@ -84,6 +84,14 @@ export interface Request {
   events?: RequestEvent[]
 }
 
+export interface OfferClaim {
+  id: string
+  status: 'committed' | 'delivered' | 'cancelled'
+  claimerName: string | null
+  note: string | null
+  claimedAt: string
+}
+
 export interface Offer {
   id: string
   type: OfferType
@@ -96,6 +104,8 @@ export interface Offer {
   lng: number | null
   city: CityRef
   reporter: Reporter
+  claim: OfferClaim | null
+  canClaim: boolean
   resolvedAt: string | null
   createdAt: string
   updatedAt: string
@@ -167,6 +177,7 @@ export interface RequestFilters extends BaseFilters {
 export interface OfferFilters extends BaseFilters {
   type?: OfferType
   status?: OfferStatus | 'active'
+  forTransport?: boolean
 }
 
 export interface AvisoFilters extends BaseFilters {

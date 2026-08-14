@@ -41,6 +41,10 @@ const initialReporter: ReporterState = {
   email: '',
 }
 
+const OFFER_TYPE_CHOICES = Object.entries(OFFER_TYPE_LABELS).filter(
+  ([code]) => code !== 'transport_offered',
+)
+
 export default function CreateOfferPage() {
   const navigate = useNavigate()
   const [type, setType] = useState<OfferType | ''>('')
@@ -173,7 +177,7 @@ export default function CreateOfferPage() {
               <option value="" disabled>
                 Selecciona un tipo…
               </option>
-              {Object.entries(OFFER_TYPE_LABELS).map(([code, label]) => (
+              {OFFER_TYPE_CHOICES.map(([code, label]) => (
                 <option key={code} value={code}>
                   {label}
                 </option>
@@ -199,6 +203,12 @@ export default function CreateOfferPage() {
                   </option>
                 ))}
               </select>
+              {transport === 'needs_transport' && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Estas ofertas aparecen en el centro de carga para que alguien
+                  se comprometa a llevarlas.
+                </p>
+              )}
             </div>
           )}
 

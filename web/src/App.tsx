@@ -15,6 +15,7 @@ import VerifyEmailPage from './pages/VerifyEmailPage'
 import AvisoDetailPage from './pages/AvisoDetailPage'
 import OfferDetailPage from './pages/OfferDetailPage'
 import RequestDetailPage from './pages/RequestDetailPage'
+import TransportHubPage from './pages/TransportHubPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/pedir-ayuda" element={<CreateRequestPage />} />
             <Route path="/ofrecer-ayuda" element={<CreateOfferPage />} />
+            <Route path="/transporte" element={<TransportHubPage />} />
             <Route path="/informar" element={<CreateAvisoPage />} />
             <Route path="/pedido/:id" element={<RequestDetailPage />} />
             <Route path="/oferta/:id" element={<OfferDetailPage />} />

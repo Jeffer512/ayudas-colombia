@@ -114,6 +114,8 @@ const offersResponse: OfferListResponse = {
         whatsapp: null,
         email: null,
       },
+      claim: null,
+      canClaim: false,
       resolvedAt: null,
       createdAt: '2026-08-13T11:00:00Z',
       updatedAt: '2026-08-13T11:00:00Z',

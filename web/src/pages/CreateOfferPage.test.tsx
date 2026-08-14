@@ -64,7 +64,7 @@ describe('CreateOfferPage', () => {
     expect(options).toContain('Ofrezco suministros')
     expect(options).toContain('Me ofrezco como voluntario')
     expect(options).toContain('Refugio ofrecido')
-    expect(options).toContain('Ofrezco transporte')
+    expect(options).not.toContain('Ofrezco transporte')
     expect(options).not.toContain('Solicitud de suministros')
     expect(screen.queryByLabelText('Urgencia')).not.toBeInTheDocument()
   })
@@ -116,7 +116,7 @@ describe('CreateOfferPage', () => {
     const user = userEvent.setup()
     renderPage()
 
-    await user.selectOptions(await screen.findByLabelText('Tipo'), 'transport_offered')
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'volunteers_offered')
     expect(screen.queryByLabelText('Transporte')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Tipo'), 'supplies_offered')
@@ -141,5 +141,20 @@ describe('CreateOfferPage', () => {
         expect.objectContaining({ transport: 'can_transport' }),
       ),
     )
+  })
+
+  it('avisa que las ofertas que necesitan transporte aparecen en el centro de carga', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await user.selectOptions(
+      await screen.findByLabelText('Transporte'),
+      'needs_transport',
+    )
+
+    expect(
+      screen.getByText(/aparecen en el centro de carga/),
+    ).toBeInTheDocument()
   })
 })

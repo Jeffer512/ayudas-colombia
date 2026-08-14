@@ -39,6 +39,8 @@ const baseOffer: Offer = {
     whatsapp: null,
     email: null,
   },
+  claim: null,
+  canClaim: false,
   resolvedAt: null,
   createdAt: '2026-08-13T12:00:00Z',
   updatedAt: '2026-08-13T12:00:00Z',
@@ -144,6 +146,64 @@ describe('OfferDetailPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Código de cierre incorrecto',
+    )
+  })
+
+  it('muestra el compromiso cuando la oferta está en camino', async () => {
+    renderPage({
+      ...baseOffer,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        note: null,
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    expect(
+      await screen.findByText(
+        /Voluntaria se comprometió a llevar esta oferta/,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Confirmar entrega' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Reabrir oferta' }),
+    ).toBeInTheDocument()
+  })
+
+  it('confirma la entrega de una oferta en camino', async () => {
+    mockedUpdateStatus.mockResolvedValue({ ...baseOffer, status: 'fulfilled' })
+    const user = userEvent.setup()
+    renderPage({
+      ...baseOffer,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        note: null,
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Confirmar entrega' }),
+    )
+    await user.type(
+      screen.getByLabelText('Código de cierre (4 dígitos)'),
+      '1234',
+    )
+    await user.click(screen.getByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(mockedUpdateStatus).toHaveBeenCalledWith(
+        'o1',
+        expect.objectContaining({ status: 'fulfilled', resolveCode: '1234' }),
+      ),
     )
   })
 })
