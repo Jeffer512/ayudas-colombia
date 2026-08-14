@@ -137,7 +137,11 @@ export async function createOffer(input: CreateOfferInput) {
   return { ...serializeOffer(created), resolveCode: created.resolveCode }
 }
 
-export async function updateOfferStatus(id: string, input: UpdateOfferStatusInput) {
+export async function updateOfferStatus(
+  id: string,
+  input: UpdateOfferStatusInput,
+  isAdmin = false,
+) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
 
   const offer = await prisma.offer.findUnique({ where: { id } })
@@ -162,7 +166,7 @@ export async function updateOfferStatus(id: string, input: UpdateOfferStatusInpu
   }
 
   const code = (input.resolveCode ?? '').trim()
-  if (!offer.resolveCode || code !== offer.resolveCode) {
+  if (!isAdmin && (!offer.resolveCode || code !== offer.resolveCode)) {
     throw new ApiError(403, 'Código de cierre incorrecto')
   }
 

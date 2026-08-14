@@ -32,7 +32,7 @@ export type OfferFilters = z.infer<typeof offerFiltersSchema>
 
 export const updateOfferStatusSchema = z.object({
   status: z.enum(OFFER_STATUSES),
-  resolveCode: z.string().trim().min(4).max(6),
+  resolveCode: z.string().trim().min(4).max(6).optional(),
   note: z.string().trim().max(2000).optional(),
   actorName: z.string().trim().max(120).optional(),
 })

@@ -178,3 +178,16 @@ export async function markAviso(id: string, markerId?: string) {
   ])
   return getAviso(id)
 }
+
+export async function setAvisoStatus(id: string, status: 'open' | 'closed') {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Aviso no encontrado')
+
+  const aviso = await prisma.aviso.findUnique({ where: { id } })
+  if (!aviso) throw new ApiError(404, 'Aviso no encontrado')
+
+  if (status === 'open') {
+    await prisma.avisoMark.deleteMany({ where: { avisoId: id } })
+  }
+  await prisma.aviso.update({ where: { id }, data: { status } })
+  return getAviso(id)
+}

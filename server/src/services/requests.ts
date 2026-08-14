@@ -174,7 +174,11 @@ export async function createRequest(input: CreateRequestInput) {
   return { ...serializeRequest(created), resolveCode: created.resolveCode }
 }
 
-export async function updateRequestStatus(id: string, input: UpdateRequestStatusInput) {
+export async function updateRequestStatus(
+  id: string,
+  input: UpdateRequestStatusInput,
+  isAdmin = false,
+) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
   const request = await prisma.request.findUnique({ where: { id } })
@@ -196,7 +200,7 @@ export async function updateRequestStatus(id: string, input: UpdateRequestStatus
   let resolvedAt = request.resolvedAt
   if (input.status === 'resolved') {
     const code = (input.resolveCode ?? '').trim()
-    if (!request.resolveCode || code !== request.resolveCode) {
+    if (!isAdmin && (!request.resolveCode || code !== request.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
     resolvedAt = request.resolvedAt ?? new Date()
