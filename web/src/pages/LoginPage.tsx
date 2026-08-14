@@ -146,6 +146,12 @@ export default function LoginPage() {
           Regístrate
         </Link>
       </p>
+      <p className="mt-2 text-sm text-slate-600">
+        ¿Olvidaste tu contraseña?{' '}
+        <Link to="/recuperar-contrasena" className="font-medium text-sky-700 hover:underline">
+          Recupérala
+        </Link>
+      </p>
     </div>
   )
 }

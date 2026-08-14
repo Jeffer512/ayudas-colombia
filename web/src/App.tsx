@@ -12,6 +12,8 @@ import NewOrgPage from './pages/NewOrgPage'
 import RedDeAyudasPage from './pages/RedDeAyudasPage'
 import RegisterPage from './pages/RegisterPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import AvisoDetailPage from './pages/AvisoDetailPage'
 import OfferDetailPage from './pages/OfferDetailPage'
 import RequestDetailPage from './pages/RequestDetailPage'
@@ -46,6 +48,8 @@ export default function App() {
             <Route path="/iniciar-sesion" element={<LoginPage />} />
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/verificar-correo" element={<VerifyEmailPage />} />
+            <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
+            <Route path="/restablecer-contrasena" element={<ResetPasswordPage />} />
             <Route path="/mi-organizacion" element={<MyOrgPage />} />
           </Route>
         </Routes>

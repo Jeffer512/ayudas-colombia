@@ -243,6 +243,20 @@ export const api = {
     })
   },
 
+  forgotPassword(email: string): Promise<{ ok: boolean }> {
+    return http('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+  },
+
+  resetPassword(token: string, password: string): Promise<{ ok: boolean }> {
+    return http('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    })
+  },
+
   login(body: { email: string; password: string }): Promise<{ staff: Staff | null }> {
     return http('/auth/login', { method: 'POST', body: JSON.stringify(body) })
   },
