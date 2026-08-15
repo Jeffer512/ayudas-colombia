@@ -22,7 +22,7 @@ export type CreateOfferInput = z.infer<typeof createOfferSchema>
 export const offerFiltersSchema = z.object({
   type: z.enum(OFFER_TYPES).optional(),
   status: z.enum(['open', 'in_transit', 'fulfilled', 'unavailable', 'active']).optional(),
-  forTransport: z.enum(['true', 'false']).optional(),
+  forTransport: z.enum(['true', 'false', 'assigned']).optional(),
   city: z.string().trim().optional(),
   q: z.string().trim().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),

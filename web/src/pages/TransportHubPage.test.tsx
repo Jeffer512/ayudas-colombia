@@ -12,12 +12,14 @@ vi.mock('../api/client', () => ({
     offers: vi.fn(),
     me: vi.fn(),
     claimOffer: vi.fn(),
+    cancelClaim: vi.fn(),
   },
 }))
 
 const mockedOffers = vi.mocked(api.offers)
 const mockedMe = vi.mocked(api.me)
 const mockedClaim = vi.mocked(api.claimOffer)
+const mockedCancel = vi.mocked(api.cancelClaim)
 
 const transportOffer: Offer = {
   id: 'o1',
@@ -43,8 +45,31 @@ const transportOffer: Offer = {
   updatedAt: '2026-08-13T12:00:00Z',
 }
 
+const assignedOffer: Offer = {
+  ...transportOffer,
+  id: 'o2',
+  title: 'Colchonetas y cobijas',
+  status: 'in_transit',
+  canClaim: false,
+  claim: {
+    id: 'c1',
+    status: 'committed',
+    claimerName: 'Voluntaria',
+    mine: true,
+    note: null,
+    claimedAt: '2026-08-13T12:00:00Z',
+  },
+}
+
 const hubResponse: OfferListResponse = {
   offers: [transportOffer],
+  total: 1,
+  limit: 50,
+  offset: 0,
+}
+
+const assignedResponse: OfferListResponse = {
+  offers: [assignedOffer],
   total: 1,
   limit: 50,
   offset: 0,
@@ -63,29 +88,51 @@ function renderHub() {
   )
 }
 
+const loggedInMe: Awaited<ReturnType<typeof api.me>> = {
+  authenticated: true,
+  name: 'Voluntaria',
+  email: 'v@correo.org',
+  staff: {
+    id: 'm1',
+    userId: 'u1',
+    email: 'v@correo.org',
+    name: 'Voluntaria',
+    role: 'member',
+    orgId: 'org-1',
+    status: 'active',
+  },
+}
+
+function mockList() {
+  mockedOffers.mockImplementation((filters) =>
+    Promise.resolve(
+      filters?.forTransport === 'assigned' ? assignedResponse : hubResponse,
+    ),
+  )
+}
+
 describe('TransportHubPage', () => {
   beforeEach(() => {
     mockedOffers.mockReset()
     mockedMe.mockReset()
     mockedClaim.mockReset()
-    mockedOffers.mockResolvedValue(hubResponse)
+    mockedCancel.mockReset()
+    mockList()
   })
 
-  it('pide solo las ofertas del centro de carga', async () => {
+  it('pide las ofertas pendientes y las comprometidas', async () => {
     renderHub()
 
     await waitFor(() =>
       expect(mockedOffers).toHaveBeenCalledWith({ forTransport: true }),
     )
+    await waitFor(() =>
+      expect(mockedOffers).toHaveBeenCalledWith({ forTransport: 'assigned' }),
+    )
   })
 
   it('muestra las cargas disponibles con botón para comprometerse', async () => {
-    mockedMe.mockResolvedValue({
-      authenticated: true,
-      name: 'Voluntaria',
-      email: 'v@correo.org',
-      staff: { id: 'm1', userId: 'u1', email: 'v@correo.org', name: 'Voluntaria', role: 'member', orgId: 'org-1', status: 'active' },
-    })
+    mockedMe.mockResolvedValue(loggedInMe)
     renderHub()
 
     expect(
@@ -100,12 +147,7 @@ describe('TransportHubPage', () => {
   })
 
   it('reserva la oferta al hacer clic en el botón', async () => {
-    mockedMe.mockResolvedValue({
-      authenticated: true,
-      name: 'Voluntaria',
-      email: 'v@correo.org',
-      staff: { id: 'm1', userId: 'u1', email: 'v@correo.org', name: 'Voluntaria', role: 'member', orgId: 'org-1', status: 'active' },
-    })
+    mockedMe.mockResolvedValue(loggedInMe)
     mockedClaim.mockResolvedValue({ ...transportOffer, status: 'in_transit' })
     const user = userEvent.setup()
     renderHub()
@@ -115,6 +157,57 @@ describe('TransportHubPage', () => {
     )
 
     await waitFor(() => expect(mockedClaim).toHaveBeenCalledWith('o1'))
+  })
+
+  it('muestra las cargas comprometidas y el botón para cancelar el propio compromiso', async () => {
+    mockedMe.mockResolvedValue(loggedInMe)
+    mockedCancel.mockResolvedValue({
+      ...assignedOffer,
+      status: 'open',
+      claim: null,
+      canClaim: true,
+    })
+    const user = userEvent.setup()
+    renderHub()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Comprometidas' }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByText('Colchonetas y cobijas'),
+    ).toBeInTheDocument()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Cancelar compromiso' }),
+    )
+
+    await waitFor(() => expect(mockedCancel).toHaveBeenCalledWith('o2'))
+  })
+
+  it('no muestra el botón de cancelar para compromisos de otros', async () => {
+    mockedMe.mockResolvedValue(loggedInMe)
+    mockedOffers.mockImplementation((filters) =>
+      Promise.resolve(
+        filters?.forTransport === 'assigned'
+          ? {
+              offers: [
+                { ...assignedOffer, id: 'o3', claim: { ...assignedOffer.claim!, mine: false } },
+              ],
+              total: 1,
+              limit: 50,
+              offset: 0,
+            }
+          : hubResponse,
+      ),
+    )
+    renderHub()
+
+    expect(
+      await screen.findByText('Colchonetas y cobijas'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Cancelar compromiso' }),
+    ).not.toBeInTheDocument()
   })
 
   it('pide iniciar sesión cuando no hay usuario', async () => {

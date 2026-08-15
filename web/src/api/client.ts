@@ -138,6 +138,10 @@ export const api = {
     return http(`/offers/${id}/claim`, { method: 'POST' })
   },
 
+  cancelClaim(id: string): Promise<Offer> {
+    return http(`/offers/${id}/claim`, { method: 'DELETE' })
+  },
+
   avisos(filters: AvisoFilters): Promise<AvisoListResponse> {
     return http(`/avisos${buildQuery(filters)}`)
   },

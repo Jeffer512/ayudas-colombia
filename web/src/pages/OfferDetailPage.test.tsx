@@ -11,6 +11,7 @@ vi.mock('../api/client', () => ({
   api: {
     offer: vi.fn(),
     updateOfferStatus: vi.fn(),
+    cancelClaim: vi.fn(),
   },
 }))
 
@@ -21,6 +22,7 @@ vi.mock('../components/Map', () => ({
 
 const mockedOffer = vi.mocked(api.offer)
 const mockedUpdateStatus = vi.mocked(api.updateOfferStatus)
+const mockedCancel = vi.mocked(api.cancelClaim)
 
 const baseOffer: Offer = {
   id: 'o1',
@@ -66,6 +68,7 @@ describe('OfferDetailPage', () => {
   beforeEach(() => {
     mockedOffer.mockReset()
     mockedUpdateStatus.mockReset()
+    mockedCancel.mockReset()
   })
 
   it('muestra la información de la oferta sin urgencia ni historial', async () => {
@@ -157,6 +160,7 @@ describe('OfferDetailPage', () => {
         id: 'c1',
         status: 'committed',
         claimerName: 'Voluntaria',
+        mine: false,
         note: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
@@ -185,6 +189,7 @@ describe('OfferDetailPage', () => {
         id: 'c1',
         status: 'committed',
         claimerName: 'Voluntaria',
+        mine: false,
         note: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
@@ -205,5 +210,55 @@ describe('OfferDetailPage', () => {
         expect.objectContaining({ status: 'fulfilled', resolveCode: '1234' }),
       ),
     )
+  })
+
+  it('permite a quien se comprometió cancelar el compromiso', async () => {
+    mockedCancel.mockResolvedValue({
+      ...baseOffer,
+      status: 'open',
+      claim: null,
+      canClaim: true,
+    })
+    const user = userEvent.setup()
+    renderPage({
+      ...baseOffer,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        mine: true,
+        note: null,
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Cancelar compromiso' }),
+    )
+
+    await waitFor(() => expect(mockedCancel).toHaveBeenCalledWith('o1'))
+  })
+
+  it('no muestra el botón de cancelar para compromisos de otros', async () => {
+    renderPage({
+      ...baseOffer,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        mine: false,
+        note: null,
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    expect(
+      await screen.findByRole('button', { name: 'Confirmar entrega' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Cancelar compromiso' }),
+    ).not.toBeInTheDocument()
   })
 })

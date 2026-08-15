@@ -28,7 +28,7 @@ function generateResolveCode(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
 
-export function serializeOffer(offer: SerializedOffer) {
+export function serializeOffer(offer: SerializedOffer, currentUserId?: string) {
   const activeClaim = (offer.claims ?? []).find((c) => c.status === 'committed')
 
   return {
@@ -56,6 +56,7 @@ export function serializeOffer(offer: SerializedOffer) {
           id: activeClaim.id,
           status: activeClaim.status,
           claimerName: activeClaim.claimer?.name ?? null,
+          mine: currentUserId != null && activeClaim.claimerId === currentUserId,
           note: activeClaim.note ?? null,
           claimedAt: activeClaim.claimedAt,
         }
@@ -85,12 +86,12 @@ const OFFER_INCLUDE = {
   },
 }
 
-export async function listOffers(filters: OfferFilters) {
+export async function listOffers(filters: OfferFilters, currentUserId?: string) {
   const where: Record<string, unknown> = {}
-  if (filters.forTransport === 'true') {
+  if (filters.forTransport === 'true' || filters.forTransport === 'assigned') {
     where.type = 'supplies_offered'
     where.transport = 'needs_transport'
-    where.status = 'open'
+    where.status = filters.forTransport === 'assigned' ? 'in_transit' : 'open'
   } else {
     if (filters.type) where.type = filters.type
     if (filters.status === 'active') {
@@ -123,14 +124,14 @@ export async function listOffers(filters: OfferFilters) {
   ])
 
   return {
-    offers: offers.map(serializeOffer),
+    offers: offers.map((offer) => serializeOffer(offer, currentUserId)),
     total,
     limit,
     offset,
   }
 }
 
-export async function getOffer(id: string) {
+export async function getOffer(id: string, currentUserId?: string) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
 
   const offer = await prisma.offer.findUnique({
@@ -138,7 +139,7 @@ export async function getOffer(id: string) {
     include: OFFER_INCLUDE,
   })
   if (!offer) throw new ApiError(404, 'Oferta no encontrada')
-  return serializeOffer(offer)
+  return serializeOffer(offer, currentUserId)
 }
 
 export async function claimOffer(id: string, userId: string) {
@@ -172,7 +173,38 @@ export async function claimOffer(id: string, userId: string) {
     }),
   ])
 
-  return getOffer(id)
+  return getOffer(id, userId)
+}
+
+export async function cancelClaim(id: string, userId: string) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
+
+  const offer = await prisma.offer.findUnique({
+    where: { id },
+    include: {
+      claims: { where: { status: 'committed' }, take: 1 },
+    },
+  })
+  if (!offer) throw new ApiError(404, 'Oferta no encontrada')
+  if (offer.status !== 'in_transit') {
+    throw new ApiError(409, 'Esta oferta no está siendo transportada')
+  }
+  if (!offer.claims.some((claim) => claim.claimerId === userId)) {
+    throw new ApiError(403, 'Solo quien se comprometió puede cancelar el compromiso')
+  }
+
+  await prisma.$transaction([
+    prisma.offerClaim.updateMany({
+      where: { offerId: id, status: 'committed', claimerId: userId },
+      data: { status: 'cancelled', resolvedAt: new Date() },
+    }),
+    prisma.offer.update({
+      where: { id },
+      data: { status: 'open', resolvedAt: null },
+    }),
+  ])
+
+  return getOffer(id, userId)
 }
 
 export async function createOffer(input: CreateOfferInput) {

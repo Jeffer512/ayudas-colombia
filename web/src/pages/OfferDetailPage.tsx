@@ -43,6 +43,14 @@ export default function OfferDetailPage() {
     },
   })
 
+  const cancelClaimMutation = useMutation({
+    mutationFn: () => api.cancelClaim(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['offer', id] })
+      queryClient.invalidateQueries({ queryKey: ['offers'] })
+    },
+  })
+
   if (isPending) {
     return <p role="status">Cargando oferta…</p>
   }
@@ -117,6 +125,27 @@ export default function OfferDetailPage() {
               : 'Alguien se comprometió a llevar esta oferta.'}{' '}
             Coordina con esa persona y confirma la entrega cuando esté hecha.
           </p>
+          {offer.claim.mine && (
+            <>
+              {cancelClaimMutation.isError && (
+                <div
+                  role="alert"
+                  className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  {(cancelClaimMutation.error as Error).message}
+                </div>
+              )}
+              <button
+                onClick={() => cancelClaimMutation.mutate()}
+                disabled={cancelClaimMutation.isPending}
+                className="mt-3 inline-block rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+              >
+                {cancelClaimMutation.isPending
+                  ? 'Cancelando…'
+                  : 'Cancelar compromiso'}
+              </button>
+            </>
+          )}
         </div>
       )}
 

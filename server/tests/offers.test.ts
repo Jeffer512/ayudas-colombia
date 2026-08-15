@@ -177,6 +177,25 @@ describe('GET /api/offers con forTransport', () => {
       status: 'open',
     })
   })
+
+  it('solo muestra ofertas de suministros que necesitan transporte y ya fueron comprometidas', async () => {
+    const agent = await loginCitizen()
+    const claimed = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${claimed.id}/claim`)
+    await createOffer({ transport: 'needs_transport' })
+    await createOffer({ transport: 'needs_transport', status: 'fulfilled', resolvedAt: new Date() })
+
+    const res = await request(app).get('/api/offers').query({ forTransport: 'assigned' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.offers).toHaveLength(1)
+    expect(res.body.offers[0]).toMatchObject({
+      type: 'supplies_offered',
+      transport: 'needs_transport',
+      status: 'in_transit',
+      claim: { status: 'committed', mine: false },
+    })
+  })
 })
 
 describe('POST /api/offers/:id/claim', () => {
@@ -263,5 +282,73 @@ describe('POST /api/offers/:id/claim', () => {
     const hub = await request(app).get('/api/offers').query({ forTransport: 'true' })
     expect(hub.body.offers).toHaveLength(1)
     expect(hub.body.offers[0].canClaim).toBe(true)
+  })
+
+  it('marca la oferta como de quien la reclama cuando está logueado', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+
+    const res = await agent.post(`/api/offers/${offer.id}/claim`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.claim).toMatchObject({ status: 'committed', mine: true })
+  })
+})
+
+describe('DELETE /api/offers/:id/claim', () => {
+  it('requiere sesión', async () => {
+    const offer = await createOffer({ transport: 'needs_transport' })
+    const res = await request(app).delete(`/api/offers/${offer.id}/claim`)
+    expect(res.status).toBe(401)
+  })
+
+  it('cancela el compromiso de quien la reclamó y vuelve a abrir la oferta', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${offer.id}/claim`)
+
+    const res = await agent.delete(`/api/offers/${offer.id}/claim`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({
+      status: 'open',
+      canClaim: true,
+      claim: null,
+    })
+
+    const claim = await prisma.offerClaim.findFirst({ where: { offerId: offer.id } })
+    expect(claim?.status).toBe('cancelled')
+    expect(claim?.resolvedAt).not.toBeNull()
+
+    const hub = await request(app).get('/api/offers').query({ forTransport: 'true' })
+    expect(hub.body.offers).toHaveLength(1)
+    expect(hub.body.offers[0].canClaim).toBe(true)
+  })
+
+  it('impide cancelar el compromiso de otro usuario', async () => {
+    const claimer = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await claimer.post(`/api/offers/${offer.id}/claim`)
+
+    const other = await loginCitizen('otra@correo.org')
+    const res = await other.delete(`/api/offers/${offer.id}/claim`)
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe(
+      'Solo quien se comprometió puede cancelar el compromiso',
+    )
+
+    const claim = await prisma.offerClaim.findFirst({ where: { offerId: offer.id } })
+    expect(claim?.status).toBe('committed')
+  })
+
+  it('rechaza cancelar una oferta que no está en tránsito', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+
+    const res = await agent.delete(`/api/offers/${offer.id}/claim`)
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('Esta oferta no está siendo transportada')
   })
 })

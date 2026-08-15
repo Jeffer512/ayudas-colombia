@@ -89,6 +89,7 @@ export interface OfferClaim {
   id: string
   status: 'committed' | 'delivered' | 'cancelled'
   claimerName: string | null
+  mine: boolean
   note: string | null
   claimedAt: string
 }
@@ -178,7 +179,7 @@ export interface RequestFilters extends BaseFilters {
 export interface OfferFilters extends BaseFilters {
   type?: OfferType
   status?: OfferStatus | 'active'
-  forTransport?: boolean
+  forTransport?: boolean | 'assigned'
 }
 
 export interface AvisoFilters extends BaseFilters {

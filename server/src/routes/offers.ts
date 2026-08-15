@@ -1,8 +1,9 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { asyncHandler } from '../middleware/asyncHandler.js'
-import { requireSession } from '../middleware/requireSession.js'
+import { currentSession, requireSession } from '../middleware/requireSession.js'
 import {
+  cancelClaim,
   claimOffer,
   createOffer,
   getOffer,
@@ -37,14 +38,14 @@ offersRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const filters = offerFiltersSchema.parse(req.query)
-    res.json(await listOffers(filters))
+    res.json(await listOffers(filters, currentSession(req)?.sub))
   }),
 )
 
 offersRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getOffer(String(req.params.id)))
+    res.json(await getOffer(String(req.params.id), currentSession(req)?.sub))
   }),
 )
 
@@ -72,6 +73,15 @@ offersRouter.post(
   requireSession,
   asyncHandler(async (req, res) => {
     const offer = await claimOffer(String(req.params.id), req.staff!.sub)
+    res.json(offer)
+  }),
+)
+
+offersRouter.delete(
+  '/:id/claim',
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const offer = await cancelClaim(String(req.params.id), req.staff!.sub)
     res.json(offer)
   }),
 )
