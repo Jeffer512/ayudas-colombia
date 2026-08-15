@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { currentSession } from '../middleware/requireSession.js'
+import { viewerFromSession } from '../lib/viewer.js'
 import {
   createAviso,
   getAviso,
@@ -35,14 +37,14 @@ avisosRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const filters = avisoFiltersSchema.parse(req.query)
-    res.json(await listAvisos(filters))
+    res.json(await listAvisos(filters, viewerFromSession(currentSession(req))))
   }),
 )
 
 avisosRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getAviso(String(req.params.id)))
+    res.json(await getAviso(String(req.params.id), viewerFromSession(currentSession(req))))
   }),
 )
 
@@ -51,7 +53,7 @@ avisosRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createAvisoSchema.parse(req.body)
-    const created = await createAviso(input)
+    const created = await createAviso(input, viewerFromSession(currentSession(req)))
     res.status(201).json(created)
   }),
 )

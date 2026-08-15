@@ -2,6 +2,7 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { currentSession, requireSession } from '../middleware/requireSession.js'
+import { viewerFromSession } from '../lib/viewer.js'
 import {
   cancelClaim,
   claimOffer,
@@ -38,14 +39,14 @@ offersRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const filters = offerFiltersSchema.parse(req.query)
-    res.json(await listOffers(filters, currentSession(req)?.sub))
+    res.json(await listOffers(filters, viewerFromSession(currentSession(req))))
   }),
 )
 
 offersRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getOffer(String(req.params.id), currentSession(req)?.sub))
+    res.json(await getOffer(String(req.params.id), viewerFromSession(currentSession(req))))
   }),
 )
 
@@ -54,7 +55,7 @@ offersRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createOfferSchema.parse(req.body)
-    const created = await createOffer(input, currentSession(req)?.sub)
+    const created = await createOffer(input, viewerFromSession(currentSession(req)))
     res.status(201).json(created)
   }),
 )
@@ -69,7 +70,7 @@ offersRouter.post(
         String(req.params.id),
         input,
         false,
-        currentSession(req)?.sub,
+        viewerFromSession(currentSession(req)),
       ),
     )
   }),
@@ -79,7 +80,7 @@ offersRouter.post(
   '/:id/claim',
   requireSession,
   asyncHandler(async (req, res) => {
-    const offer = await claimOffer(String(req.params.id), req.staff!.sub)
+    const offer = await claimOffer(String(req.params.id), viewerFromSession(req.staff))
     res.json(offer)
   }),
 )
@@ -88,7 +89,7 @@ offersRouter.delete(
   '/:id/claim',
   requireSession,
   asyncHandler(async (req, res) => {
-    const offer = await cancelClaim(String(req.params.id), req.staff!.sub)
+    const offer = await cancelClaim(String(req.params.id), viewerFromSession(req.staff))
     res.json(offer)
   }),
 )

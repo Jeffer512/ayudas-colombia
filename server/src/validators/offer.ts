@@ -4,7 +4,12 @@ import {
   OFFER_TYPES,
   TRANSPORT_OPTIONS,
 } from '../constants.js'
-import { cityCodeSchema, coordinatesSchema, reporterSchema } from './common.js'
+import {
+  cityCodeSchema,
+  contactVisibilitySchema,
+  coordinatesSchema,
+  reporterSchema,
+} from './common.js'
 
 export const createOfferSchema = z.object({
   type: z.enum(OFFER_TYPES, { message: 'Tipo de oferta inválido' }),
@@ -15,6 +20,10 @@ export const createOfferSchema = z.object({
   ...coordinatesSchema.shape,
   cityCode: cityCodeSchema,
   reporter: reporterSchema,
+  contactVisibility: contactVisibilitySchema,
+  audience: z
+    .enum(['public', 'users', 'orgs'], { message: 'Audiencia inválida' })
+    .optional(),
 })
 
 export type CreateOfferInput = z.infer<typeof createOfferSchema>

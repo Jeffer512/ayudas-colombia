@@ -38,3 +38,9 @@ export const coordinatesSchema = z.object({
 })
 
 export const cityCodeSchema = z.string().trim().min(1, 'Ciudad requerida').max(60)
+
+export const contactVisibilitySchema = z
+  .enum(['public', 'users'], {
+    message: 'Visibilidad de contacto inválida',
+  })
+  .default('public')

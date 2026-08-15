@@ -3,6 +3,7 @@ import { URGENCIES } from '../constants.js'
 import {
   anonymousReporterSchema,
   cityCodeSchema,
+  contactVisibilitySchema,
   coordinatesSchema,
 } from './common.js'
 
@@ -14,6 +15,7 @@ export const createAvisoSchema = z.object({
   ...coordinatesSchema.shape,
   cityCode: cityCodeSchema,
   reporter: anonymousReporterSchema,
+  contactVisibility: contactVisibilitySchema,
 })
 
 export type CreateAvisoInput = z.infer<typeof createAvisoSchema>

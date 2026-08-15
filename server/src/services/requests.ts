@@ -8,6 +8,8 @@ import type {
   RequestFilters,
   UpdateRequestStatusInput,
 } from '../validators/request.js'
+import type { Viewer } from '../lib/viewer.js'
+import { canSeeContact, isOwner } from '../lib/viewer.js'
 
 type SerializedRequest = Request & {
   city: City
@@ -38,12 +40,15 @@ export function serializeRequest(
   request: SerializedRequest,
   helperCount = 0,
   helperList?: { name: string | null; note: string | null; createdAt: Date }[],
-  currentUserId?: string,
+  viewer?: Viewer,
 ) {
+  const ownerId = request.reporter.userId
+  const contactVisibility = (request.contactVisibility ?? 'public') as 'public' | 'users'
+  const contactRestricted = !canSeeContact(contactVisibility, viewer, ownerId)
+
   return {
     id: request.id,
-    isOwner:
-      currentUserId != null && request.reporter.userId === currentUserId,
+    isOwner: isOwner(viewer, ownerId),
     type: request.type,
     transport: request.transport ?? null,
     urgency: request.urgency,
@@ -60,10 +65,12 @@ export function serializeRequest(
     },
     reporter: {
       name: request.reporter.name,
-      phone: request.reporter.phone ?? null,
-      whatsapp: request.reporter.whatsapp ?? null,
-      email: request.reporter.email ?? null,
+      phone: contactRestricted ? null : (request.reporter.phone ?? null),
+      whatsapp: contactRestricted ? null : (request.reporter.whatsapp ?? null),
+      email: contactRestricted ? null : (request.reporter.email ?? null),
     },
+    contactVisibility,
+    contactRestricted,
     organization: request.org
       ? { id: request.org.id, name: request.org.name, category: request.org.category }
       : null,
@@ -90,7 +97,7 @@ export function serializeRequest(
   }
 }
 
-export async function listRequests(filters: RequestFilters) {
+export async function listRequests(filters: RequestFilters, viewer?: Viewer) {
   const where: Record<string, unknown> = {}
   if (filters.type) where.type = filters.type
   if (filters.status === 'active') {
@@ -134,7 +141,7 @@ export async function listRequests(filters: RequestFilters) {
 
   return {
     requests: requests.map((request) =>
-      serializeRequest(request, helpersById.get(request.id) ?? 0),
+      serializeRequest(request, helpersById.get(request.id) ?? 0, undefined, viewer),
     ),
     total,
     limit,
@@ -142,7 +149,7 @@ export async function listRequests(filters: RequestFilters) {
   }
 }
 
-export async function getRequest(id: string, currentUserId?: string) {
+export async function getRequest(id: string, viewer?: Viewer) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
   const [request, helpers, helperList] = await prisma.$transaction([
@@ -163,10 +170,10 @@ export async function getRequest(id: string, currentUserId?: string) {
     }),
   ])
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
-  return serializeRequest(request, helpers, helperList, currentUserId)
+  return serializeRequest(request, helpers, helperList, viewer)
 }
 
-export async function createRequest(input: CreateRequestInput, currentUserId?: string) {
+export async function createRequest(input: CreateRequestInput, viewer?: Viewer) {
   const city = await prisma.city.findUnique({ where: { code: input.cityCode } })
   if (!city) throw new ApiError(400, `Ciudad no encontrada: ${input.cityCode}`)
 
@@ -189,7 +196,7 @@ export async function createRequest(input: CreateRequestInput, currentUserId?: s
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
-        userId: currentUserId ?? null,
+        userId: viewer?.sub ?? null,
         name: input.reporter.name,
         phone: input.reporter.phone ?? null,
         whatsapp: input.reporter.whatsapp ?? null,
@@ -211,6 +218,7 @@ export async function createRequest(input: CreateRequestInput, currentUserId?: s
         lng: input.lng ?? null,
         cityId: city.id,
         reporterId: reporter.id,
+        contactVisibility: input.contactVisibility,
         resolveCode: generateResolveCode(),
         events: {
           create: [
@@ -226,7 +234,7 @@ export async function createRequest(input: CreateRequestInput, currentUserId?: s
     })
   })
 
-  return { ...serializeRequest(created, 0, undefined, currentUserId), resolveCode: created.resolveCode }
+  return { ...serializeRequest(created, 0, undefined, viewer), resolveCode: created.resolveCode }
 }
 
 export async function helpRequest(id: string, input: HelpRequestInput) {
@@ -261,7 +269,7 @@ export async function updateRequestStatus(
   id: string,
   input: UpdateRequestStatusInput,
   isAdmin = false,
-  currentUserId?: string,
+  viewer?: Viewer,
 ) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
@@ -271,11 +279,11 @@ export async function updateRequestStatus(
   })
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const isOwner = currentUserId != null && request.reporter.userId === currentUserId
+  const isOwnerFlag = isOwner(viewer, request.reporter.userId)
 
   const from = request.status
   if (from === input.status) {
-    return getRequest(id, currentUserId)
+    return getRequest(id, viewer)
   }
 
   const allowed = TRANSITIONS[from] ?? []
@@ -289,14 +297,14 @@ export async function updateRequestStatus(
   let resolvedAt = request.resolvedAt
   if (input.status === 'resolved') {
     const code = (input.resolveCode ?? '').trim()
-    if (!isAdmin && !isOwner && (!request.resolveCode || code !== request.resolveCode)) {
+    if (!isAdmin && !isOwnerFlag && (!request.resolveCode || code !== request.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
     resolvedAt = request.resolvedAt ?? new Date()
   } else if (input.status === 'open') {
     if (
       !isAdmin &&
-      !isOwner &&
+      !isOwnerFlag &&
       CLOSED_STATES.includes(from) &&
       (!request.resolveCode || (input.resolveCode ?? '').trim() !== request.resolveCode)
     ) {
@@ -320,7 +328,7 @@ export async function updateRequestStatus(
     }),
   ])
 
-  return getRequest(id, currentUserId)
+  return getRequest(id, viewer)
 }
 
 export async function closeStaleRequests() {

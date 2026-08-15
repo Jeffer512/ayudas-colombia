@@ -2,6 +2,8 @@ import type { Aviso, City, Reporter } from '@prisma/client'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type { AvisoFilters, CreateAvisoInput } from '../validators/aviso.js'
+import type { Viewer } from '../lib/viewer.js'
+import { canSeeContact, isOwner } from '../lib/viewer.js'
 
 const MARK_THRESHOLD = 3
 
@@ -9,9 +11,17 @@ type SerializedAviso = Aviso & { city: City; reporter: Reporter }
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-export function serializeAviso(aviso: SerializedAviso, marks = 0) {
+export function serializeAviso(aviso: SerializedAviso, marks = 0, viewer?: Viewer) {
+  const contactVisibility = (aviso.contactVisibility ?? 'public') as 'public' | 'users'
+  const contactRestricted = !canSeeContact(
+    contactVisibility,
+    viewer,
+    aviso.reporter.userId,
+  )
+
   return {
     id: aviso.id,
+    isOwner: isOwner(viewer, aviso.reporter.userId),
     type: aviso.type,
     urgency: aviso.urgency,
     status: aviso.status,
@@ -26,10 +36,12 @@ export function serializeAviso(aviso: SerializedAviso, marks = 0) {
     },
     reporter: {
       name: aviso.reporter.name,
-      phone: aviso.reporter.phone ?? null,
-      whatsapp: aviso.reporter.whatsapp ?? null,
-      email: aviso.reporter.email ?? null,
+      phone: contactRestricted ? null : (aviso.reporter.phone ?? null),
+      whatsapp: contactRestricted ? null : (aviso.reporter.whatsapp ?? null),
+      email: contactRestricted ? null : (aviso.reporter.email ?? null),
     },
+    contactVisibility,
+    contactRestricted,
     marks,
     createdAt: aviso.createdAt,
     updatedAt: aviso.updatedAt,
@@ -55,7 +67,7 @@ async function buildWhere(filters: AvisoFilters) {
   return where
 }
 
-export async function listAvisos(filters: AvisoFilters) {
+export async function listAvisos(filters: AvisoFilters, viewer?: Viewer) {
   const where = await buildWhere(filters)
   const limit = filters.limit ?? 50
   const offset = filters.offset ?? 0
@@ -82,7 +94,7 @@ export async function listAvisos(filters: AvisoFilters) {
 
   return {
     avisos: avisos.map((aviso) =>
-      serializeAviso(aviso, marksById.get(aviso.id) ?? 0),
+      serializeAviso(aviso, marksById.get(aviso.id) ?? 0, viewer),
     ),
     total,
     limit,
@@ -90,7 +102,7 @@ export async function listAvisos(filters: AvisoFilters) {
   }
 }
 
-export async function getAviso(id: string) {
+export async function getAviso(id: string, viewer?: Viewer) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Aviso no encontrado')
 
   const [aviso, marks] = await prisma.$transaction([
@@ -101,10 +113,10 @@ export async function getAviso(id: string) {
     prisma.avisoMark.count({ where: { avisoId: id } }),
   ])
   if (!aviso) throw new ApiError(404, 'Aviso no encontrado')
-  return serializeAviso(aviso, marks)
+  return serializeAviso(aviso, marks, viewer)
 }
 
-export async function createAviso(input: CreateAvisoInput) {
+export async function createAviso(input: CreateAvisoInput, viewer?: Viewer) {
   const city = await prisma.city.findUnique({ where: { code: input.cityCode } })
   if (!city) throw new ApiError(400, `Ciudad no encontrada: ${input.cityCode}`)
 
@@ -130,12 +142,13 @@ export async function createAviso(input: CreateAvisoInput) {
         lng: input.lng ?? null,
         cityId: city.id,
         reporterId: reporter.id,
+        contactVisibility: input.contactVisibility,
       },
       include: { reporter: true, city: true },
     })
   })
 
-  return serializeAviso(created, 0)
+  return serializeAviso(created, 0, viewer)
 }
 
 export async function markAviso(id: string, markerId?: string) {

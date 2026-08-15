@@ -276,6 +276,7 @@ export async function createOrgRequest(
         cityId: city.id,
         reporterId: reporter.id,
         helpOrgId: org.id,
+        contactVisibility: input.contactVisibility,
         resolveCode: generateResolveCode(),
         events: {
           create: [
@@ -303,6 +304,7 @@ export async function createOrgRequest(
     status: created.status,
     title: created.title,
     city: { code: created.city.code, name: created.city.name },
+    contactVisibility: created.contactVisibility,
     resolveCode: created.resolveCode,
     organization: { id: org.id, name: org.name, category: org.category },
   }

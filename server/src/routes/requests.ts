@@ -2,6 +2,7 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { currentSession } from '../middleware/requireSession.js'
+import { viewerFromSession } from '../lib/viewer.js'
 import {
   createRequest,
   getRequest,
@@ -38,14 +39,14 @@ requestsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const filters = requestFiltersSchema.parse(req.query)
-    res.json(await listRequests(filters))
+    res.json(await listRequests(filters, viewerFromSession(currentSession(req))))
   }),
 )
 
 requestsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getRequest(String(req.params.id), currentSession(req)?.sub))
+    res.json(await getRequest(String(req.params.id), viewerFromSession(currentSession(req))))
   }),
 )
 
@@ -54,7 +55,7 @@ requestsRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createRequestSchema.parse(req.body)
-    const created = await createRequest(input, currentSession(req)?.sub)
+    const created = await createRequest(input, viewerFromSession(currentSession(req)))
     res.status(201).json(created)
   }),
 )
@@ -69,7 +70,7 @@ requestsRouter.post(
         String(req.params.id),
         input,
         false,
-        currentSession(req)?.sub,
+        viewerFromSession(currentSession(req)),
       ),
     )
   }),

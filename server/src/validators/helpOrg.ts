@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { HELP_ORG_CATEGORIES, HELP_ORG_ITEM_KINDS } from '../constants.js'
+import { contactVisibilitySchema } from './common.js'
 
 export const createHelpOrgSchema = z.object({
   name: z.string().trim().min(2, 'Nombre requerido').max(140),
@@ -48,6 +49,7 @@ export const createOrgRequestSchema = z.object({
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
   cityCode: z.string().trim().min(1, 'Ciudad requerida').max(60),
+  contactVisibility: contactVisibilitySchema,
 })
 
 export type CreateOrgRequestInput = z.infer<typeof createOrgRequestSchema>

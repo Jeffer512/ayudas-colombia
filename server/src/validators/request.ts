@@ -5,7 +5,7 @@ import {
   TRANSPORT_OPTIONS,
   URGENCIES,
 } from '../constants.js'
-import { cityCodeSchema, coordinatesSchema, reporterSchema } from './common.js'
+import { cityCodeSchema, contactVisibilitySchema, coordinatesSchema, reporterSchema } from './common.js'
 
 const PHOTO_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]*={0,2}$/
 
@@ -23,6 +23,7 @@ const base = z.object({
   ...coordinatesSchema.shape,
   cityCode: cityCodeSchema,
   reporter: reporterSchema,
+  contactVisibility: contactVisibilitySchema,
 })
 
 export const createRequestSchema = base.extend({

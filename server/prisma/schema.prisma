@@ -76,10 +76,11 @@ model Request {
   address     String?
   lat         Float?
   lng         Float?
-  cityId      Int      @map("city_id")
-  reporterId  String   @map("reporter_id")
-  helpOrgId   String?  @map("help_org_id")
-  resolveCode String   @default("0000") @map("resolve_code")
+  cityId           Int      @map("city_id")
+  reporterId       String   @map("reporter_id")
+  helpOrgId        String?  @map("help_org_id")
+  contactVisibility String  @default("public") @map("contact_visibility")
+  resolveCode      String   @default("0000") @map("resolve_code")
   resolvedAt  DateTime? @map("resolved_at")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -135,12 +136,14 @@ model Offer {
   address     String?
   lat         Float?
   lng         Float?
-  cityId      Int      @map("city_id")
-  reporterId  String   @map("reporter_id")
-  resolveCode String   @default("0000") @map("resolve_code")
-  resolvedAt  DateTime? @map("resolved_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  cityId           Int      @map("city_id")
+  reporterId       String   @map("reporter_id")
+  contactVisibility String  @default("public") @map("contact_visibility")
+  audience         String   @default("public") @map("audience")
+  resolveCode      String   @default("0000") @map("resolve_code")
+  resolvedAt       DateTime? @map("resolved_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   city     City          @relation(fields: [cityId], references: [id])
   reporter Reporter      @relation(fields: [reporterId], references: [id], onDelete: Cascade)
@@ -182,6 +185,7 @@ model Aviso {
   lng         Float?
   cityId      Int      @map("city_id")
   reporterId  String   @map("reporter_id")
+  contactVisibility String  @default("public") @map("contact_visibility")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

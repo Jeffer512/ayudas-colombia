@@ -80,3 +80,9 @@ export const CATEGORY_TO_ORG_TYPE: Record<HelpOrgCategory, OrganizationType> = {
   albergue: 'shelter',
   other: 'other',
 }
+
+export const CONTACT_VISIBILITIES = ['public', 'users'] as const
+export type ContactVisibility = (typeof CONTACT_VISIBILITIES)[number]
+
+export const OFFER_AUDIENCES = ['public', 'users', 'orgs'] as const
+export type OfferAudience = (typeof OFFER_AUDIENCES)[number]
