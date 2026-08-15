@@ -293,6 +293,25 @@ describe('POST /api/offers/:id/claim', () => {
     expect(res.status).toBe(200)
     expect(res.body.claim).toMatchObject({ status: 'committed', mine: true })
   })
+
+  it('solo deja que uno de dos reclamos simultáneos gane', async () => {
+    const a = await loginCitizen()
+    const b = await loginCitizen('segunda@correo.org')
+    const offer = await createOffer({ transport: 'needs_transport' })
+
+    const [ra, rb] = await Promise.all([
+      a.post(`/api/offers/${offer.id}/claim`),
+      b.post(`/api/offers/${offer.id}/claim`),
+    ])
+
+    const statuses = [ra.status, rb.status].sort()
+    expect(statuses).toEqual([200, 409])
+
+    const committed = await prisma.offerClaim.count({
+      where: { offerId: offer.id, status: 'committed' },
+    })
+    expect(committed).toBe(1)
+  })
 })
 
 describe('DELETE /api/offers/:id/claim', () => {
@@ -350,5 +369,27 @@ describe('DELETE /api/offers/:id/claim', () => {
 
     expect(res.status).toBe(409)
     expect(res.body.error).toBe('Esta oferta no está siendo transportada')
+  })
+
+  it('solo deja que uno de dos cancelaciones simultáneas gane', async () => {
+    const agent = await loginCitizen()
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${offer.id}/claim`)
+
+    const [ra, rb] = await Promise.all([
+      agent.delete(`/api/offers/${offer.id}/claim`),
+      agent.delete(`/api/offers/${offer.id}/claim`),
+    ])
+
+    const statuses = [ra.status, rb.status].sort()
+    expect(statuses).toEqual([200, 409])
+
+    const offerRow = await prisma.offer.findUnique({ where: { id: offer.id } })
+    expect(offerRow?.status).toBe('open')
+
+    const cancelled = await prisma.offerClaim.count({
+      where: { offerId: offer.id, status: 'cancelled' },
+    })
+    expect(cancelled).toBe(1)
   })
 })

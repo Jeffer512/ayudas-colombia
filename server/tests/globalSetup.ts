@@ -2,6 +2,11 @@ import { execSync } from 'node:child_process'
 import { Client } from 'pg'
 import { env } from '../src/config.js'
 
+const SINGLE_COMMITTED_CLAIM_INDEX = `
+CREATE UNIQUE INDEX IF NOT EXISTS "offer_claims_single_committed_idx"
+ON "offer_claims" ("offer_id") WHERE "status" = 'committed';
+`
+
 export default async function globalSetup() {
   const url = new URL(env.databaseUrl)
   const dbName = url.pathname.slice(1)
@@ -33,4 +38,12 @@ export default async function globalSetup() {
     stdio: 'inherit',
     env: { ...process.env, DATABASE_URL: env.databaseUrl },
   })
+
+  const db = new Client({ connectionString: env.databaseUrl })
+  try {
+    await db.connect()
+    await db.query(SINGLE_COMMITTED_CLAIM_INDEX)
+  } finally {
+    await db.end()
+  }
 }

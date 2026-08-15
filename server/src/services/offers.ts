@@ -1,4 +1,5 @@
 import type { City, Offer, OfferClaim, Reporter } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type {
@@ -156,22 +157,27 @@ export async function claimOffer(id: string, userId: string) {
   if (offer.type !== 'supplies_offered' || offer.transport !== 'needs_transport') {
     throw new ApiError(400, 'Esta oferta no necesita transporte')
   }
-  if (offer.status !== 'open') {
-    throw new ApiError(409, 'Ya hay alguien llevando esta oferta')
-  }
-  if (offer.claims.length > 0) {
-    throw new ApiError(409, 'Alguien ya se comprometió a llevar esta oferta')
-  }
 
-  await prisma.$transaction([
-    prisma.offerClaim.create({
-      data: { offerId: id, claimerId: userId, status: 'committed' },
-    }),
-    prisma.offer.update({
-      where: { id },
-      data: { status: 'in_transit' },
-    }),
-  ])
+  try {
+    await prisma.$transaction(async (tx) => {
+      const flipped = await tx.offer.updateMany({
+        where: { id, status: 'open' },
+        data: { status: 'in_transit' },
+      })
+      if (flipped.count === 0) {
+        throw new ApiError(409, 'Alguien ya se comprometió a llevar esta oferta')
+      }
+      await tx.offerClaim.create({
+        data: { offerId: id, claimerId: userId, status: 'committed' },
+      })
+    })
+  } catch (err) {
+    if (err instanceof ApiError) throw err
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      throw new ApiError(409, 'Alguien ya se comprometió a llevar esta oferta')
+    }
+    throw err
+  }
 
   return getOffer(id, userId)
 }
@@ -193,16 +199,19 @@ export async function cancelClaim(id: string, userId: string) {
     throw new ApiError(403, 'Solo quien se comprometió puede cancelar el compromiso')
   }
 
-  await prisma.$transaction([
-    prisma.offerClaim.updateMany({
+  await prisma.$transaction(async (tx) => {
+    const flipped = await tx.offer.updateMany({
+      where: { id, status: 'in_transit' },
+      data: { status: 'open', resolvedAt: null },
+    })
+    if (flipped.count === 0) {
+      throw new ApiError(409, 'Esta oferta ya dejó de estar en tránsito')
+    }
+    await tx.offerClaim.updateMany({
       where: { offerId: id, status: 'committed', claimerId: userId },
       data: { status: 'cancelled', resolvedAt: new Date() },
-    }),
-    prisma.offer.update({
-      where: { id },
-      data: { status: 'open', resolvedAt: null },
-    }),
-  ])
+    })
+  })
 
   return getOffer(id, userId)
 }
