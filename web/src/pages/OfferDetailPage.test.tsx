@@ -318,4 +318,44 @@ describe('OfferDetailPage', () => {
       screen.queryByRole('button', { name: 'Cancelar compromiso' }),
     ).not.toBeInTheDocument()
   })
+
+  it('el voluntario comprometido confirma la entrega sin pedir el código', async () => {
+    mockedUpdateStatus.mockResolvedValue({
+      ...baseOffer,
+      status: 'fulfilled',
+    })
+    const user = userEvent.setup()
+    renderPage({
+      ...baseOffer,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        mine: true,
+        note: null,
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Confirmar entrega' }),
+    )
+
+    expect(
+      screen.queryByLabelText('Código de cierre (4 dígitos)'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Reabrir oferta' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(mockedUpdateStatus).toHaveBeenCalledWith('o1', {
+        status: 'fulfilled',
+        note: undefined,
+      }),
+    )
+  })
 })

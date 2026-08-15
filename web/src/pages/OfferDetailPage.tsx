@@ -71,6 +71,7 @@ export default function OfferDetailPage() {
   const canClose = offer.status === 'open'
   const canReopen = offer.status === 'unavailable'
   const inTransit = offer.status === 'in_transit'
+  const canCloseWithoutCode = offer.isOwner === true || offer.claim?.mine === true
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -171,7 +172,7 @@ export default function OfferDetailPage() {
           {offer.status === 'open' &&
             'Si la oferta ya no está disponible, ciérrala con tu código para que otros no te busquen en vano.'}
           {offer.status === 'in_transit' &&
-            'La oferta está en camino. Cuando se entregue, confírmalo con tu código; si el compromiso se cayó, reábrela para ofrecerla de nuevo.'}
+            'La oferta está en camino. Cuando se entregue, confírmalo; si estás coordinando y el compromiso se cayó, reábrela para ofrecerla de nuevo.'}
           {offer.status === 'fulfilled' &&
             'Esta oferta ya se entregó y no se puede reabrir. Gracias por la ayuda.'}
           {offer.status === 'unavailable' &&
@@ -221,15 +222,17 @@ export default function OfferDetailPage() {
             >
               Confirmar entrega
             </button>
-            <button
-              onClick={() => {
-                setCloseAs('open')
-                setMode('close')
-              }}
-              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
-            >
-              Reabrir oferta
-            </button>
+            {!offer.claim?.mine && (
+              <button
+                onClick={() => {
+                  setCloseAs('open')
+                  setMode('close')
+                }}
+                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+              >
+                Reabrir oferta
+              </button>
+            )}
           </div>
         )}
 
@@ -239,13 +242,15 @@ export default function OfferDetailPage() {
               e.preventDefault()
               mutation.mutate({
                 status: closeAs,
-                ...(offer.isOwner ? {} : { resolveCode: resolveCode.trim() }),
+                ...(canCloseWithoutCode
+                  ? {}
+                  : { resolveCode: resolveCode.trim() }),
                 note: note.trim() || undefined,
               })
             }}
             className="mt-3 space-y-3"
           >
-            {!offer.isOwner && (
+            {!canCloseWithoutCode && (
               <div>
                 <label htmlFor="offerResolveCode" className="text-sm font-medium text-slate-700">
                   Código de cierre (4 dígitos)
