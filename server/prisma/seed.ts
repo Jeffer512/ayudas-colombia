@@ -21,6 +21,7 @@ type SampleEntry = {
   lat: number | null
   lng: number | null
   transport?: 'can_transport' | 'needs_transport'
+  photoUrl?: string
   reporter: { name: string; phone: string }
 }
 
@@ -57,6 +58,7 @@ const sampleRequests: Record<string, SampleEntry> = {
     address: 'Villa Verde, conjunto Los Alamos',
     lat: 4.82,
     lng: -75.68,
+    photoUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&q=80',
     reporter: { name: 'Andrés Giraldo', phone: '3105551002' },
   },
   supplies_request: {
@@ -387,6 +389,7 @@ async function main() {
         status: sample.status,
         title: sample.title,
         description: sample.description,
+        photoUrl: sample.photoUrl ?? null,
         address: sample.address,
         lat: sample.lat,
         lng: sample.lng,
