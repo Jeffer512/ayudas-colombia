@@ -97,4 +97,38 @@ describe('CreateAvisoPage', () => {
     expect(screen.queryByLabelText('Código de cierre')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver aviso' })).toBeInTheDocument()
   })
+
+  it('publica un aviso sin pedir medio de contacto', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-2',
+      marks: 0,
+    } as unknown as CreatedAviso)
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(
+      screen.queryByText(/al menos un medio de contacto/i),
+    ).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Título'), 'Ruta alterna por el centro')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'La vía queda bloqueada entre las 10am y 3pm por trabajos.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Andrés Mora')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar aviso' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reporter: { name: 'Andrés Mora' },
+        }),
+      ),
+    )
+
+    expect(
+      await screen.findByRole('heading', { name: 'Aviso publicado' }),
+    ).toBeInTheDocument()
+  })
 })

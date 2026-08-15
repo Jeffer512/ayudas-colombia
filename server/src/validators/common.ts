@@ -23,6 +23,15 @@ export const reporterSchema = z
     }
   })
 
+export const anonymousReporterSchema = z.object({
+  name: z.string().trim().min(1, 'Nombre requerido').max(120),
+  phone: z.string().trim().max(30).optional(),
+  whatsapp: z.string().trim().max(40).optional(),
+  email: z
+    .union([z.string().email('Correo inválido'), z.literal('')])
+    .optional(),
+})
+
 export const coordinatesSchema = z.object({
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),

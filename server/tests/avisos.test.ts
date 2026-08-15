@@ -80,6 +80,28 @@ describe('POST /api/avisos', () => {
       .send({ ...validAviso, title: 'x' })
     expect(noTitle.status).toBe(400)
   })
+
+  it('no exige medio de contacto para publicar un aviso', async () => {
+    const res = await request(app)
+      .post('/api/avisos')
+      .send({ ...validAviso, reporter: { name: 'María Gómez' } })
+
+    expect(res.status).toBe(201)
+    expect(res.body.reporter).toMatchObject({
+      name: 'María Gómez',
+      phone: null,
+      whatsapp: null,
+      email: null,
+    })
+  })
+
+  it('sigue exigiendo el nombre de quien reporta', async () => {
+    const res = await request(app)
+      .post('/api/avisos')
+      .send({ ...validAviso, reporter: {} })
+
+    expect(res.status).toBe(400)
+  })
 })
 
 describe('POST /api/avisos/:id/mark', () => {

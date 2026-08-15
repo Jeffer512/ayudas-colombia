@@ -61,17 +61,6 @@ export default function CreateAvisoPage() {
     setSubmitting(true)
     setError(null)
 
-    const phone = reporter.phone.trim()
-    const whatsapp = reporter.whatsapp.trim()
-    const email = reporter.email.trim()
-    if (!phone && !whatsapp && !email) {
-      setError(
-        'Deja al menos un medio de contacto: teléfono, WhatsApp o correo.',
-      )
-      setSubmitting(false)
-      return
-    }
-
     const body: NewAviso = {
       urgency,
       title: title.trim(),
@@ -83,9 +72,9 @@ export default function CreateAvisoPage() {
         : {}),
       reporter: {
         name: reporter.name.trim(),
-        ...(phone ? { phone } : {}),
-        ...(whatsapp ? { whatsapp } : {}),
-        ...(email ? { email } : {}),
+        ...(reporter.phone.trim() ? { phone: reporter.phone.trim() } : {}),
+        ...(reporter.whatsapp.trim() ? { whatsapp: reporter.whatsapp.trim() } : {}),
+        ...(reporter.email.trim() ? { email: reporter.email.trim() } : {}),
       },
     }
 
@@ -220,6 +209,7 @@ export default function CreateAvisoPage() {
           whatsapp={reporter.whatsapp}
           email={reporter.email}
           codeHint="Es público para coordinar la ayuda."
+          requireContact={false}
           onPatch={setReporter}
         />
 

@@ -18,6 +18,7 @@ interface ReporterSectionProps {
   whatsapp: string
   email: string
   codeHint?: string
+  requireContact?: boolean
   onPatch: Dispatch<SetStateAction<ReporterState>>
 }
 
@@ -27,6 +28,7 @@ export default function ReporterSection({
   whatsapp,
   email,
   codeHint = 'Es público para coordinar la ayuda. Al publicar recibirás un código de cierre de 4 dígitos.',
+  requireContact = true,
   onPatch,
 }: ReporterSectionProps) {
   return (
@@ -94,7 +96,10 @@ export default function ReporterSection({
       </div>
 
       <p className="mt-3 text-xs text-slate-500">
-        Deja al menos un medio de contacto: teléfono, WhatsApp o correo. {codeHint}
+        {requireContact
+          ? 'Deja al menos un medio de contacto: teléfono, WhatsApp o correo. '
+          : ''}
+        {codeHint}
       </p>
     </fieldset>
   )

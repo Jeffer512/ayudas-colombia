@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { URGENCIES } from '../constants.js'
-import { cityCodeSchema, coordinatesSchema, reporterSchema } from './common.js'
+import {
+  anonymousReporterSchema,
+  cityCodeSchema,
+  coordinatesSchema,
+} from './common.js'
 
 export const createAvisoSchema = z.object({
   title: z.string().trim().min(5, 'Título muy corto').max(140),
@@ -9,7 +13,7 @@ export const createAvisoSchema = z.object({
   address: z.string().trim().max(300).optional(),
   ...coordinatesSchema.shape,
   cityCode: cityCodeSchema,
-  reporter: reporterSchema,
+  reporter: anonymousReporterSchema,
 })
 
 export type CreateAvisoInput = z.infer<typeof createAvisoSchema>
