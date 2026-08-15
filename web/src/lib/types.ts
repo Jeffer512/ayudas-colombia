@@ -62,6 +62,21 @@ export interface CityRef {
   name: string
 }
 
+export type ReportKind = 'request' | 'offer' | 'aviso' | 'org'
+export type ReportReason =
+  | 'fake'
+  | 'unreachable'
+  | 'spam'
+  | 'wrong'
+  | 'other'
+
+export type NewReport = {
+  kind: ReportKind
+  targetId: string
+  reason: ReportReason
+  note?: string
+}
+
 export interface Request {
   id: string
   isOwner?: boolean

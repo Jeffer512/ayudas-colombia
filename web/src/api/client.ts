@@ -15,6 +15,7 @@ import type {
   NewAviso,
   NewOffer,
   NewOrgRequest,
+  NewReport,
   NewRequest,
   Offer,
   OfferFilters,
@@ -110,6 +111,13 @@ export const api = {
 
   helpRequest(id: string, body: { markerId?: string; name?: string; note?: string }): Promise<Request> {
     return http(`/requests/${id}/help`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  createReport(body: NewReport): Promise<{ ok: boolean }> {
+    return http('/reports', {
       method: 'POST',
       body: JSON.stringify(body),
     })

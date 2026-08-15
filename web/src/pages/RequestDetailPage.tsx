@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import {
@@ -143,6 +144,10 @@ export default function RequestDetailPage() {
         </div>
         <ReporterContact reporter={request.reporter} nameLabel="Reporta" />
       </dl>
+
+      <div className="mt-3">
+        <ReportButton kind="request" targetId={request.id} />
+      </div>
 
       {request.lat !== null && request.lng !== null && (
         <div className="mt-4">

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import {
@@ -96,6 +97,10 @@ export default function AvisoDetailPage() {
         </div>
         <ReporterContact reporter={aviso.reporter} nameLabel="Informa" />
       </dl>
+
+      <div className="mt-3">
+        <ReportButton kind="aviso" targetId={aviso.id} />
+      </div>
 
       {aviso.lat !== null && aviso.lng !== null && (
         <div className="mt-4">

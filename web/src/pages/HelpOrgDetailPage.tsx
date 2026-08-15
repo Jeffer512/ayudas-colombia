@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import ReportButton from '../components/ReportButton'
 import RequestCard from '../components/RequestCard'
 import StatusBadge from '../components/StatusBadge'
 import {
@@ -108,6 +109,10 @@ export default function HelpOrgDetailPage() {
           <dd className="text-slate-800">{formatDate(org.createdAt)}</dd>
         </div>
       </dl>
+
+      <div className="mt-3">
+        <ReportButton kind="org" targetId={org.id} />
+      </div>
 
       {org.lat !== null && org.lng !== null && (
         <div className="mt-4">
