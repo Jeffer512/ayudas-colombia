@@ -270,15 +270,15 @@ describe('POST /api/requests', () => {
     expect(huge.status).toBe(400)
   })
 
-  it('el listado omite la foto y el detalle la incluye', async () => {
-    const res = await request(app)
+  it('la foto aparece en el listado y en el detalle', async () => {
+    const created = await request(app)
       .post('/api/requests')
       .send({ ...validMissingPerson, photo: tinyPng })
 
     const list = await request(app).get('/api/requests')
-    expect(list.body.requests[0].photo).toBeUndefined()
+    expect(list.body.requests[0].photo).toBe(tinyPng)
 
-    const detail = await request(app).get(`/api/requests/${res.body.id}`)
+    const detail = await request(app).get(`/api/requests/${created.body.id}`)
     expect(detail.body.photo).toBe(tinyPng)
   })
 })

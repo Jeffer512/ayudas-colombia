@@ -38,7 +38,6 @@ export function serializeRequest(
   request: SerializedRequest,
   helperCount = 0,
   helperList?: { name: string | null; note: string | null; createdAt: Date }[],
-  includePhoto = false,
 ) {
   return {
     id: request.id,
@@ -48,7 +47,7 @@ export function serializeRequest(
     status: request.status,
     title: request.title,
     description: request.description,
-    photo: includePhoto ? request.photoUrl ?? null : undefined,
+    photo: request.photoUrl ?? null,
     address: request.address ?? null,
     lat: request.lat ?? null,
     lng: request.lng ?? null,
@@ -161,7 +160,7 @@ export async function getRequest(id: string) {
     }),
   ])
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
-  return serializeRequest(request, helpers, helperList, true)
+  return serializeRequest(request, helpers, helperList)
 }
 
 export async function createRequest(input: CreateRequestInput) {
@@ -223,7 +222,7 @@ export async function createRequest(input: CreateRequestInput) {
     })
   })
 
-  return { ...serializeRequest(created, 0, undefined, true), resolveCode: created.resolveCode }
+  return { ...serializeRequest(created), resolveCode: created.resolveCode }
 }
 
 export async function helpRequest(id: string, input: HelpRequestInput) {

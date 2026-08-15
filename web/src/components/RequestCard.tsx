@@ -47,6 +47,13 @@ export default function RequestCard({ request }: { request: Request }) {
       </div>
 
       <h2 className="mt-2 font-semibold text-slate-900">{request.title}</h2>
+      {request.photo && (
+        <img
+          src={request.photo}
+          alt={`Foto de: ${request.title}`}
+          className="mt-2 h-20 w-20 rounded-md border border-slate-200 object-cover"
+        />
+      )}
       <p className="mt-1 line-clamp-2 text-sm text-slate-600">
         {request.description}
       </p>
