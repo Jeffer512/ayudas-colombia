@@ -13,6 +13,7 @@ import { citiesRouter } from './routes/cities.js'
 import { healthRouter } from './routes/health.js'
 import { helpOrgsRouter } from './routes/helpOrgs.js'
 import { offersRouter } from './routes/offers.js'
+import { reportsRouter } from './routes/reports.js'
 import { requestsRouter } from './routes/requests.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
@@ -67,6 +68,7 @@ export function createApp() {
   app.use('/api/cities', citiesRouter)
   app.use('/api/requests', requestsRouter)
   app.use('/api/offers', offersRouter)
+  app.use('/api/reports', reportsRouter)
   app.use('/api/avisos', avisosRouter)
   app.use('/api/help-orgs', helpOrgsRouter)
   app.use('/api/admin', adminRouter)

@@ -23,6 +23,7 @@ verifyTokenHash      String?        @map("verify_token_hash")
   memberships HelpOrgStaff[]
   claims      OfferClaim[]
   reporters   Reporter[]
+  reports     PostReport[]
 
   @@map("users")
 }
@@ -267,4 +268,23 @@ model HelpOrgStaff {
 
   @@index([orgId])
   @@map("help_org_staff")
+}
+
+model PostReport {
+  id         String   @id @default(uuid())
+  kind       String
+  targetId   String   @map("target_id")
+  reason     String
+  note       String?
+  reporterId String   @map("reporter_id")
+  status     String   @default("open")
+  createdAt  DateTime @default(now()) @map("created_at")
+  reviewedAt DateTime? @map("reviewed_at")
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([kind, targetId, reporterId])
+  @@index([status])
+  @@index([kind, targetId])
+  @@map("post_reports")
 }

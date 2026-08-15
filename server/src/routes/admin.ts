@@ -6,7 +6,9 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 import { setAvisoStatus } from '../services/avisos.js'
 import { updateOfferStatus } from '../services/offers.js'
+import { listReports, reviewReport } from '../services/reports.js'
 import { updateRequestStatus } from '../services/requests.js'
+import { reportFiltersSchema } from '../validators/report.js'
 
 const statusSchema = z.object({
   status: z.enum(REQUEST_STATUSES),
@@ -60,5 +62,20 @@ adminRouter.post(
   asyncHandler(async (req, res) => {
     const input = avisoStatusSchema.parse(req.body)
     res.json(await setAvisoStatus(String(req.params.id), input.status))
+  }),
+)
+
+adminRouter.get(
+  '/reports',
+  asyncHandler(async (req, res) => {
+    const filters = reportFiltersSchema.parse(req.query)
+    res.json(await listReports(filters))
+  }),
+)
+
+adminRouter.post(
+  '/reports/:id/review',
+  asyncHandler(async (req, res) => {
+    res.json(await reviewReport(String(req.params.id)))
   }),
 )
