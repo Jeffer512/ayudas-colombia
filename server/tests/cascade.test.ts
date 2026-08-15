@@ -64,7 +64,7 @@ describe('borrado en cascada del usuario', () => {
       events: {
         create: [
           { status: 'open', actorName: 'Sistema', note: 'Solicitud creada' },
-          { status: 'in_progress', actorName: 'Cruz Roja', note: 'En camino' },
+          { status: 'resolved', actorName: 'Cruz Roja', note: 'En camino' },
         ],
       },
     })

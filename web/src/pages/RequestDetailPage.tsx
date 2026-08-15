@@ -80,8 +80,7 @@ export default function RequestDetailPage() {
     color: '#64748b',
   }
   const typeLabel = REQUEST_TYPE_LABELS[request.type] ?? request.type
-  const canBeMarkedActive =
-    request.status === 'open' || request.status === 'in_progress'
+  const canBeMarkedActive = request.status === 'open'
   const canReopen = request.status !== 'open'
 
   return (
@@ -169,8 +168,6 @@ export default function RequestDetailPage() {
         <p className="mt-1 text-sm text-slate-600">
           {request.status === 'open' &&
             'Si puedes apoyar esta situación, dilo para que quienes esperan ayuda sepan que ya hay gente en camino.'}
-          {request.status === 'in_progress' &&
-            'Este pedido ya tiene gente ayudando. Si la situación terminó, márquenlo como resuelto.'}
           {request.status === 'resolved' &&
             'Este pedido fue resuelto. Si sigue pendiente, reábrelo.'}
           {(request.status === 'duplicate' || request.status === 'invalid') &&

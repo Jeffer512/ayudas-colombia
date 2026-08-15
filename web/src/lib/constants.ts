@@ -37,10 +37,6 @@ export const URGENCY_META: Record<string, { label: string; color: string }> = {
 
 export const REQUEST_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
   open: { label: 'Abierto', badgeClass: 'bg-blue-100 text-blue-800' },
-  in_progress: {
-    label: 'Siendo atendido',
-    badgeClass: 'bg-amber-100 text-amber-800',
-  },
   resolved: { label: 'Resuelto', badgeClass: 'bg-green-100 text-green-800' },
   duplicate: { label: 'Duplicado', badgeClass: 'bg-gray-200 text-gray-700' },
   invalid: { label: 'Inválido', badgeClass: 'bg-gray-200 text-gray-700' },

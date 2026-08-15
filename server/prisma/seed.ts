@@ -15,7 +15,7 @@ const cities = [
 type SampleEntry = {
   title: string
   description: string
-  status: 'open' | 'in_progress' | 'resolved'
+  status: 'open' | 'resolved'
   urgency: 'critical' | 'high' | 'medium' | 'low'
   address: string
   lat: number | null
@@ -77,7 +77,7 @@ const sampleRequests: Record<string, SampleEntry> = {
     title: 'Voluntarios para el albergue del barrio Cuba',
     description:
       'Se necesita gente para repartir comida y organizar los kits de aseo en el albergue temporal que abrió la junta de acción comunal.',
-    status: 'in_progress',
+    status: 'open',
     urgency: 'medium',
     address: 'Barrio Cuba, salón comunal',
     lat: 4.82,
@@ -345,18 +345,12 @@ function eventsFor(type: 'request', status: string, actorName: string) {
   const events: { status: string; actorName: string; note: string }[] = [
     { status: 'open', actorName, note: 'Solicitud creada' },
   ]
-  if (status === 'in_progress') {
-    events.push({
-      status: 'in_progress',
-      actorName: 'Voluntario asignado',
-      note: 'Ya se está coordinando la ayuda',
-    })
-  }
   if (status === 'resolved') {
-    events.push(
-      { status: 'in_progress', actorName: 'Coordinación de ayuda', note: 'Se empezó a atender el caso' },
-      { status: 'resolved', actorName, note: 'Se resolvió con el código de cierre' },
-    )
+    events.push({
+      status: 'resolved',
+      actorName,
+      note: 'Se resolvió con el código de cierre',
+    })
   }
   return events
 }

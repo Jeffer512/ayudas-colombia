@@ -37,7 +37,7 @@ export type CreateRequestInput = z.infer<typeof createRequestSchema>
 export const requestFiltersSchema = z.object({
   type: z.enum(REQUEST_TYPES).optional(),
   status: z
-    .enum(['open', 'in_progress', 'resolved', 'duplicate', 'invalid', 'active'])
+    .enum(['open', 'resolved', 'duplicate', 'invalid', 'active'])
     .optional(),
   urgency: z.enum(URGENCIES).optional(),
   city: z.string().trim().optional(),

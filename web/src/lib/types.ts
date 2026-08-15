@@ -19,7 +19,7 @@ export type TransportOption = 'can_transport' | 'needs_transport'
 
 export type Urgency = 'critical' | 'high' | 'medium' | 'low'
 
-export type RequestStatus = 'open' | 'in_progress' | 'resolved' | 'duplicate' | 'invalid'
+export type RequestStatus = 'open' | 'resolved' | 'duplicate' | 'invalid'
 export type OfferStatus = 'open' | 'in_transit' | 'fulfilled' | 'unavailable'
 export type AvisoStatus = 'open' | 'closed'
 export type HelpOrgCategory = 'acopio' | 'psicologia' | 'voluntarios' | 'albergue' | 'other'

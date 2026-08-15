@@ -82,13 +82,12 @@ describe('GET /api/requests', () => {
     expect(byCity.body.total).toBe(3)
   })
 
-  it('el filtro active incluye abiertos y siendo atendidos', async () => {
+  it('el filtro active solo incluye pedidos abiertos', async () => {
     await createRequest({ status: 'open' })
-    await createRequest({ status: 'in_progress' })
     await createRequest({ status: 'resolved', resolvedAt: new Date() })
 
     const res = await request(app).get('/api/requests').query({ status: 'active' })
-    expect(res.body.total).toBe(2)
+    expect(res.body.total).toBe(1)
   })
 
   it('busca por palabra clave', async () => {
@@ -284,18 +283,13 @@ describe('POST /api/requests', () => {
 })
 
 describe('POST /api/requests/:id/status', () => {
-  it('marca una solicitud como siendo atendida', async () => {
+  it('rechaza el estado eliminado "siendo atendido"', async () => {
     const created = await createRequest()
     const res = await request(app)
       .post(`/api/requests/${created.id}/status`)
       .send({ status: 'in_progress', actorName: 'Cruz Roja', note: 'Van en camino' })
 
-    expect(res.status).toBe(200)
-    expect(res.body.status).toBe('in_progress')
-    expect(res.body.events[1]).toMatchObject({
-      status: 'in_progress',
-      actorName: 'Cruz Roja',
-    })
+    expect(res.status).toBe(400)
   })
 
   it('resuelve con el código de cierre correcto', async () => {
@@ -341,10 +335,10 @@ describe('POST /api/requests/:id/status', () => {
   })
 
   it('rechaza una transición no permitida', async () => {
-    const created = await createRequest({ status: 'resolved', resolvedAt: new Date() })
+    const created = await createRequest({ status: 'duplicate' })
     const res = await request(app)
       .post(`/api/requests/${created.id}/status`)
-      .send({ status: 'in_progress' })
+      .send({ status: 'invalid' })
 
     expect(res.status).toBe(400)
   })

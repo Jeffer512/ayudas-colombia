@@ -28,7 +28,6 @@ export type TransportOption = (typeof TRANSPORT_OPTIONS)[number]
 
 export const REQUEST_STATUSES = [
   'open',
-  'in_progress',
   'resolved',
   'duplicate',
   'invalid',

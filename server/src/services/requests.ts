@@ -19,8 +19,7 @@ type SerializedRequest = Request & {
 }
 
 const TRANSITIONS: Record<string, string[]> = {
-  open: ['in_progress', 'resolved', 'duplicate', 'invalid'],
-  in_progress: ['open', 'resolved', 'duplicate', 'invalid'],
+  open: ['resolved', 'duplicate', 'invalid'],
   resolved: ['open', 'duplicate', 'invalid'],
   duplicate: ['open'],
   invalid: ['open'],
@@ -101,7 +100,7 @@ export async function listRequests(filters: RequestFilters, viewer?: Viewer) {
   const where: Record<string, unknown> = {}
   if (filters.type) where.type = filters.type
   if (filters.status === 'active') {
-    where.status = { in: ['open', 'in_progress'] }
+    where.status = 'open'
   } else if (filters.status) {
     where.status = filters.status
   }
@@ -243,7 +242,7 @@ export async function helpRequest(id: string, input: HelpRequestInput) {
   const request = await prisma.request.findUnique({ where: { id } })
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
 
-  if (request.status !== 'open' && request.status !== 'in_progress') {
+  if (request.status !== 'open') {
     throw new ApiError(400, 'Este pedido ya se cerró')
   }
 
@@ -334,7 +333,7 @@ export async function updateRequestStatus(
 export async function closeStaleRequests() {
   const stale = await prisma.request.findMany({
     where: {
-      status: { in: ['open', 'in_progress'] },
+      status: 'open',
       updatedAt: { lt: new Date(Date.now() - STALE_REQUEST_MS) },
     },
     select: { id: true },
