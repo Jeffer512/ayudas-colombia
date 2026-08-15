@@ -46,7 +46,8 @@ export const env = {
   smtpUrl: process.env.SMTP_URL ?? '',
   mailFrom:
     process.env.MAIL_FROM ?? 'Red de ayudas <no-responder@ayudas.local>',
-  frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  frontendUrl:
+    process.env.FRONTEND_URL ?? process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:5173',
   supabaseUrl: process.env.SUPABASE_URL ?? '',
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
   supabaseBucket: process.env.SUPABASE_BUCKET ?? 'fotos',

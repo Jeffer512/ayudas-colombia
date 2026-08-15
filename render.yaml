@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: proyecto-ayudas
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: virginia
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: FRONTEND_URL
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: fotos
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: SMTP_URL
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
