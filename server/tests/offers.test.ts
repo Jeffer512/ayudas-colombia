@@ -447,3 +447,59 @@ describe('DELETE /api/offers/:id/claim', () => {
     expect(cancelled).toBe(1)
   })
 })
+
+describe('POST /api/offers/:id/status · voluntario comprometido', () => {
+  it('el voluntario comprometido confirma la entrega sin pedir el código', async () => {
+    const agent = await loginCitizen('repartidor@correo.org')
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${offer.id}/claim`)
+
+    const delivered = await agent
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'fulfilled', note: 'Llegó a destino, entregado el kit' })
+
+    expect(delivered.status).toBe(200)
+    expect(delivered.body).toMatchObject({ status: 'fulfilled' })
+    expect(delivered.body.claim).toBeNull()
+
+    const claim = await prisma.offerClaim.findFirst({ where: { offerId: offer.id } })
+    expect(claim?.status).toBe('delivered')
+    expect(claim?.resolvedAt).not.toBeNull()
+  })
+
+  it('el voluntario comprometido no puede reabrir ni descartar la oferta', async () => {
+    const agent = await loginCitizen('repartidor2@correo.org')
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${offer.id}/claim`)
+
+    const reopened = await agent
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'open', resolveCode: '1234' })
+    expect(reopened.status).toBe(403)
+    expect(reopened.body.error).toBe(
+      'El voluntario comprometido solo puede confirmar la entrega',
+    )
+
+    const discarded = await agent
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'unavailable', resolveCode: '1234' })
+    expect(discarded.status).toBe(403)
+
+    const offerRow = await prisma.offer.findUnique({ where: { id: offer.id } })
+    expect(offerRow?.status).toBe('in_transit')
+  })
+
+  it('un voluntario que no está comprometido sigue necesitando el código', async () => {
+    const claimer = await loginCitizen()
+    const stranger = await loginCitizen('otro-voluntario@correo.org')
+    const offer = await createOffer({ transport: 'needs_transport' })
+    await claimer.post(`/api/offers/${offer.id}/claim`)
+
+    const res = await stranger
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'fulfilled', note: 'No soy yo quien la lleva' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Código de cierre incorrecto')
+  })
+})

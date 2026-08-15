@@ -270,11 +270,24 @@ export async function updateOfferStatus(
 
   const offer = await prisma.offer.findUnique({
     where: { id },
-    include: { reporter: true },
+    include: { reporter: true, claims: true },
   })
   if (!offer) throw new ApiError(404, 'Oferta no encontrada')
 
   const isOwner = currentUserId != null && offer.reporter.userId === currentUserId
+  const isClaimer =
+    currentUserId != null &&
+    offer.claims.some(
+      (claim) =>
+        claim.status === 'committed' && claim.claimerId === currentUserId,
+    )
+
+  if (isClaimer && input.status !== 'fulfilled') {
+    throw new ApiError(
+      403,
+      'El voluntario comprometido solo puede confirmar la entrega',
+    )
+  }
 
   const from = offer.status
   if (from === input.status) {
@@ -293,6 +306,7 @@ export async function updateOfferStatus(
   if (
     !isAdmin &&
     !isOwner &&
+    !isClaimer &&
     (!offer.resolveCode || code !== offer.resolveCode)
   ) {
     throw new ApiError(403, 'Código de cierre incorrecto')
