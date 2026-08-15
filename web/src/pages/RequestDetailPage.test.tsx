@@ -205,6 +205,64 @@ describe('RequestDetailPage', () => {
     expect(mockedUpdateStatus).not.toHaveBeenCalled()
   })
 
+  it('el dueño resuelve sin pedir el código de cierre', async () => {
+    mockedUpdateStatus.mockResolvedValue({
+      ...baseRequest,
+      isOwner: true,
+      status: 'resolved',
+    })
+    const user = userEvent.setup()
+    renderPage({ ...baseRequest, isOwner: true })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Marcarlo como resuelto' }),
+    )
+
+    expect(
+      screen.queryByLabelText('Código de cierre (4 dígitos)'),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Confirmar resolución' }),
+    )
+
+    await waitFor(() =>
+      expect(mockedUpdateStatus).toHaveBeenCalledWith('r1', {
+        status: 'resolved',
+        note: undefined,
+      }),
+    )
+    expect(mockedUpdateStatus.mock.calls[0][1]).not.toHaveProperty('resolveCode')
+  })
+
+  it('el dueño reabre sin pedir el código de cierre', async () => {
+    mockedUpdateStatus.mockResolvedValue({ ...baseRequest, isOwner: true })
+    const user = userEvent.setup()
+    renderPage({
+      ...baseRequest,
+      isOwner: true,
+      status: 'resolved',
+      resolvedAt: '2026-08-14T10:00:00Z',
+    })
+
+    await user.click(await screen.findByRole('button', { name: 'Reabrir pedido' }))
+
+    expect(
+      screen.queryByLabelText('Código de cierre (4 dígitos)'),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Confirmar reapertura' }),
+    )
+
+    await waitFor(() =>
+      expect(mockedUpdateStatus).toHaveBeenCalledWith('r1', {
+        status: 'open',
+        note: 'Reabierto',
+      }),
+    )
+  })
+
   it('reabre un pedido ingresando el código de cierre', async () => {
     mockedUpdateStatus.mockResolvedValue({ ...baseRequest, status: 'open' })
     const user = userEvent.setup()

@@ -54,7 +54,7 @@ offersRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createOfferSchema.parse(req.body)
-    const created = await createOffer(input)
+    const created = await createOffer(input, currentSession(req)?.sub)
     res.status(201).json(created)
   }),
 )
@@ -64,7 +64,14 @@ offersRouter.post(
   statusLimiter,
   asyncHandler(async (req, res) => {
     const input = updateOfferStatusSchema.parse(req.body)
-    res.json(await updateOfferStatus(String(req.params.id), input))
+    res.json(
+      await updateOfferStatus(
+        String(req.params.id),
+        input,
+        false,
+        currentSession(req)?.sub,
+      ),
+    )
   }),
 )
 

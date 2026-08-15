@@ -34,6 +34,7 @@ export function serializeOffer(offer: SerializedOffer, currentUserId?: string) {
 
   return {
     id: offer.id,
+    isOwner: currentUserId != null && offer.reporter.userId === currentUserId,
     type: offer.type,
     transport: offer.transport ?? null,
     status: offer.status,
@@ -216,7 +217,7 @@ export async function cancelClaim(id: string, userId: string) {
   return getOffer(id, userId)
 }
 
-export async function createOffer(input: CreateOfferInput) {
+export async function createOffer(input: CreateOfferInput, currentUserId?: string) {
   const city = await prisma.city.findUnique({ where: { code: input.cityCode } })
   if (!city) throw new ApiError(400, `Ciudad no encontrada: ${input.cityCode}`)
 
@@ -230,6 +231,7 @@ export async function createOffer(input: CreateOfferInput) {
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
+        userId: currentUserId ?? null,
         name: input.reporter.name,
         phone: input.reporter.phone ?? null,
         whatsapp: input.reporter.whatsapp ?? null,
@@ -255,22 +257,28 @@ export async function createOffer(input: CreateOfferInput) {
     })
   })
 
-  return { ...serializeOffer(created), resolveCode: created.resolveCode }
+  return { ...serializeOffer(created, currentUserId), resolveCode: created.resolveCode }
 }
 
 export async function updateOfferStatus(
   id: string,
   input: UpdateOfferStatusInput,
   isAdmin = false,
+  currentUserId?: string,
 ) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
 
-  const offer = await prisma.offer.findUnique({ where: { id } })
+  const offer = await prisma.offer.findUnique({
+    where: { id },
+    include: { reporter: true },
+  })
   if (!offer) throw new ApiError(404, 'Oferta no encontrada')
+
+  const isOwner = currentUserId != null && offer.reporter.userId === currentUserId
 
   const from = offer.status
   if (from === input.status) {
-    return getOffer(id)
+    return getOffer(id, currentUserId)
   }
 
   const allowed = OFFER_TRANSITIONS[from] ?? []
@@ -282,7 +290,11 @@ export async function updateOfferStatus(
   }
 
   const code = (input.resolveCode ?? '').trim()
-  if (!isAdmin && (!offer.resolveCode || code !== offer.resolveCode)) {
+  if (
+    !isAdmin &&
+    !isOwner &&
+    (!offer.resolveCode || code !== offer.resolveCode)
+  ) {
     throw new ApiError(403, 'Código de cierre incorrecto')
   }
 
@@ -303,5 +315,5 @@ export async function updateOfferStatus(
     }),
   ])
 
-  return getOffer(id)
+  return getOffer(id, currentUserId)
 }

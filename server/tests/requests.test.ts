@@ -350,6 +350,83 @@ describe('POST /api/requests/:id/status', () => {
   })
 })
 
+describe('POST /api/requests/:id/status · dueño de la solicitud', () => {
+  beforeEach(async () => {
+    await ensureCity()
+  })
+
+  function tokenFrom(body: { verificationUrl?: string | null }): string | undefined {
+    if (!body.verificationUrl) return undefined
+    return new URL(body.verificationUrl, 'http://localhost').searchParams.get('token') ?? undefined
+  }
+
+  async function loginCitizen(email: string) {
+    const res = await request(app).post('/api/auth/register').send({
+      email,
+      password: 'contrasena-segura',
+      name: 'Solicitante',
+    })
+    await request(app).post('/api/auth/verify-email').send({ token: tokenFrom(res.body) })
+    const agent = request.agent(app)
+    await agent.post('/api/auth/login').send({ email, password: 'contrasena-segura' })
+    return agent
+  }
+
+  it('el dueño cierra su solicitud sin código de cierre', async () => {
+    const agent = await loginCitizen('dueno@correo.org')
+    const created = await agent
+      .post('/api/requests')
+      .send({ ...validRequest, reporter: { name: 'Dueño', phone: '3101112222' } })
+    expect(created.status).toBe(201)
+    expect(created.body.isOwner).toBe(true)
+
+    const stored = await prisma.request.findUnique({
+      where: { id: created.body.id },
+      include: { reporter: true },
+    })
+    expect(stored?.reporter.userId).not.toBeNull()
+
+    const closed = await agent
+      .post(`/api/requests/${created.body.id}/status`)
+      .send({ status: 'resolved', note: 'Lo resolvió quien lo publicó' })
+
+    expect(closed.status).toBe(200)
+    expect(closed.body.status).toBe('resolved')
+  })
+
+  it('el dueño reabre su solicitud resuelta sin código', async () => {
+    const agent = await loginCitizen('reabre@correo.org')
+    const created = await agent
+      .post('/api/requests')
+      .send({ ...validRequest, reporter: { name: 'Dueño', phone: '3101112222' } })
+    await agent
+      .post(`/api/requests/${created.body.id}/status`)
+      .send({ status: 'resolved', note: 'Resuelto por el dueño' })
+
+    const reopened = await agent
+      .post(`/api/requests/${created.body.id}/status`)
+      .send({ status: 'open', note: 'Reabierto por el dueño' })
+
+    expect(reopened.status).toBe(200)
+    expect(reopened.body.status).toBe('open')
+  })
+
+  it('un usuario ajeno no cierra sin el código aunque tenga sesión', async () => {
+    const owner = await loginCitizen('otro-dueño@correo.org')
+    const created = await owner
+      .post('/api/requests')
+      .send({ ...validRequest, reporter: { name: 'Dueño', phone: '3101112222' } })
+
+    const stranger = await loginCitizen('ajeno@correo.org')
+    const res = await stranger
+      .post(`/api/requests/${created.body.id}/status`)
+      .send({ status: 'resolved', note: 'Intento ajeno' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Código de cierre incorrecto')
+  })
+})
+
 describe('cierre automático por inactividad', () => {
   it('cierra solicitudes abiertas sin actividad por más de 3 días', async () => {
     const stale = await createRequest({

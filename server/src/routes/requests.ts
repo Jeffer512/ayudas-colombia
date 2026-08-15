@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { asyncHandler } from '../middleware/asyncHandler.js'
+import { currentSession } from '../middleware/requireSession.js'
 import {
   createRequest,
   getRequest,
@@ -44,7 +45,7 @@ requestsRouter.get(
 requestsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getRequest(String(req.params.id)))
+    res.json(await getRequest(String(req.params.id), currentSession(req)?.sub))
   }),
 )
 
@@ -53,7 +54,7 @@ requestsRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createRequestSchema.parse(req.body)
-    const created = await createRequest(input)
+    const created = await createRequest(input, currentSession(req)?.sub)
     res.status(201).json(created)
   }),
 )
@@ -63,7 +64,14 @@ requestsRouter.post(
   statusLimiter,
   asyncHandler(async (req, res) => {
     const input = updateRequestStatusSchema.parse(req.body)
-    res.json(await updateRequestStatus(String(req.params.id), input))
+    res.json(
+      await updateRequestStatus(
+        String(req.params.id),
+        input,
+        false,
+        currentSession(req)?.sub,
+      ),
+    )
   }),
 )
 

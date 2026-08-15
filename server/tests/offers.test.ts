@@ -159,6 +159,60 @@ describe('POST /api/offers/:id/status', () => {
   })
 })
 
+describe('POST /api/offers/:id/status · dueño de la oferta', () => {
+  beforeEach(async () => {
+    await ensureCity()
+  })
+
+  it('el dueño cierra su oferta sin código de cierre', async () => {
+    const agent = await loginCitizen('donante@correo.org')
+    const created = await agent
+      .post('/api/offers')
+      .send({ ...validOffer, reporter: { name: 'Donante', phone: '3101113333' } })
+    expect(created.status).toBe(201)
+    expect(created.body.isOwner).toBe(true)
+
+    const closed = await agent
+      .post(`/api/offers/${created.body.id}/status`)
+      .send({ status: 'fulfilled', note: 'Entregado por quien lo ofreció' })
+
+    expect(closed.status).toBe(200)
+    expect(closed.body.status).toBe('fulfilled')
+  })
+
+  it('el dueño reabre su oferta no disponible sin código', async () => {
+    const agent = await loginCitizen('donante2@correo.org')
+    const created = await agent
+      .post('/api/offers')
+      .send({ ...validOffer, reporter: { name: 'Donante', phone: '3101113333' } })
+    await agent
+      .post(`/api/offers/${created.body.id}/status`)
+      .send({ status: 'unavailable', note: 'Cerrada por el dueño' })
+
+    const reopened = await agent
+      .post(`/api/offers/${created.body.id}/status`)
+      .send({ status: 'open', note: 'Reabierta por el dueño' })
+
+    expect(reopened.status).toBe(200)
+    expect(reopened.body.status).toBe('open')
+  })
+
+  it('un usuario ajeno no cierra sin el código aunque tenga sesión', async () => {
+    const owner = await loginCitizen('donante3@correo.org')
+    const created = await owner
+      .post('/api/offers')
+      .send({ ...validOffer, reporter: { name: 'Donante', phone: '3101113333' } })
+
+    const stranger = await loginCitizen('extraño@correo.org')
+    const res = await stranger
+      .post(`/api/offers/${created.body.id}/status`)
+      .send({ status: 'fulfilled', note: 'Intento ajeno' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Código de cierre incorrecto')
+  })
+})
+
 describe('GET /api/offers con forTransport', () => {
   it('solo muestra ofertas de suministros que necesitan transporte y están abiertas', async () => {
     await createOffer({ transport: 'needs_transport' })

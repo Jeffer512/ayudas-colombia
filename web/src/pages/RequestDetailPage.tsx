@@ -195,38 +195,40 @@ export default function RequestDetailPage() {
               if (mode === 'reopen') {
                 mutation.mutate({
                   status: 'open',
-                  resolveCode: resolveCode.trim(),
+                  ...(request.isOwner ? {} : { resolveCode: resolveCode.trim() }),
                   note: note.trim() || 'Reabierto',
                 })
                 return
               }
               mutation.mutate({
                 status: 'resolved',
-                resolveCode: resolveCode.trim(),
+                ...(request.isOwner ? {} : { resolveCode: resolveCode.trim() }),
                 note: note.trim() || undefined,
               })
             }}
             className="mt-3 space-y-3"
           >
-            <div>
-              <label htmlFor="resolveCode" className="text-sm font-medium text-slate-700">
-                Código de cierre (4 dígitos)
-              </label>
-              <input
-                id="resolveCode"
-                required
-                minLength={4}
-                maxLength={4}
-                placeholder="1234"
-                value={resolveCode}
-                onChange={(e) => setResolveCode(e.target.value)}
-                className={`mt-1 ${inputClass}`}
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                Se entregó al publicar el pedido. Con él se confirma que la
-                situación terminó y evita cierres o reaperturas por error.
-              </p>
-            </div>
+            {!request.isOwner && (
+              <div>
+                <label htmlFor="resolveCode" className="text-sm font-medium text-slate-700">
+                  Código de cierre (4 dígitos)
+                </label>
+                <input
+                  id="resolveCode"
+                  required
+                  minLength={4}
+                  maxLength={4}
+                  placeholder="1234"
+                  value={resolveCode}
+                  onChange={(e) => setResolveCode(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Se entregó al publicar el pedido. Con él se confirma que la
+                  situación terminó y evita cierres o reaperturas por error.
+                </p>
+              </div>
+            )}
             <div>
               <label htmlFor="note" className="text-sm font-medium text-slate-700">
                 Nota (opcional)

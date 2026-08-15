@@ -212,6 +212,63 @@ describe('OfferDetailPage', () => {
     )
   })
 
+  it('el dueño marca como entregada sin pedir el código', async () => {
+    mockedUpdateStatus.mockResolvedValue({
+      ...baseOffer,
+      isOwner: true,
+      status: 'fulfilled',
+    })
+    const user = userEvent.setup()
+    renderPage({ ...baseOffer, isOwner: true })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Marcarla como entregada' }),
+    )
+
+    expect(
+      screen.queryByLabelText('Código de cierre (4 dígitos)'),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(mockedUpdateStatus).toHaveBeenCalledWith('o1', {
+        status: 'fulfilled',
+        note: undefined,
+      }),
+    )
+    expect(mockedUpdateStatus.mock.calls[0][1]).not.toHaveProperty('resolveCode')
+  })
+
+  it('el dueño reabre la oferta sin pedir el código', async () => {
+    mockedUpdateStatus.mockResolvedValue({
+      ...baseOffer,
+      isOwner: true,
+      status: 'open',
+    })
+    const user = userEvent.setup()
+    renderPage({ ...baseOffer, isOwner: true, status: 'unavailable' })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Reabrir oferta' }),
+    )
+
+    expect(
+      screen.queryByLabelText('Código de cierre (4 dígitos)'),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Confirmar reapertura' }),
+    )
+
+    await waitFor(() =>
+      expect(mockedUpdateStatus).toHaveBeenCalledWith('o1', {
+        status: 'open',
+        note: undefined,
+      }),
+    )
+  })
+
   it('permite a quien se comprometió cancelar el compromiso', async () => {
     mockedCancel.mockResolvedValue({
       ...baseOffer,

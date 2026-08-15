@@ -64,6 +64,7 @@ export interface CityRef {
 
 export interface Request {
   id: string
+  isOwner?: boolean
   type: RequestType
   transport: TransportOption | null
   urgency: Urgency
@@ -96,6 +97,7 @@ export interface OfferClaim {
 
 export interface Offer {
   id: string
+  isOwner?: boolean
   type: OfferType
   transport: TransportOption | null
   status: OfferStatus

@@ -22,6 +22,7 @@ verifyTokenHash      String?        @map("verify_token_hash")
 
   memberships HelpOrgStaff[]
   claims      OfferClaim[]
+  reporters   Reporter[]
 
   @@map("users")
 }
@@ -45,6 +46,7 @@ model City {
 
 model Reporter {
   id               String   @id @default(uuid())
+  userId           String?  @map("user_id")
   name             String
   organizationName String?  @map("organization_name")
   organizationType String?  @map("organization_type")
@@ -52,10 +54,12 @@ model Reporter {
   whatsapp         String?
   email            String?
   createdAt        DateTime @default(now()) @map("created_at")
+  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   requests         Request[]
   offers           Offer[]
   avisos           Aviso[]
 
+  @@index([userId])
   @@map("reporters")
 }
 
@@ -80,7 +84,7 @@ model Request {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   city     City           @relation(fields: [cityId], references: [id])
-  reporter Reporter       @relation(fields: [reporterId], references: [id])
+  reporter Reporter       @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   org      HelpOrg?       @relation(fields: [helpOrgId], references: [id], onDelete: SetNull)
   events   RequestEvent[]
   helpers  RequestHelper[]
@@ -138,7 +142,7 @@ model Offer {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   city     City          @relation(fields: [cityId], references: [id])
-  reporter Reporter      @relation(fields: [reporterId], references: [id])
+  reporter Reporter      @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   claims   OfferClaim[]
 
   @@index([cityId, status])

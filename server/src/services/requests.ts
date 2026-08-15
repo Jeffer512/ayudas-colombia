@@ -38,9 +38,12 @@ export function serializeRequest(
   request: SerializedRequest,
   helperCount = 0,
   helperList?: { name: string | null; note: string | null; createdAt: Date }[],
+  currentUserId?: string,
 ) {
   return {
     id: request.id,
+    isOwner:
+      currentUserId != null && request.reporter.userId === currentUserId,
     type: request.type,
     transport: request.transport ?? null,
     urgency: request.urgency,
@@ -139,7 +142,7 @@ export async function listRequests(filters: RequestFilters) {
   }
 }
 
-export async function getRequest(id: string) {
+export async function getRequest(id: string, currentUserId?: string) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
   const [request, helpers, helperList] = await prisma.$transaction([
@@ -160,10 +163,10 @@ export async function getRequest(id: string) {
     }),
   ])
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
-  return serializeRequest(request, helpers, helperList)
+  return serializeRequest(request, helpers, helperList, currentUserId)
 }
 
-export async function createRequest(input: CreateRequestInput) {
+export async function createRequest(input: CreateRequestInput, currentUserId?: string) {
   const city = await prisma.city.findUnique({ where: { code: input.cityCode } })
   if (!city) throw new ApiError(400, `Ciudad no encontrada: ${input.cityCode}`)
 
@@ -186,6 +189,7 @@ export async function createRequest(input: CreateRequestInput) {
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
+        userId: currentUserId ?? null,
         name: input.reporter.name,
         phone: input.reporter.phone ?? null,
         whatsapp: input.reporter.whatsapp ?? null,
@@ -222,7 +226,7 @@ export async function createRequest(input: CreateRequestInput) {
     })
   })
 
-  return { ...serializeRequest(created), resolveCode: created.resolveCode }
+  return { ...serializeRequest(created, 0, undefined, currentUserId), resolveCode: created.resolveCode }
 }
 
 export async function helpRequest(id: string, input: HelpRequestInput) {
@@ -257,15 +261,21 @@ export async function updateRequestStatus(
   id: string,
   input: UpdateRequestStatusInput,
   isAdmin = false,
+  currentUserId?: string,
 ) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const request = await prisma.request.findUnique({ where: { id } })
+  const request = await prisma.request.findUnique({
+    where: { id },
+    include: { reporter: true },
+  })
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
+
+  const isOwner = currentUserId != null && request.reporter.userId === currentUserId
 
   const from = request.status
   if (from === input.status) {
-    return getRequest(id)
+    return getRequest(id, currentUserId)
   }
 
   const allowed = TRANSITIONS[from] ?? []
@@ -279,13 +289,14 @@ export async function updateRequestStatus(
   let resolvedAt = request.resolvedAt
   if (input.status === 'resolved') {
     const code = (input.resolveCode ?? '').trim()
-    if (!isAdmin && (!request.resolveCode || code !== request.resolveCode)) {
+    if (!isAdmin && !isOwner && (!request.resolveCode || code !== request.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
     resolvedAt = request.resolvedAt ?? new Date()
   } else if (input.status === 'open') {
     if (
       !isAdmin &&
+      !isOwner &&
       CLOSED_STATES.includes(from) &&
       (!request.resolveCode || (input.resolveCode ?? '').trim() !== request.resolveCode)
     ) {
@@ -309,7 +320,7 @@ export async function updateRequestStatus(
     }),
   ])
 
-  return getRequest(id)
+  return getRequest(id, currentUserId)
 }
 
 export async function closeStaleRequests() {

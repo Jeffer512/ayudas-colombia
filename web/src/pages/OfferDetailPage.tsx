@@ -234,30 +234,32 @@ export default function OfferDetailPage() {
               e.preventDefault()
               mutation.mutate({
                 status: closeAs,
-                resolveCode: resolveCode.trim(),
+                ...(offer.isOwner ? {} : { resolveCode: resolveCode.trim() }),
                 note: note.trim() || undefined,
               })
             }}
             className="mt-3 space-y-3"
           >
-            <div>
-              <label htmlFor="offerResolveCode" className="text-sm font-medium text-slate-700">
-                Código de cierre (4 dígitos)
-              </label>
-              <input
-                id="offerResolveCode"
-                required
-                minLength={4}
-                maxLength={4}
-                placeholder="1234"
-                value={resolveCode}
-                onChange={(e) => setResolveCode(e.target.value)}
-                className={`mt-1 ${inputClass}`}
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                Se entregó al publicar la oferta. Solo tú puedes cerrarla o reabrirla.
-              </p>
-            </div>
+            {!offer.isOwner && (
+              <div>
+                <label htmlFor="offerResolveCode" className="text-sm font-medium text-slate-700">
+                  Código de cierre (4 dígitos)
+                </label>
+                <input
+                  id="offerResolveCode"
+                  required
+                  minLength={4}
+                  maxLength={4}
+                  placeholder="1234"
+                  value={resolveCode}
+                  onChange={(e) => setResolveCode(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Se entregó al publicar la oferta. Solo tú puedes cerrarla o reabrirla.
+                </p>
+              </div>
+            )}
             <div>
               <label htmlFor="note" className="text-sm font-medium text-slate-700">
                 Nota (opcional)
