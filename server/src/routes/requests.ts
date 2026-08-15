@@ -81,6 +81,12 @@ requestsRouter.post(
   statusLimiter,
   asyncHandler(async (req, res) => {
     const input = helpRequestSchema.parse(req.body)
-    res.json(await helpRequest(String(req.params.id), input))
+    res.json(
+      await helpRequest(
+        String(req.params.id),
+        input,
+        viewerFromSession(currentSession(req)),
+      ),
+    )
   }),
 )

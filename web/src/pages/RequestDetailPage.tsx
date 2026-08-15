@@ -289,12 +289,14 @@ export default function RequestDetailPage() {
               : `${request.helpers} personas están ayudando`}
           </h2>
           <p className="mt-1 text-sm text-emerald-700">
-            {iHelped
-              ? 'Gracias por ayudar. Tu apoyo a este pedido ya quedó registrado.'
-              : 'Registra que puedes ayudar para que los demás coordinen sus esfuerzos.'}
+            {request.isOwner
+              ? 'Tú creaste este pedido. Los demás pueden registrarse aquí para ayudarte.'
+              : iHelped
+                ? 'Gracias por ayudar. Tu apoyo a este pedido ya quedó registrado.'
+                : 'Registra que puedes ayudar para que los demás coordinen sus esfuerzos.'}
           </p>
 
-          {helpMutation.isError && (
+          {!request.isOwner && helpMutation.isError && (
             <div
               role="alert"
               className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
@@ -303,77 +305,78 @@ export default function RequestDetailPage() {
             </div>
           )}
 
-          {iHelped ? (
-            <p className="mt-3 inline-block rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
-              Ya estás ayudando en este pedido
-            </p>
-          ) : !helpMode ? (
-            <button
-              onClick={() => setHelpMode(true)}
-              className="mt-3 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-            >
-              Voy a ayudar
-            </button>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                helpMutation.mutate({
-                  markerId: api.markerId(),
-                  name: helperName.trim() || undefined,
-                  note: helperNote.trim() || undefined,
-                })
-              }}
-              className="mt-3 space-y-3"
-            >
-              <div>
-                <label
-                  htmlFor="helperName"
-                  className="text-sm font-medium text-emerald-800"
-                >
-                  Tu nombre (opcional)
-                </label>
-                <input
-                  id="helperName"
-                  placeholder="Ej: Camila"
-                  value={helperName}
-                  onChange={(e) => setHelperName(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="helperNote"
-                  className="text-sm font-medium text-emerald-800"
-                >
-                  ¿Qué vas a aportar? (opcional)
-                </label>
-                <input
-                  id="helperNote"
-                  placeholder="Ej: llevo agua y una carpa"
-                  value={helperNote}
-                  onChange={(e) => setHelperNote(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={helpMutation.isPending}
-                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  Confirmar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setHelpMode(false)}
-                  className="rounded-md border border-emerald-300 bg-white px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          )}
+          {!request.isOwner &&
+            (iHelped ? (
+              <p className="mt-3 inline-block rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
+                Ya estás ayudando en este pedido
+              </p>
+            ) : !helpMode ? (
+              <button
+                onClick={() => setHelpMode(true)}
+                className="mt-3 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Voy a ayudar
+              </button>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  helpMutation.mutate({
+                    markerId: api.markerId(),
+                    name: helperName.trim() || undefined,
+                    note: helperNote.trim() || undefined,
+                  })
+                }}
+                className="mt-3 space-y-3"
+              >
+                <div>
+                  <label
+                    htmlFor="helperName"
+                    className="text-sm font-medium text-emerald-800"
+                  >
+                    Tu nombre (opcional)
+                  </label>
+                  <input
+                    id="helperName"
+                    placeholder="Ej: Camila"
+                    value={helperName}
+                    onChange={(e) => setHelperName(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="helperNote"
+                    className="text-sm font-medium text-emerald-800"
+                  >
+                    ¿Qué vas a aportar? (opcional)
+                  </label>
+                  <input
+                    id="helperNote"
+                    placeholder="Ej: llevo agua y una carpa"
+                    value={helperNote}
+                    onChange={(e) => setHelperNote(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={helpMutation.isPending}
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHelpMode(false)}
+                    className="rounded-md border border-emerald-300 bg-white px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ))}
 
           {request.helperList && request.helperList.length > 0 && (
             <ul className="mt-4 space-y-2">

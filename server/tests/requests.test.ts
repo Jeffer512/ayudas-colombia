@@ -465,6 +465,10 @@ describe('cierre automático por inactividad', () => {
 })
 
 describe('POST /api/requests/:id/help', () => {
+  beforeEach(async () => {
+    await ensureCity()
+  })
+
   it('registra a una persona que va a ayudar', async () => {
     const created = await createRequest()
     const res = await request(app)
@@ -538,5 +542,37 @@ describe('POST /api/requests/:id/help', () => {
   it('devuelve 404 si la solicitud no existe', async () => {
     const res = await request(app).post('/api/requests/no-existe/help').send({})
     expect(res.status).toBe(404)
+  })
+
+  it('rechaza que el dueño se ayude a sí mismo', async () => {
+    const registered = await request(app).post('/api/auth/register').send({
+      email: 'dueno-ayuda@correo.org',
+      password: 'contrasena-segura',
+      name: 'Dueño',
+    })
+    const token = new URL(
+      registered.body.verificationUrl,
+      'http://localhost',
+    ).searchParams.get('token')
+    await request(app).post('/api/auth/verify-email').send({ token })
+    const agent = request.agent(app)
+    await agent
+      .post('/api/auth/login')
+      .send({ email: 'dueno-ayuda@correo.org', password: 'contrasena-segura' })
+
+    const created = await agent
+      .post('/api/requests')
+      .send({ ...validRequest, reporter: { name: 'Dueño', phone: '3101112222' } })
+    expect(created.status).toBe(201)
+
+    const res = await agent
+      .post(`/api/requests/${created.body.id}/help`)
+      .send({ markerId: 'marker-dueno', name: 'Dueño' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('No puedes ayudar en tu propio pedido')
+
+    const detail = await request(app).get(`/api/requests/${created.body.id}`)
+    expect(detail.body.helpers).toBe(0)
   })
 })

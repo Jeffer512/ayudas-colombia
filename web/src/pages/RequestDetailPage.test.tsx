@@ -145,6 +145,20 @@ describe('RequestDetailPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('el dueño ve la nota y no puede ayudarse a sí mismo', async () => {
+    renderPage({ ...baseRequest, isOwner: true, helpers: 1 })
+
+    expect(
+      await screen.findByText(
+        'Tú creaste este pedido. Los demás pueden registrarse aquí para ayudarte.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('1 persona está ayudando')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Voy a ayudar' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('resuelve ingresando el código de cierre', async () => {
     mockedUpdateStatus.mockResolvedValue({ ...baseRequest, status: 'resolved' })
     const user = userEvent.setup()

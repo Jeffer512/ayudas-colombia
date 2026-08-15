@@ -236,11 +236,22 @@ export async function createRequest(input: CreateRequestInput, viewer?: Viewer) 
   return { ...serializeRequest(created, 0, undefined, viewer), resolveCode: created.resolveCode }
 }
 
-export async function helpRequest(id: string, input: HelpRequestInput) {
+export async function helpRequest(
+  id: string,
+  input: HelpRequestInput,
+  viewer?: Viewer,
+) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const request = await prisma.request.findUnique({ where: { id } })
+  const request = await prisma.request.findUnique({
+    where: { id },
+    include: { reporter: true },
+  })
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
+
+  if (isOwner(viewer, request.reporter.userId)) {
+    throw new ApiError(403, 'No puedes ayudar en tu propio pedido')
+  }
 
   if (request.status !== 'open') {
     throw new ApiError(400, 'Este pedido ya se cerró')
