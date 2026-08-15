@@ -113,7 +113,11 @@ export default function OfferDetailPage() {
           <dt className="font-medium text-slate-500">Publicado</dt>
           <dd className="text-slate-800">{formatDate(offer.createdAt)}</dd>
         </div>
-        <ReporterContact reporter={offer.reporter} nameLabel="Ofrece" />
+        <ReporterContact
+          reporter={offer.reporter}
+          nameLabel="Ofrece"
+          restricted={offer.contactRestricted}
+        />
       </dl>
 
       <div className="mt-3">

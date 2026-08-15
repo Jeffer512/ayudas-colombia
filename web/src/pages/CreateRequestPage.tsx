@@ -3,12 +3,14 @@ import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import ContactVisibilitySection from '../components/ContactVisibilitySection'
 import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { REQUEST_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS, URGENCY_META } from '../lib/constants'
 import { compressImage } from '../lib/image'
 import type {
+  ContactVisibility,
   CreatedRequest,
   NewRequest,
   RequestType,
@@ -56,6 +58,8 @@ export default function CreateRequestPage() {
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [location, setLocation] = useState<LocationState>(initialLocation)
   const [reporter, setReporter] = useState<ReporterState>(initialReporter)
+  const [contactVisibility, setContactVisibility] =
+    useState<ContactVisibility>('public')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<CreatedRequest | null>(null)
@@ -97,6 +101,7 @@ export default function CreateRequestPage() {
       ...(location.lat !== null && location.lng !== null
         ? { lat: location.lat, lng: location.lng }
         : {}),
+      contactVisibility,
       reporter: {
         name: reporter.name.trim(),
         ...(phone ? { phone } : {}),
@@ -344,6 +349,11 @@ export default function CreateRequestPage() {
           whatsapp={reporter.whatsapp}
           email={reporter.email}
           onPatch={setReporter}
+        />
+
+        <ContactVisibilitySection
+          value={contactVisibility}
+          onChange={setContactVisibility}
         />
 
         <div className="flex justify-end gap-3">

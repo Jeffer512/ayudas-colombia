@@ -3,13 +3,17 @@ import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import AudienceSection from '../components/AudienceSection'
+import ContactVisibilitySection from '../components/ContactVisibilitySection'
 import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { OFFER_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS } from '../lib/constants'
 import type {
+  ContactVisibility,
   CreatedOffer,
   NewOffer,
+  OfferAudience,
   OfferType,
   TransportOption,
 } from '../lib/types'
@@ -53,6 +57,9 @@ export default function CreateOfferPage() {
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState<LocationState>(initialLocation)
   const [reporter, setReporter] = useState<ReporterState>(initialReporter)
+  const [contactVisibility, setContactVisibility] =
+    useState<ContactVisibility>('public')
+  const [audience, setAudience] = useState<OfferAudience>('users')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<CreatedOffer | null>(null)
@@ -94,6 +101,8 @@ export default function CreateOfferPage() {
       ...(location.lat !== null && location.lng !== null
         ? { lat: location.lat, lng: location.lng }
         : {}),
+      contactVisibility,
+      ...(type === 'volunteers_offered' ? { audience } : {}),
       reporter: {
         name: reporter.name.trim(),
         ...(phone ? { phone } : {}),
@@ -268,6 +277,15 @@ export default function CreateOfferPage() {
           email={reporter.email}
           onPatch={setReporter}
         />
+
+        <ContactVisibilitySection
+          value={contactVisibility}
+          onChange={setContactVisibility}
+        />
+
+        {type === 'volunteers_offered' && (
+          <AudienceSection value={audience} onChange={setAudience} />
+        )}
 
         <div className="flex justify-end gap-3">
           <button

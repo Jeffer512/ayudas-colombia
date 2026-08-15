@@ -27,6 +27,9 @@ export type HelpOrgType = 'ciudadano' | 'oficial'
 export type HelpOrgStatus = 'open' | 'closed'
 export type HelpOrgItemKind = 'available' | 'needed'
 
+export type ContactVisibility = 'public' | 'users'
+export type OfferAudience = 'public' | 'users' | 'orgs'
+
 export interface City {
   id: number
   code: string
@@ -92,6 +95,8 @@ export interface Request {
   lng: number | null
   city: CityRef
   reporter: Reporter
+  contactVisibility?: ContactVisibility
+  contactRestricted?: boolean
   organization?: { id: string; name: string; category: HelpOrgCategory }
   helpers: number
   helperList?: RequestHelper[]
@@ -123,6 +128,9 @@ export interface Offer {
   lng: number | null
   city: CityRef
   reporter: Reporter
+  contactVisibility?: ContactVisibility
+  contactRestricted?: boolean
+  audience?: OfferAudience
   claim: OfferClaim | null
   canClaim: boolean
   resolvedAt: string | null
@@ -142,6 +150,8 @@ export interface Aviso {
   lng: number | null
   city: CityRef
   reporter: Reporter
+  contactVisibility?: ContactVisibility
+  contactRestricted?: boolean
   marks: number
   createdAt: string
   updatedAt: string
@@ -215,6 +225,7 @@ export type NewRequest = {
   lat?: number
   lng?: number
   cityCode: string
+  contactVisibility?: ContactVisibility
   reporter: ReporterInput
 }
 
@@ -227,6 +238,8 @@ export type NewOffer = {
   lat?: number
   lng?: number
   cityCode: string
+  contactVisibility?: ContactVisibility
+  audience?: OfferAudience
   reporter: ReporterInput
 }
 
@@ -238,6 +251,7 @@ export type NewAviso = {
   lat?: number
   lng?: number
   cityCode: string
+  contactVisibility?: ContactVisibility
   reporter: ReporterInput
 }
 

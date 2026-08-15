@@ -17,6 +17,13 @@ export default function OfferCard({ offer }: { offer: Offer }) {
         <span className="text-xs text-slate-500">
           {typeLabel} · {offer.city.name}
         </span>
+        {offer.type === 'volunteers_offered' &&
+          offer.audience &&
+          offer.audience !== 'public' && (
+            <span className="inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700">
+              {offer.audience === 'orgs' ? 'Solo organizaciones' : 'Solo usuarios'}
+            </span>
+          )}
       </div>
 
       <h2 className="mt-2 font-semibold text-slate-900">{offer.title}</h2>

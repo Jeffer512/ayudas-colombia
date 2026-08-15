@@ -157,4 +157,66 @@ describe('CreateOfferPage', () => {
       screen.getByText(/aparecen en el centro de carga/),
     ).toBeInTheDocument()
   })
+
+  it('muestra la audiencia solo en ofertas de voluntariado y la envía al publicar', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-4',
+      resolveCode: '2222',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    expect(screen.queryByLabelText('Audiencia')).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'volunteers_offered')
+    await user.selectOptions(await screen.findByLabelText('Audiencia'), 'orgs')
+
+    await user.type(screen.getByLabelText('Título'), 'Me ofrezco como voluntario')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Puedo ayudar en traslados y cuidado de niños durante el fin de semana.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'volunteers_offered',
+          audience: 'orgs',
+          contactVisibility: 'public',
+        }),
+      ),
+    )
+  })
+
+  it('permite restringir el contacto a usuarios registrados', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-5',
+      resolveCode: '3333',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await user.selectOptions(screen.getByLabelText('Contacto'), 'users')
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Pongo a disposición kits de aseo para las familias afectadas.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ contactVisibility: 'users' }),
+      ),
+    )
+  })
 })

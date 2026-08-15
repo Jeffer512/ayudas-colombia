@@ -142,7 +142,11 @@ export default function RequestDetailPage() {
           <dt className="font-medium text-slate-500">Publicado</dt>
           <dd className="text-slate-800">{formatDate(request.createdAt)}</dd>
         </div>
-        <ReporterContact reporter={request.reporter} nameLabel="Reporta" />
+        <ReporterContact
+          reporter={request.reporter}
+          nameLabel="Reporta"
+          restricted={request.contactRestricted}
+        />
       </dl>
 
       <div className="mt-3">

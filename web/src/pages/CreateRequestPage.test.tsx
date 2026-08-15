@@ -157,6 +157,33 @@ it('muestra error del servidor si falla la publicación', async () => {
     expect(screen.queryByText('Pedido publicado')).not.toBeInTheDocument()
   })
 
+  it('envía la visibilidad de contacto elegida al publicar', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-3',
+      resolveCode: '9999',
+    } as unknown as CreatedRequest)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
+    await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Las familias del sector requieren agua para cocinar y beber.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
+    await user.type(screen.getByLabelText('Teléfono'), '3158765432')
+    await user.selectOptions(screen.getByLabelText('Contacto'), 'users')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ contactVisibility: 'users' }),
+      ),
+    )
+  })
+
   it('envía WhatsApp o correo como medio de contacto alternativo', async () => {
     mockedCreate.mockResolvedValue({
       id: 'new-4',

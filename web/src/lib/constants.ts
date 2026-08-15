@@ -95,3 +95,26 @@ export const HELP_ORG_ITEM_KIND_BADGE: Record<
   available: { badgeClass: 'bg-emerald-100', textClass: 'text-emerald-800' },
   needed: { badgeClass: 'bg-rose-100', textClass: 'text-rose-800' },
 }
+
+export const CONTACT_VISIBILITY_LABELS: Record<string, string> = {
+  public: 'Público',
+  users: 'Solo usuarios registrados',
+}
+
+export const CONTACT_VISIBILITY_HINT: Record<string, string> = {
+  public: 'Tu teléfono y correo los verá cualquiera que visite la página.',
+  users:
+    'Tu teléfono y correo solo lo verán personas con sesión iniciada. El resto ve la publicación sin contacto.',
+}
+
+export const OFFER_AUDIENCE_LABELS: Record<string, string> = {
+  public: 'Público',
+  users: 'Solo usuarios',
+  orgs: 'Solo organizaciones',
+}
+
+export const OFFER_AUDIENCE_HINTS: Record<string, string> = {
+  public: 'Tu oferta la ve cualquiera que visite la página.',
+  users: 'Tu oferta solo la ven personas con sesión iniciada, no aparecerá para visitantes anónimos.',
+  orgs: 'Tu oferta solo la ven miembros de organizaciones. Es ideal si buscas coordinación formal.',
+}

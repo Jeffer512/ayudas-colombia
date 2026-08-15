@@ -3,11 +3,17 @@ import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import ContactVisibilitySection from '../components/ContactVisibilitySection'
 import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { URGENCY_META } from '../lib/constants'
-import type { CreatedAviso, NewAviso, Urgency } from '../lib/types'
+import type {
+  ContactVisibility,
+  CreatedAviso,
+  NewAviso,
+  Urgency,
+} from '../lib/types'
 
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
@@ -43,6 +49,8 @@ export default function CreateAvisoPage() {
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState<LocationState>(initialLocation)
   const [reporter, setReporter] = useState<ReporterState>(initialReporter)
+  const [contactVisibility, setContactVisibility] =
+    useState<ContactVisibility>('public')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<CreatedAviso | null>(null)
@@ -70,6 +78,7 @@ export default function CreateAvisoPage() {
       ...(location.lat !== null && location.lng !== null
         ? { lat: location.lat, lng: location.lng }
         : {}),
+      contactVisibility,
       reporter: {
         name: reporter.name.trim(),
         ...(reporter.phone.trim() ? { phone: reporter.phone.trim() } : {}),
@@ -211,6 +220,11 @@ export default function CreateAvisoPage() {
           codeHint="Es público para coordinar la ayuda."
           requireContact={false}
           onPatch={setReporter}
+        />
+
+        <ContactVisibilitySection
+          value={contactVisibility}
+          onChange={setContactVisibility}
         />
 
         <div className="flex justify-end gap-3">

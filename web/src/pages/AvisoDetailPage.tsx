@@ -95,7 +95,11 @@ export default function AvisoDetailPage() {
           <dt className="font-medium text-slate-500">Publicado</dt>
           <dd className="text-slate-800">{formatDate(aviso.createdAt)}</dd>
         </div>
-        <ReporterContact reporter={aviso.reporter} nameLabel="Informa" />
+        <ReporterContact
+          reporter={aviso.reporter}
+          nameLabel="Informa"
+          restricted={aviso.contactRestricted}
+        />
       </dl>
 
       <div className="mt-3">
