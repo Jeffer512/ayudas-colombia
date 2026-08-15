@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import EntityList from '../components/EntityList'
 import { formatDate } from '../lib/format'
-import { TRANSPORT_LABELS } from '../lib/constants'
+import { TRANSPORT_LABELS, OFFER_TYPE_LABELS } from '../lib/constants'
 import type { Offer } from '../lib/types'
 
 export default function TransportHubPage() {
@@ -19,6 +19,11 @@ export default function TransportHubPage() {
   const assignedQuery = useQuery({
     queryKey: ['offers', { forTransport: 'assigned' }],
     queryFn: () => api.offers({ forTransport: 'assigned' }),
+  })
+
+  const transportOffersQuery = useQuery({
+    queryKey: ['offers', { type: 'transport_offered', status: 'active' }],
+    queryFn: () => api.offers({ type: 'transport_offered', status: 'active' }),
   })
 
   const meQuery = useQuery({
@@ -60,9 +65,13 @@ export default function TransportHubPage() {
 
   const available: Offer[] = availableQuery.data?.offers ?? []
   const assigned: Offer[] = assignedQuery.data?.offers ?? []
+  const transportOffers: Offer[] = transportOffersQuery.data?.offers ?? []
   const loginKnown = meQuery.isSuccess || meQuery.isError
   const loggedIn = meQuery.data?.authenticated === true
-  const loading = availableQuery.isPending || assignedQuery.isPending
+  const loading =
+    availableQuery.isPending ||
+    assignedQuery.isPending ||
+    transportOffersQuery.isPending
 
   return (
     <div>
@@ -72,15 +81,23 @@ export default function TransportHubPage() {
         </h1>
         <p className="mt-1 text-sm text-amber-800">
           Suministros que alguien publicó y que necesitan transporte hasta las
-          familias. Elige uno, comprométete a llevarlo y coordina con quien lo
-          ofrece.
+          familias. Comprométete a llevarlos o publica tu disponibilidad de
+          transporte para coordinar envíos.
         </p>
-        <Link
-          to="/ofrecer-ayuda"
-          className="mt-3 inline-block rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
-        >
-          Publicar suministros que necesitan transporte
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <Link
+            to="/ofrecer-ayuda"
+            className="inline-block rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+          >
+            Publicar suministros que necesitan transporte
+          </Link>
+          <Link
+            to="/ofrecer-ayuda?tipo=transport_offered"
+            className="inline-block rounded-md border border-emerald-700 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+          >
+            Publicar transporte disponible
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -211,6 +228,47 @@ export default function TransportHubPage() {
               ))}
             </ul>
           )}
+        </section>
+      )}
+
+      {!loading && (
+        <section aria-labelledby="transporte-disponible" className="mt-8">
+          <h2
+            id="transporte-disponible"
+            className="mb-2 text-lg font-semibold text-slate-800"
+          >
+            Transporte disponible
+          </h2>
+          <p className="mb-2 text-sm text-slate-600">
+            Personas u organizaciones que ofrecen transporte para suministros.
+            Contáctalas directamente desde su oferta.
+          </p>
+          <EntityList
+            empty={transportOffers.length === 0}
+            emptyTitle="Aún no hay ofertas de transporte"
+            emptyHint="Si puedes transportar suministros, publica aquí tu disponibilidad."
+          >
+            {transportOffers.map((offer) => (
+              <li key={offer.id}>
+                <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <Link to={`/oferta/${offer.id}`} className="block">
+                      <p className="font-semibold text-slate-900">{offer.title}</p>
+                    </Link>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <span className="inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                        {OFFER_TYPE_LABELS.transport_offered}
+                      </span>
+                      <span>{offer.city.name}</span>
+                      {offer.address ? (
+                        <span className="truncate">{offer.address}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </EntityList>
         </section>
       )}
     </div>

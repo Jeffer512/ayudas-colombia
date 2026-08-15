@@ -22,13 +22,13 @@ vi.mock('../components/Map', () => ({
 const mockedCities = vi.mocked(api.cities)
 const mockedCreate = vi.mocked(api.createOffer)
 
-function renderPage() {
+function renderPage(route?: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[route ?? '/ofrecer-ayuda']}>
         <CreateOfferPage />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -67,6 +67,48 @@ describe('CreateOfferPage', () => {
     expect(options).not.toContain('Ofrezco transporte')
     expect(options).not.toContain('Solicitud de suministros')
     expect(screen.queryByLabelText('Urgencia')).not.toBeInTheDocument()
+  })
+
+  it('preselecciona transporte cuando llega del centro de carga y publica la oferta', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-5',
+      resolveCode: '5555',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage('/ofrecer-ayuda?tipo=transport_offered')
+
+    const typeSelect = await screen.findByLabelText('Tipo')
+    expect(typeSelect).toHaveValue('transport_offered')
+    const options = Array.from(
+      typeSelect.querySelectorAll('option'),
+    ).map((option) => option.textContent ?? '')
+    expect(options).toContain('Ofrezco transporte')
+    expect(
+      screen.getByText(/aparecen en el centro de carga/),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Transporte')).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Camioneta disponible para llevar suministros durante la semana.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
+    await user.type(screen.getByLabelText('Teléfono'), '3105558888')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'transport_offered',
+          title: 'Ofrezco transporte en Pereira',
+        }),
+      ),
+    )
+    const body = mockedCreate.mock.calls[0][0] as Record<string, unknown>
+    expect(body).not.toHaveProperty('transport')
+    expect(body).not.toHaveProperty('audience')
   })
 
   it('publica una oferta de voluntariado', async () => {

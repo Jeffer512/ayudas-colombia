@@ -75,6 +75,30 @@ const assignedResponse: OfferListResponse = {
   offset: 0,
 }
 
+const transportOfferRow: Offer = {
+  ...transportOffer,
+  id: 'o3',
+  type: 'transport_offered',
+  transport: null,
+  title: 'Ofrezco viajes desde la bodega',
+  description: 'Puedo llevar suministros dentro de Pereira los fines de semana.',
+  canClaim: false,
+}
+
+const transportResponse: OfferListResponse = {
+  offers: [transportOfferRow],
+  total: 1,
+  limit: 50,
+  offset: 0,
+}
+
+const emptyResponse: OfferListResponse = {
+  offers: [],
+  total: 0,
+  limit: 50,
+  offset: 0,
+}
+
 function renderHub() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -104,11 +128,11 @@ const loggedInMe: Awaited<ReturnType<typeof api.me>> = {
 }
 
 function mockList() {
-  mockedOffers.mockImplementation((filters) =>
-    Promise.resolve(
-      filters?.forTransport === 'assigned' ? assignedResponse : hubResponse,
-    ),
-  )
+  mockedOffers.mockImplementation((filters) => {
+    if (filters?.type === 'transport_offered') return Promise.resolve(transportResponse)
+    if (filters?.forTransport === 'assigned') return Promise.resolve(assignedResponse)
+    return Promise.resolve(hubResponse)
+  })
 }
 
 describe('TransportHubPage', () => {
@@ -120,7 +144,7 @@ describe('TransportHubPage', () => {
     mockList()
   })
 
-  it('pide las ofertas pendientes y las comprometidas', async () => {
+  it('pide las ofertas pendientes, las comprometidas y las de transporte', async () => {
     renderHub()
 
     await waitFor(() =>
@@ -128,6 +152,12 @@ describe('TransportHubPage', () => {
     )
     await waitFor(() =>
       expect(mockedOffers).toHaveBeenCalledWith({ forTransport: 'assigned' }),
+    )
+    await waitFor(() =>
+      expect(mockedOffers).toHaveBeenCalledWith({
+        type: 'transport_offered',
+        status: 'active',
+      }),
     )
   })
 
@@ -186,20 +216,20 @@ describe('TransportHubPage', () => {
 
   it('no muestra el botón de cancelar para compromisos de otros', async () => {
     mockedMe.mockResolvedValue(loggedInMe)
-    mockedOffers.mockImplementation((filters) =>
-      Promise.resolve(
-        filters?.forTransport === 'assigned'
-          ? {
-              offers: [
-                { ...assignedOffer, id: 'o3', claim: { ...assignedOffer.claim!, mine: false } },
-              ],
-              total: 1,
-              limit: 50,
-              offset: 0,
-            }
-          : hubResponse,
-      ),
-    )
+    mockedOffers.mockImplementation((filters) => {
+      if (filters?.type === 'transport_offered') return Promise.resolve(emptyResponse)
+      if (filters?.forTransport === 'assigned') {
+        return Promise.resolve({
+          offers: [
+            { ...assignedOffer, id: 'o3', claim: { ...assignedOffer.claim!, mine: false } },
+          ],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        })
+      }
+      return Promise.resolve(hubResponse)
+    })
     renderHub()
 
     expect(
@@ -229,6 +259,38 @@ describe('TransportHubPage', () => {
 
     expect(
       await screen.findByText('No hay suministros esperando transporte'),
+    ).toBeInTheDocument()
+  })
+
+  it('muestra el enlace para publicar transporte disponible desde el centro de carga', async () => {
+    renderHub()
+
+    const link = await screen.findByRole('link', {
+      name: 'Publicar transporte disponible',
+    })
+    expect(link).toHaveAttribute('href', '/ofrecer-ayuda?tipo=transport_offered')
+  })
+
+  it('muestra las ofertas de transporte en su propia sección al final', async () => {
+    renderHub()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Transporte disponible' }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByText('Ofrezco viajes desde la bodega'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Me comprometo a llevarla' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('muestra el estado vacío cuando no hay ofertas de transporte', async () => {
+    mockedOffers.mockResolvedValue(emptyResponse)
+    renderHub()
+
+    expect(
+      await screen.findByText('Aún no hay ofertas de transporte'),
     ).toBeInTheDocument()
   })
 })

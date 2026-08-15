@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import AudienceSection from '../components/AudienceSection'
 import ContactVisibilitySection from '../components/ContactVisibilitySection'
@@ -45,13 +45,19 @@ const initialReporter: ReporterState = {
   email: '',
 }
 
-const OFFER_TYPE_CHOICES = Object.entries(OFFER_TYPE_LABELS).filter(
-  ([code]) => code !== 'transport_offered',
-)
+function offerTypeChoices(includeTransport: boolean) {
+  return Object.entries(OFFER_TYPE_LABELS).filter(
+    ([code]) => includeTransport || code !== 'transport_offered',
+  )
+}
 
 export default function CreateOfferPage() {
   const navigate = useNavigate()
-  const [type, setType] = useState<OfferType | ''>('')
+  const [searchParams] = useSearchParams()
+  const transportEntry = searchParams.get('tipo') === 'transport_offered'
+  const [type, setType] = useState<OfferType | ''>(
+    transportEntry ? 'transport_offered' : '',
+  )
   const [transport, setTransport] = useState<TransportOption | ''>('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -186,12 +192,18 @@ export default function CreateOfferPage() {
               <option value="" disabled>
                 Selecciona un tipo…
               </option>
-              {OFFER_TYPE_CHOICES.map(([code, label]) => (
+              {offerTypeChoices(transportEntry).map(([code, label]) => (
                 <option key={code} value={code}>
                   {label}
                 </option>
               ))}
             </select>
+            {type === 'transport_offered' && (
+              <p className="mt-1 text-xs text-slate-500">
+                Estas ofertas aparecen en el centro de carga para coordinar el
+                envío de suministros.
+              </p>
+            )}
           </div>
 
           {canTransport && (
