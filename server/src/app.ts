@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import cors from 'cors'
 import express from 'express'
+import helmet from 'helmet'
 import { env } from './config.js'
 import { notFound, errorHandler } from './middleware/error.js'
 import { adminRouter } from './routes/admin.js'
@@ -24,7 +25,36 @@ export function createApp() {
     app.set('trust proxy', 1)
   }
 
-  app.use(cors())
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          baseUri: ["'self'"],
+          fontSrc: ["'self'", 'https:', 'data:'],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'https://*.tile.openstreetmap.org',
+            env.supabaseUrl ? env.supabaseUrl.replace(/^https?:\/\//, 'https://') : '',
+          ].filter(Boolean),
+          objectSrc: ["'none'"],
+          scriptSrc: ["'self'"],
+          scriptSrcAttr: ["'none'"],
+          styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
+          upgradeInsecureRequests: null,
+        },
+      },
+    }),
+  )
+  app.use(
+    cors({
+      origin: env.corsOrigin ? env.corsOrigin.split(',') : false,
+      credentials: true,
+    }),
+  )
   app.use(express.json({ limit: '10mb' }))
 
   const servesWeb = env.production && fs.existsSync(WEB_DIST)

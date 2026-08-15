@@ -43,6 +43,51 @@ npm run test                  # backend + frontend (requiere PostgreSQL arriba)
 Los tests de backend usan una base `ayudas_test` separada (creada y sincronizada
 automáticamente por el setup de Vitest).
 
+## Producción
+
+El servidor compila la API y sirve el frontend desde `web/dist` cuando
+`NODE_ENV=production`. Despliegue: construir el web, aplicar migraciones y arrancar
+el servidor.
+
+```bash
+npm install
+npm run build                   # compila server/ y web/
+npm run db:deploy -w server     # aplica migraciones (no requerido si PostgreSQL es nuevo)
+npm start -w server             # sirve API y frontend en :4000
+```
+
+### Variables de entorno
+
+Además de las de `server/.env.example`, en producción **son obligatorias**:
+
+| Variable | Descripción |
+| --- | --- |
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | PostgreSQL de producción (no la local de Docker) |
+| `JWT_SECRET` | Genera con `openssl rand -hex 32`; el secreto es obligatorio en producción |
+| `ADMIN_TOKEN` | Token para las rutas de moderación; obligatorio en producción |
+| `SMTP_URL` | SMTP para verificar correo y restablecer contraseña (p. ej. Brevo) |
+| `MAIL_FROM` | Remitente de los correos |
+| `FRONTEND_URL` | URL pública del frontend (usada en los enlaces de verificación) |
+| `TRUST_PROXY` | `true` cuando hay un proxy reverso (nginx/caddy o el de Render/Railway) |
+
+Opcionales: `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` para fotos en Supabase
+(sin ellas, las fotos se guardan como base64 en la base de datos) y `CORS_ORIGIN`
+(origins permitidos, separados por coma; vacío = sin CORS, sirviendo todo en
+mismo origen).
+
+El servidor **revienta al arrancar** si `JWT_SECRET` o `ADMIN_TOKEN` faltan o
+usan el valor de ejemplo (para evitar sesiones fraguables en producción).
+
+### Despliegue rápido (Render/Railway)
+
+1. Servidor de Postgres (Render Postgres, Railway Postgres, etc.) y usa su `DATABASE_URL`.
+2. Define todas las variables obligatorias de la tabla anterior.
+3. Build: `npm run build`.
+4. Arranque: `npm run db:deploy -w server && npm start -w server`.
+5. Antes de abrir: registra una cuenta (debe llegar el correo de verificación con
+   el enlace correcto) y restablece una contraseña; crea una solicitud, oferta y aviso.
+
 ## Flujo de trabajo
 
 Cada commit deja la app funcionando con tests en verde. Las migraciones de Prisma se
