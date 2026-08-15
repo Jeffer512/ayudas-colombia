@@ -13,9 +13,9 @@ import {
 import type { HelpOrgItem, HelpOrgItemKind, RequestType, Urgency } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
-const labelClass = 'text-sm font-medium text-slate-700'
+const labelClass = 'text-sm font-medium text-text-muted'
 
 export default function MyOrgPage() {
   const queryClient = useQueryClient()
@@ -145,9 +145,9 @@ export default function MyOrgPage() {
 
   if (!staff) {
     return (
-      <div className="mx-auto max-w-lg rounded-lg border border-slate-200 bg-white p-8 text-center">
+      <div className="mx-auto max-w-lg rounded-lg border border-line bg-surface p-8 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Mi organización</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-text-muted">
           Esta sección es para el personal de las organizaciones de la Red de
           ayudas. Inicia sesión para gestionar tu organización.
         </p>
@@ -157,7 +157,7 @@ export default function MyOrgPage() {
         >
           Iniciar sesión
         </Link>
-        <p className="mt-3 text-sm text-slate-600">
+        <p className="mt-3 text-sm text-text-muted">
           ¿No tienes cuenta?{' '}
           <Link to="/registro" className="font-medium text-sky-700 hover:underline">
             Regístrate
@@ -179,46 +179,46 @@ export default function MyOrgPage() {
         <h1 className="text-2xl font-bold tracking-tight">Mi organización</h1>
         <button
           onClick={() => api.logout().then(() => window.location.reload())}
-          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+          className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
         >
           Cerrar sesión
         </button>
       </div>
 
       {org && (
-        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+        <div className="mt-4 rounded-lg border border-line bg-surface p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-block rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
+            <span className="inline-block rounded-full bg-teal-100 dark:bg-teal-950/40 px-2 py-0.5 text-xs font-medium text-teal-800 dark:text-teal-300">
               {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category}
             </span>
-            <span className="text-sm text-slate-500">{org.city.name}</span>
+            <span className="text-sm text-text-muted">{org.city.name}</span>
             <Link
               to={`/organizacion/${org.id}`}
-              className="ml-auto text-sm text-teal-700 hover:underline"
+              className="ml-auto text-sm text-teal-700 dark:text-teal-300 hover:underline"
             >
               Ver página pública
             </Link>
           </div>
-          <h2 className="mt-2 text-lg font-semibold text-slate-900">{org.name}</h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <h2 className="mt-2 text-lg font-semibold text-text-main">{org.name}</h2>
+          <p className="mt-1 text-sm text-text-muted">
             Sesión de <strong>{staff.name}</strong> ({staff.email}) —{' '}
             {staff.role === 'manager' ? 'manager' : 'miembro'}.
           </p>
         </div>
       )}
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-700">
+      <section className="mt-6 rounded-lg border border-line bg-surface p-4">
+        <h2 className="text-sm font-semibold text-text-muted">
           Publicar un pedido de la organización
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-text-muted">
           El pedido aparecerá en el mapa con el nombre de la organización.
         </p>
 
         {reqError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
           >
             {reqError}
           </div>
@@ -226,7 +226,7 @@ export default function MyOrgPage() {
         {requestMutation.isSuccess && (
           <div
             role="status"
-            className="mt-3 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+            className="mt-3 rounded-md border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-3 text-sm text-green-700 dark:text-green-300"
           >
             Pedido publicado correctamente.
           </div>
@@ -326,11 +326,11 @@ export default function MyOrgPage() {
         </form>
       </section>
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-700">
+      <section className="mt-6 rounded-lg border border-line bg-surface p-4">
+        <h2 className="text-sm font-semibold text-text-muted">
           Inventario de la organización
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-text-muted">
           Publica lo que tienen disponible y lo que necesitan, para coordinar
           donaciones con la comunidad.
         </p>
@@ -338,7 +338,7 @@ export default function MyOrgPage() {
         {itemError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
           >
             {itemError}
           </div>
@@ -426,7 +426,7 @@ export default function MyOrgPage() {
             {items.map((item) => (
               <li
                 key={item.id}
-                className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm"
+                className="rounded-lg border border-line bg-page p-3 text-sm"
               >
                 {editing && editing.id === item.id ? (
                   <form
@@ -502,7 +502,7 @@ export default function MyOrgPage() {
                       </button>
                       <button
                         type="reset"
-                        className="rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-600 hover:bg-slate-50"
+                        className="rounded-md border border-line bg-surface px-3 text-sm text-text-muted hover:bg-page"
                       >
                         Cancelar
                       </button>
@@ -514,28 +514,28 @@ export default function MyOrgPage() {
                       <span
                         className={
                           item.kind === 'available'
-                            ? 'rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800'
-                            : 'rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800'
+                            ? 'rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-300'
+                            : 'rounded-full bg-rose-100 dark:bg-rose-950/40 px-2 py-0.5 text-xs font-medium text-rose-800 dark:text-rose-300'
                         }
                       >
                         {item.kind === 'available' ? 'Disponible' : 'Necesitamos'}
                       </span>
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-text-main">
                         {item.name}
                       </span>
-                      <span className="text-slate-500">{formatItemQuantity(item.quantity, item.unit)}</span>
+                      <span className="text-text-muted">{formatItemQuantity(item.quantity, item.unit)}</span>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setEditing({ ...item })}
-                        className="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                        className="rounded-md border border-line bg-surface px-3 py-1 text-xs font-medium text-text-muted hover:bg-page dark:hover:bg-white/10"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => deleteItemMutation.mutate(item.id)}
                         disabled={deleteItemMutation.isPending}
-                        className="rounded-md border border-red-200 bg-white px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                        className="rounded-md border border-red-200 dark:border-red-900 bg-surface px-3 py-1 text-xs font-medium text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
                       >
                         Eliminar
                       </button>
@@ -549,11 +549,11 @@ export default function MyOrgPage() {
       </section>
 
       {staff.role === 'manager' && (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-700">
+        <section className="mt-6 rounded-lg border border-line bg-surface p-4">
+          <h2 className="text-sm font-semibold text-text-muted">
             Solicitudes pendientes de aprobación
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-text-muted">
             Las personas registradas con el correo de tu organización esperan
             que las apruebes para acceder. Revisa quién es cada una antes de
             aprobar.
@@ -562,14 +562,14 @@ export default function MyOrgPage() {
           {memberError && (
             <div
               role="alert"
-              className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+              className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
             >
               {memberError}
             </div>
           )}
 
           {pendingMembers.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-500">
+            <p className="mt-3 text-sm text-text-muted">
               No hay solicitudes pendientes.
             </p>
           ) : (
@@ -577,11 +577,11 @@ export default function MyOrgPage() {
               {pendingMembers.map((member) => (
                 <li
                   key={member.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-3 text-sm"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-amber-100 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40/50 p-3 text-sm"
                 >
                   <div>
-                    <p className="font-medium text-slate-800">{member.name}</p>
-                    <p className="text-xs text-slate-500">{member.email}</p>
+                    <p className="font-medium text-text-main">{member.name}</p>
+                    <p className="text-xs text-text-muted">{member.email}</p>
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <button
@@ -594,7 +594,7 @@ export default function MyOrgPage() {
                     <button
                       onClick={() => rejectMemberMutation.mutate(member.id)}
                       disabled={rejectMemberMutation.isPending}
-                      className="rounded-md border border-red-200 bg-white px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                      className="rounded-md border border-red-200 dark:border-red-900 bg-surface px-3 py-1 text-xs font-medium text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
                     >
                       Rechazar
                     </button>
@@ -607,24 +607,24 @@ export default function MyOrgPage() {
       )}
 
       <section className="mt-6">
-        <h2 className="text-sm font-semibold text-slate-700">
+        <h2 className="text-sm font-semibold text-text-muted">
           Personal ({activeMembers.length})
         </h2>
         <ul className="mt-2 space-y-2">
           {activeMembers.map((member) => (
             <li
               key={member.id}
-              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 text-sm"
+              className="flex items-center justify-between rounded-lg border border-line bg-surface p-3 text-sm"
             >
               <div>
-                <p className="font-medium text-slate-800">{member.name}</p>
-                <p className="text-xs text-slate-500">{member.email}</p>
+                <p className="font-medium text-text-main">{member.name}</p>
+                <p className="text-xs text-text-muted">{member.email}</p>
               </div>
               <span
                 className={
                   member.role === 'manager'
                     ? 'rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800'
-                    : 'rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600'
+                    : 'rounded-full bg-page dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-text-muted'
                 }
               >
                 {member.role === 'manager' ? 'Manager' : 'Miembro'}
@@ -635,11 +635,11 @@ export default function MyOrgPage() {
       </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-semibold text-slate-700">
+        <h2 className="text-sm font-semibold text-text-muted">
           Pedidos publicados por mi organización
         </h2>
         {orgRequests.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-text-muted">
             Aún no has publicado pedidos.
           </p>
         ) : (

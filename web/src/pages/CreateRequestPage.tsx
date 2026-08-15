@@ -21,9 +21,9 @@ import type {
 const MISSING_TYPES: ReadonlySet<string> = new Set(['missing_person', 'missing_pet'])
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
-const labelClass = 'text-sm font-medium text-slate-700'
+const labelClass = 'text-sm font-medium text-text-muted'
 
 interface LocationState {
   cityCode: string
@@ -153,7 +153,7 @@ export default function CreateRequestPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="text-2xl font-bold tracking-tight">Pedir ayuda</h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-text-muted">
         Cuéntanos qué necesitas. Así, vecinos, organizaciones y centros de
         acopio lo verán en el mapa y podrán coordinar la ayuda hacia tu zona.
       </p>
@@ -161,15 +161,15 @@ export default function CreateRequestPage() {
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
         >
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <fieldset className="rounded-lg border border-slate-200 bg-white p-4">
-          <legend className="px-1 text-sm font-semibold text-slate-700">
+        <fieldset className="rounded-lg border border-line bg-surface p-4">
+          <legend className="px-1 text-sm font-semibold text-text-muted">
             ¿Qué necesitas?
           </legend>
 
@@ -233,7 +233,7 @@ export default function CreateRequestPage() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-text-muted">
                 Si marcas "Necesito transporte", quien ofrezca suministros sabrá
                 que también debe poder llevarlos.
               </p>
@@ -278,7 +278,7 @@ export default function CreateRequestPage() {
               <label htmlFor="photo" className={labelClass}>
                 Foto (opcional)
               </label>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-text-muted">
                 Una foto ayuda a identificar a la persona o la mascota. Se
                 reduce automáticamente al enviarla.
               </p>
@@ -287,7 +287,7 @@ export default function CreateRequestPage() {
                   <img
                     src={photo}
                     alt="Vista previa de la foto"
-                    className="h-40 w-40 rounded-md border border-slate-200 object-cover"
+                    className="h-40 w-40 rounded-md border border-line object-cover"
                   />
                   <button
                     type="button"
@@ -295,7 +295,7 @@ export default function CreateRequestPage() {
                       setPhoto(null)
                       setPhotoError(null)
                     }}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                    className="rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-text-muted hover:bg-page"
                   >
                     Quitar foto
                   </button>
@@ -305,7 +305,7 @@ export default function CreateRequestPage() {
                   id="photo"
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  className="mt-2 block w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-sky-700 hover:file:bg-sky-100"
+                  className="mt-2 block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-sky-700 hover:file:bg-sky-100"
                   onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (!file) return
@@ -325,7 +325,7 @@ export default function CreateRequestPage() {
                 />
               )}
               {photoError && (
-                <p role="alert" className="mt-1 text-sm text-red-600">
+                <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-300">
                   {photoError}
                 </p>
               )}
@@ -360,7 +360,7 @@ export default function CreateRequestPage() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
           >
             Cancelar
           </button>

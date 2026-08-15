@@ -26,14 +26,14 @@ export default function ReporterContact({
   return (
     <>
       <div>
-        <dt className="font-medium text-slate-500">{nameLabel}</dt>
-        <dd className="text-slate-800">{name ?? reporter.name}</dd>
+        <dt className="font-medium text-text-muted">{nameLabel}</dt>
+        <dd className="text-text-main">{name ?? reporter.name}</dd>
       </div>
 
       {restricted ? (
-        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-          <dt className="font-medium text-slate-500">Contacto</dt>
-          <dd className="mt-1 text-sm text-slate-600">
+        <div className="rounded-md border border-line bg-page p-3">
+          <dt className="font-medium text-text-muted">Contacto</dt>
+          <dd className="mt-1 text-sm text-text-muted">
             Quien publicó ocultó su contacto. Inicia sesión para verlo.
           </dd>
           <Link
@@ -47,8 +47,8 @@ export default function ReporterContact({
         <>
           {hasPhone && (
             <div>
-              <dt className="font-medium text-slate-500">Teléfono</dt>
-              <dd className="text-slate-800">
+              <dt className="font-medium text-text-muted">Teléfono</dt>
+              <dd className="text-text-main">
                 <a href={`tel:${reporter.phone}`} className="text-sky-700">
                   {reporter.phone}
                 </a>
@@ -58,8 +58,8 @@ export default function ReporterContact({
 
           {reporter.whatsapp && (
             <div>
-              <dt className="font-medium text-slate-500">WhatsApp</dt>
-              <dd className="text-slate-800">
+              <dt className="font-medium text-text-muted">WhatsApp</dt>
+              <dd className="text-text-main">
                 {whatsappLink(reporter.whatsapp) ? (
                   <a
                     href={whatsappLink(reporter.whatsapp)!}
@@ -89,8 +89,8 @@ export default function ReporterContact({
 
           {hasEmail && (
             <div>
-              <dt className="font-medium text-slate-500">Correo</dt>
-              <dd className="text-slate-800">
+              <dt className="font-medium text-text-muted">Correo</dt>
+              <dd className="text-text-main">
                 <a href={`mailto:${reporter.email}`} className="text-sky-700">
                   {reporter.email}
                 </a>

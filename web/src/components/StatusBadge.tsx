@@ -6,7 +6,7 @@ interface StatusBadgeProps {
 export default function StatusBadge({ status, meta }: StatusBadgeProps) {
   const item = meta[status] ?? {
     label: status,
-    badgeClass: 'bg-gray-100 text-gray-700',
+    badgeClass: 'bg-page dark:bg-white/10 text-text-muted',
   }
   return (
     <span

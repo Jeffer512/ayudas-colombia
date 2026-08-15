@@ -41,7 +41,7 @@ export default function HomeMap({
     <MapContainer
       center={[center.lat, center.lng]}
       zoom={13}
-      className="h-96 w-full rounded-lg border border-slate-300"
+      className="h-96 w-full rounded-lg border border-line"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -57,7 +57,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.needs)}
             >
               <Popup>
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-xs font-medium text-text-muted">
                   Pedido · {request.city.name}
                 </span>
                 <p className="font-semibold">{request.title}</p>
@@ -76,7 +76,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.offers)}
             >
               <Popup>
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-xs font-medium text-text-muted">
                   Oferta · {offer.city.name}
                 </span>
                 <p className="font-semibold">{offer.title}</p>
@@ -95,7 +95,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.avisos)}
             >
               <Popup>
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-xs font-medium text-text-muted">
                   Aviso · {aviso.city.name}
                 </span>
                 <p className="font-semibold">{aviso.title}</p>
@@ -114,7 +114,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.helpOrgs)}
             >
               <Popup>
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-xs font-medium text-text-muted">
                   {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category} · {org.city.name}
                 </span>
                 <p className="font-semibold">{org.name}</p>

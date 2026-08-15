@@ -15,7 +15,7 @@ export default function EntityList({
 }: EntityListProps) {
   if (empty) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
+      <div className="rounded-lg border border-dashed border-line bg-surface p-8 text-center text-text-muted">
         <p className="font-medium">{emptyTitle}</p>
         <p className="mt-1 text-sm">{emptyHint}</p>
       </div>

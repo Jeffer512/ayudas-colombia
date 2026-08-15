@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
-const labelClass = 'text-sm font-medium text-slate-700'
+const labelClass = 'text-sm font-medium text-text-muted'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -24,11 +24,11 @@ export default function ForgotPasswordPage() {
   if (mutation.isSuccess) {
     return (
       <div className="mx-auto max-w-md text-center">
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-8">
+          <h1 className="text-2xl font-bold tracking-tight text-text-main">
             Revisa tu correo
           </h1>
-          <p className="mt-2 text-sm text-slate-700">
+          <p className="mt-2 text-sm text-text-muted">
             Si existe una cuenta con ese correo, te enviamos un enlace para
             restablecer tu contraseña. Revisa la bandeja de entrada (y el spam).
           </p>
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
       <h1 className="text-2xl font-bold tracking-tight">
         Recuperar contraseña
       </h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-text-muted">
         Escribe el correo de tu cuenta y te enviaremos un enlace para crear una
         contraseña nueva.
       </p>
@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
       {mutation.isError && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
         >
           {(mutation.error as Error).message}
         </div>
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-text-muted">
         ¿Recordaste tu contraseña?{' '}
         <Link to="/iniciar-sesion" className="font-medium text-sky-700 hover:underline">
           Inicia sesión

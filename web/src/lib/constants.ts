@@ -36,22 +36,22 @@ export const URGENCY_META: Record<string, { label: string; color: string }> = {
 }
 
 export const REQUEST_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
-  open: { label: 'Abierto', badgeClass: 'bg-blue-100 text-blue-800' },
-  resolved: { label: 'Resuelto', badgeClass: 'bg-green-100 text-green-800' },
-  duplicate: { label: 'Duplicado', badgeClass: 'bg-gray-200 text-gray-700' },
-  invalid: { label: 'Inválido', badgeClass: 'bg-gray-200 text-gray-700' },
+  open: { label: 'Abierto', badgeClass: 'bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300' },
+  resolved: { label: 'Resuelto', badgeClass: 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300' },
+  duplicate: { label: 'Duplicado', badgeClass: 'bg-page dark:bg-white/10 text-text-muted' },
+  invalid: { label: 'Inválido', badgeClass: 'bg-page dark:bg-white/10 text-text-muted' },
 }
 
 export const OFFER_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
-  open: { label: 'Disponible', badgeClass: 'bg-green-100 text-green-800' },
-  in_transit: { label: 'En camino', badgeClass: 'bg-amber-100 text-amber-800' },
-  fulfilled: { label: 'Entregado', badgeClass: 'bg-blue-100 text-blue-800' },
-  unavailable: { label: 'Ya no disponible', badgeClass: 'bg-gray-200 text-gray-700' },
+  open: { label: 'Disponible', badgeClass: 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300' },
+  in_transit: { label: 'En camino', badgeClass: 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300' },
+  fulfilled: { label: 'Entregado', badgeClass: 'bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300' },
+  unavailable: { label: 'Ya no disponible', badgeClass: 'bg-page dark:bg-white/10 text-text-muted' },
 }
 
 export const AVISO_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
-  open: { label: 'Vigente', badgeClass: 'bg-blue-100 text-blue-800' },
-  closed: { label: 'Desactualizado', badgeClass: 'bg-gray-200 text-gray-700' },
+  open: { label: 'Vigente', badgeClass: 'bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300' },
+  closed: { label: 'Desactualizado', badgeClass: 'bg-page dark:bg-white/10 text-text-muted' },
 }
 
 export const MARKER_COLORS = {
@@ -75,8 +75,8 @@ export const HELP_ORG_CATEGORY_LABELS: Record<string, string> = {
 }
 
 export const HELP_ORG_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
-  open: { label: 'Abierto', badgeClass: 'bg-green-100 text-green-800' },
-  closed: { label: 'Cerrado', badgeClass: 'bg-gray-200 text-gray-700' },
+  open: { label: 'Abierto', badgeClass: 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300' },
+  closed: { label: 'Cerrado', badgeClass: 'bg-page dark:bg-white/10 text-text-muted' },
 }
 
 export const HELP_ORG_ITEM_KIND_LABELS: Record<HelpOrgItemKind, string> = {
@@ -88,8 +88,8 @@ export const HELP_ORG_ITEM_KIND_BADGE: Record<
   HelpOrgItemKind,
   { badgeClass: string; textClass: string }
 > = {
-  available: { badgeClass: 'bg-emerald-100', textClass: 'text-emerald-800' },
-  needed: { badgeClass: 'bg-rose-100', textClass: 'text-rose-800' },
+  available: { badgeClass: 'bg-emerald-100 dark:bg-emerald-950/40', textClass: 'text-emerald-800 dark:text-emerald-300' },
+  needed: { badgeClass: 'bg-rose-100 dark:bg-rose-950/40', textClass: 'text-rose-800 dark:text-rose-300' },
 }
 
 export const CONTACT_VISIBILITY_LABELS: Record<string, string> = {

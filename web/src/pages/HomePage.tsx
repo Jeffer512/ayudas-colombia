@@ -22,8 +22,8 @@ import type {
 } from '../lib/types'
 
 const SECTION_STYLES: Record<string, { color: string; dot: string }> = {
-  needs: { color: 'text-rose-700', dot: 'bg-rose-600' },
-  offers: { color: 'text-emerald-700', dot: 'bg-emerald-600' },
+  needs: { color: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-600' },
+  offers: { color: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-600' },
   avisos: { color: 'text-sky-700', dot: 'bg-sky-600' },
 }
 
@@ -46,12 +46,12 @@ function SectionHeader({
   accent: { color: string; dot: string }
 }) {
   return (
-    <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm">
+    <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg bg-surface px-4 py-3 shadow-sm">
       <span className={`flex items-center gap-2 font-semibold ${accent.color}`}>
         <span className={`inline-block h-2.5 w-2.5 rounded-full ${accent.dot}`} />
         {title}
       </span>
-      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-sm font-medium text-slate-700">
+      <span className="rounded-full bg-page dark:bg-white/10 px-2.5 py-0.5 text-sm font-medium text-text-muted">
         {count === undefined ? '…' : `${count} activo(s)`}
       </span>
     </summary>
@@ -79,7 +79,7 @@ function RequestsSection({ cities }: { cities: City[] }) {
       <div className="mt-2 space-y-2">
         <RequestFiltersUi value={filters} cities={cities} onChange={setFilters} />
         {isError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-center text-red-700 dark:text-red-300">
             <p className="font-medium">No pudimos cargar los pedidos</p>
             <button
               onClick={() => refetch()}
@@ -90,7 +90,7 @@ function RequestsSection({ cities }: { cities: City[] }) {
           </div>
         )}
         {isPending && (
-          <p className="py-6 text-center text-sm text-slate-500" role="status">
+          <p className="py-6 text-center text-sm text-text-muted" role="status">
             Cargando pedidos…
           </p>
         )}
@@ -133,7 +133,7 @@ function OffersSection({ cities }: { cities: City[] }) {
       <div className="mt-2 space-y-2">
         <OfferFiltersUi value={filters} cities={cities} onChange={setFilters} />
         {isError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-center text-red-700 dark:text-red-300">
             <p className="font-medium">No pudimos cargar las ofertas</p>
             <button
               onClick={() => refetch()}
@@ -144,7 +144,7 @@ function OffersSection({ cities }: { cities: City[] }) {
           </div>
         )}
         {isPending && (
-          <p className="py-6 text-center text-sm text-slate-500" role="status">
+          <p className="py-6 text-center text-sm text-text-muted" role="status">
             Cargando ofertas…
           </p>
         )}
@@ -187,7 +187,7 @@ function AvisosSection({ cities }: { cities: City[] }) {
       <div className="mt-2 space-y-2">
         <AvisoFiltersUi value={filters} cities={cities} onChange={setFilters} />
         {isError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-center text-red-700 dark:text-red-300">
             <p className="font-medium">No pudimos cargar los avisos</p>
             <button
               onClick={() => refetch()}
@@ -198,7 +198,7 @@ function AvisosSection({ cities }: { cities: City[] }) {
           </div>
         )}
         {isPending && (
-          <p className="py-6 text-center text-sm text-slate-500" role="status">
+          <p className="py-6 text-center text-sm text-text-muted" role="status">
             Cargando avisos…
           </p>
         )}
@@ -274,7 +274,7 @@ export default function HomePage() {
     <div>
       <div className="mb-3">
         <h1 className="text-2xl font-bold tracking-tight">Ayuda en Pereira</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-text-muted">
           Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
         </p>
         <Link
@@ -299,7 +299,7 @@ export default function HomePage() {
 
       <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
         {toggles.map((toggle) => (
-          <label key={toggle.key} className="flex items-center gap-2 text-slate-700">
+          <label key={toggle.key} className="flex items-center gap-2 text-text-muted">
             <input
               type="checkbox"
               checked={toggle.checked}

@@ -5,9 +5,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
-const labelClass = 'text-sm font-medium text-slate-700'
+const labelClass = 'text-sm font-medium text-text-muted'
 
 type Stage = 'idle' | 'verifying' | 'verified' | 'invalid'
 
@@ -46,7 +46,7 @@ export default function VerifyEmailPage() {
     return (
       <div className="mx-auto max-w-md text-center">
         <h1 className="text-2xl font-bold tracking-tight">Verificando tu correo…</h1>
-        <p className="mt-2 text-sm text-slate-600" role="status">
+        <p className="mt-2 text-sm text-text-muted" role="status">
           Estamos activando tu cuenta.
         </p>
       </div>
@@ -56,11 +56,11 @@ export default function VerifyEmailPage() {
   if (stage === 'verified') {
     return (
       <div className="mx-auto max-w-md text-center">
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-8">
+          <h1 className="text-2xl font-bold tracking-tight text-text-main">
             Correo verificado
           </h1>
-          <p className="mt-2 text-sm text-slate-700">
+          <p className="mt-2 text-sm text-text-muted">
             Tu cuenta está activa. Si tu vinculación a una organización estaba
             pendiente, podrás ingresar cuando el manager la apruebe.
           </p>
@@ -78,7 +78,7 @@ export default function VerifyEmailPage() {
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-2xl font-bold tracking-tight">Verificar tu correo</h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-text-muted">
         Escribe el correo con el que te registraste para recibir un nuevo enlace
         de verificación.
       </p>
@@ -86,7 +86,7 @@ export default function VerifyEmailPage() {
       {stage === 'invalid' && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+          className="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-300"
         >
           El enlace no es válido o ya expiró (tiene validez de 24 horas).
           Solicita uno nuevo abajo.
@@ -96,7 +96,7 @@ export default function VerifyEmailPage() {
       {resendSent && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+          className="mt-4 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-3 text-sm text-green-700 dark:text-green-300"
         >
           Correo reenviado. Revisa tu bandeja de entrada (y la carpeta de spam).
         </div>
@@ -105,7 +105,7 @@ export default function VerifyEmailPage() {
       {resend.isError && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
         >
           {(resend.error as Error).message}
         </div>
@@ -135,7 +135,7 @@ export default function VerifyEmailPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-text-muted">
         ¿Ya verificaste tu correo?{' '}
         <Link to="/iniciar-sesion" className="font-medium text-sky-700 hover:underline">
           Inicia sesión

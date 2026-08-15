@@ -16,7 +16,7 @@ import { formatDate } from '../lib/format'
 import type { StatusUpdate } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
 type ActionMode = 'resolve' | 'reopen' | null
 
@@ -66,7 +66,7 @@ export default function RequestDetailPage() {
 
   if (isError || !request) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-700">
+      <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-center text-red-700 dark:text-red-300">
         <p className="font-medium">No encontramos este pedido</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -91,7 +91,7 @@ export default function RequestDetailPage() {
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <StatusBadge status={request.status} meta={REQUEST_STATUS_META} />
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-text-muted">
           {typeLabel} · {request.city.name}
         </span>
         <span
@@ -106,7 +106,7 @@ export default function RequestDetailPage() {
         </span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      <h1 className="mt-2 text-2xl font-bold tracking-tight text-text-main">
         {request.title}
       </h1>
 
@@ -114,32 +114,32 @@ export default function RequestDetailPage() {
         <img
           src={request.photo}
           alt={`Foto de: ${request.title}`}
-          className="mt-4 w-full max-w-md rounded-lg border border-slate-200 object-cover"
+          className="mt-4 w-full max-w-md rounded-lg border border-line object-cover"
         />
       )}
 
-      <p className="mt-3 whitespace-pre-line text-slate-700">
+      <p className="mt-3 whitespace-pre-line text-text-muted">
         {request.description}
       </p>
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {request.transport && (
           <div>
-            <dt className="font-medium text-slate-500">Transporte</dt>
-            <dd className="text-slate-800">
+            <dt className="font-medium text-text-muted">Transporte</dt>
+            <dd className="text-text-main">
               {TRANSPORT_LABELS[request.transport]}
             </dd>
           </div>
         )}
         {request.address && (
           <div>
-            <dt className="font-medium text-slate-500">Dirección</dt>
-            <dd className="text-slate-800">{request.address}</dd>
+            <dt className="font-medium text-text-muted">Dirección</dt>
+            <dd className="text-text-main">{request.address}</dd>
           </div>
         )}
         <div>
-          <dt className="font-medium text-slate-500">Publicado</dt>
-          <dd className="text-slate-800">{formatDate(request.createdAt)}</dd>
+          <dt className="font-medium text-text-muted">Publicado</dt>
+          <dd className="text-text-main">{formatDate(request.createdAt)}</dd>
         </div>
         <ReporterContact
           reporter={request.reporter}
@@ -161,11 +161,11 @@ export default function RequestDetailPage() {
         </div>
       )}
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-700">
+      <section className="mt-6 rounded-lg border border-line bg-surface p-4">
+        <h2 className="text-sm font-semibold text-text-muted">
           Acciones para coordinar la ayuda
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-text-muted">
           {request.status === 'open' &&
             'Si puedes apoyar esta situación, dilo para que quienes esperan ayuda sepan que ya hay gente en camino.'}
           {request.status === 'resolved' &&
@@ -177,7 +177,7 @@ export default function RequestDetailPage() {
         {mutation.isError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
           >
             {(mutation.error as Error).message}
           </div>
@@ -216,7 +216,7 @@ export default function RequestDetailPage() {
           >
             {!request.isOwner && (
               <div>
-                <label htmlFor="resolveCode" className="text-sm font-medium text-slate-700">
+                <label htmlFor="resolveCode" className="text-sm font-medium text-text-muted">
                   Código de cierre (4 dígitos)
                 </label>
                 <input
@@ -229,14 +229,14 @@ export default function RequestDetailPage() {
                   onChange={(e) => setResolveCode(e.target.value)}
                   className={`mt-1 ${inputClass}`}
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-text-muted">
                   Se entregó al publicar el pedido. Con él se confirma que la
                   situación terminó y evita cierres o reaperturas por error.
                 </p>
               </div>
             )}
             <div>
-              <label htmlFor="note" className="text-sm font-medium text-slate-700">
+              <label htmlFor="note" className="text-sm font-medium text-text-muted">
                 Nota (opcional)
               </label>
               <input
@@ -262,7 +262,7 @@ export default function RequestDetailPage() {
               <button
                 type="button"
                 onClick={() => setMode(null)}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
               >
                 Cancelar
               </button>
@@ -274,7 +274,7 @@ export default function RequestDetailPage() {
           <button
             onClick={() => setMode('reopen')}
             disabled={mutation.isPending}
-            className="mt-3 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            className="mt-3 rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
           >
             Reabrir pedido
           </button>
@@ -282,13 +282,13 @@ export default function RequestDetailPage() {
       </section>
 
       {canBeMarkedActive && (
-        <section className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <h2 className="text-sm font-semibold text-emerald-800">
+        <section className="mt-6 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40 p-4">
+          <h2 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
             {request.helpers === 1
               ? '1 persona está ayudando'
               : `${request.helpers} personas están ayudando`}
           </h2>
-          <p className="mt-1 text-sm text-emerald-700">
+          <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-300">
             {request.isOwner
               ? 'Tú creaste este pedido. Los demás pueden registrarse aquí para ayudarte.'
               : iHelped
@@ -299,7 +299,7 @@ export default function RequestDetailPage() {
           {!request.isOwner && helpMutation.isError && (
             <div
               role="alert"
-              className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+              className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
             >
               {(helpMutation.error as Error).message}
             </div>
@@ -332,7 +332,7 @@ export default function RequestDetailPage() {
                 <div>
                   <label
                     htmlFor="helperName"
-                    className="text-sm font-medium text-emerald-800"
+                    className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
                   >
                     Tu nombre (opcional)
                   </label>
@@ -341,13 +341,13 @@ export default function RequestDetailPage() {
                     placeholder="Ej: Camila"
                     value={helperName}
                     onChange={(e) => setHelperName(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-emerald-600 focus:outline-none"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="helperNote"
-                    className="text-sm font-medium text-emerald-800"
+                    className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
                   >
                     ¿Qué vas a aportar? (opcional)
                   </label>
@@ -356,7 +356,7 @@ export default function RequestDetailPage() {
                     placeholder="Ej: llevo agua y una carpa"
                     value={helperNote}
                     onChange={(e) => setHelperNote(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-emerald-600 focus:outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -370,7 +370,7 @@ export default function RequestDetailPage() {
                   <button
                     type="button"
                     onClick={() => setHelpMode(false)}
-                    className="rounded-md border border-emerald-300 bg-white px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100"
+                    className="rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/40"
                   >
                     Cancelar
                   </button>
@@ -383,16 +383,16 @@ export default function RequestDetailPage() {
               {request.helperList.map((helper, index) => (
                 <li
                   key={index}
-                  className="rounded-md bg-white p-3 text-sm"
+                  className="rounded-md bg-surface p-3 text-sm"
                 >
-                  <p className="font-medium text-emerald-900">
+                  <p className="font-medium text-emerald-900 dark:text-emerald-300">
                     {helper.name ?? 'Alguien'}
                     <span className="ml-2 font-normal text-emerald-600">
                       {formatDate(helper.createdAt)}
                     </span>
                   </p>
                   {helper.note && (
-                    <p className="mt-0.5 text-emerald-800">{helper.note}</p>
+                    <p className="mt-0.5 text-emerald-800 dark:text-emerald-300">{helper.note}</p>
                   )}
                 </li>
               ))}
@@ -403,19 +403,19 @@ export default function RequestDetailPage() {
 
       {request.events && request.events.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-semibold text-slate-700">
+          <h2 className="text-sm font-semibold text-text-muted">
             Historial del pedido
           </h2>
           <ol className="mt-2 space-y-2">
             {request.events.map((event) => (
               <li
                 key={event.id}
-                className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm"
+                className="flex items-start gap-3 rounded-lg border border-line bg-surface p-3 text-sm"
               >
                 <StatusBadge status={event.status} meta={REQUEST_STATUS_META} />
                 <div className="min-w-0 flex-1">
-                  {event.note && <p className="text-slate-800">{event.note}</p>}
-                  <p className="text-xs text-slate-500">
+                  {event.note && <p className="text-text-main">{event.note}</p>}
+                  <p className="text-xs text-text-muted">
                     {event.actorName ?? 'Alguien'} · {formatDate(event.createdAt)}
                   </p>
                 </div>

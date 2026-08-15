@@ -6,9 +6,9 @@ import { api } from '../api/client'
 import type { RegisterResult } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
-const labelClass = 'text-sm font-medium text-slate-700'
+const labelClass = 'text-sm font-medium text-text-muted'
 
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState<'staff' | 'citizen'>('staff')
@@ -40,23 +40,23 @@ export default function RegisterPage() {
   if (done) {
     return (
       <div className="mx-auto max-w-md text-center">
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-8">
+          <h1 className="text-2xl font-bold tracking-tight text-text-main">
             Revisa tu correo
           </h1>
-          <p className="mt-2 text-sm text-slate-700">
+          <p className="mt-2 text-sm text-text-muted">
             Enviamos un enlace de verificación a <strong>{email}</strong>. Ábrelo
             para activar tu cuenta y luego inicia sesión.
           </p>
           {accountType === 'staff' && (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-text-muted">
               Si no eres la primera persona de la organización, tu solicitud
               quedará pendiente de aprobación por el manager. Verificar tu correo
               no cambia eso.
             </p>
           )}
           {done.verificationUrl && (
-            <p className="mt-3 break-all rounded-md bg-white p-2 text-xs text-sky-700">
+            <p className="mt-3 break-all rounded-md bg-surface p-2 text-xs text-sky-700">
               <span className="font-medium">Enlace de desarrollo:</span>{' '}
               {done.verificationUrl}
             </p>
@@ -77,7 +77,7 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-2xl font-bold tracking-tight">Crear cuenta</h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-text-muted">
         Regístrate para participar en la Red de ayudas. Después de
         registrarte tendrás que verificar tu correo.
       </p>
@@ -85,7 +85,7 @@ export default function RegisterPage() {
       {mutation.isError && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
         >
           {(mutation.error as Error).message}
         </div>
@@ -99,7 +99,7 @@ export default function RegisterPage() {
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm ${
                 accountType === 'staff'
                   ? 'border-sky-600 bg-sky-50'
-                  : 'border-slate-300 bg-white'
+                  : 'border-line bg-surface'
               }`}
             >
               <input
@@ -110,10 +110,10 @@ export default function RegisterPage() {
                 className="mt-0.5"
               />
               <span>
-                <span className="font-medium text-slate-800">
+                <span className="font-medium text-text-main">
                   Personal de organización
                 </span>
-                <span className="block text-xs text-slate-500">
+                <span className="block text-xs text-text-muted">
                   Gestiona una organización y publica pedidos a su nombre.
                 </span>
               </span>
@@ -122,7 +122,7 @@ export default function RegisterPage() {
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm ${
                 accountType === 'citizen'
                   ? 'border-sky-600 bg-sky-50'
-                  : 'border-slate-300 bg-white'
+                  : 'border-line bg-surface'
               }`}
             >
               <input
@@ -133,10 +133,10 @@ export default function RegisterPage() {
                 className="mt-0.5"
               />
               <span>
-                <span className="font-medium text-slate-800">
+                <span className="font-medium text-text-main">
                   Cuenta personal
                 </span>
-                <span className="block text-xs text-slate-500">
+                <span className="block text-xs text-text-muted">
                   Para ofrecer y coordinar ayuda como persona. Publicar sigue
                   siendo anónimo.
                 </span>
@@ -205,7 +205,7 @@ export default function RegisterPage() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-text-muted">
               Si eres el primero de tu organización, quedarás como manager. Si ya
               tiene personal, tu solicitud quedará{' '}
               <strong>pendiente de aprobación</strong>. ¿No encuentras tu
@@ -228,7 +228,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-text-muted">
         ¿Ya tienes cuenta?{' '}
         <Link to="/iniciar-sesion" className="font-medium text-sky-700 hover:underline">
           Inicia sesión

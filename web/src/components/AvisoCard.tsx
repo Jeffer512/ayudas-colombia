@@ -14,11 +14,11 @@ export default function AvisoCard({ aviso }: { aviso: Aviso }) {
   return (
     <Link
       to={`/aviso/${aviso.id}`}
-      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-sky-400 hover:shadow"
+      className="block rounded-lg border border-line bg-surface p-4 shadow-sm transition hover:border-sky-400 hover:shadow"
     >
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={aviso.status} meta={AVISO_STATUS_META} />
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-text-muted">
           {typeLabel} · {aviso.city.name}
         </span>
         <span
@@ -33,12 +33,12 @@ export default function AvisoCard({ aviso }: { aviso: Aviso }) {
         </span>
       </div>
 
-      <h2 className="mt-2 font-semibold text-slate-900">{aviso.title}</h2>
-      <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+      <h2 className="mt-2 font-semibold text-text-main">{aviso.title}</h2>
+      <p className="mt-1 line-clamp-2 text-sm text-text-muted">
         {aviso.description}
       </p>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-2 text-xs text-text-muted">
         {aviso.marks > 0 && (
           <span className="mr-2 inline-block rounded-full bg-sky-50 px-2 py-0.5 text-sky-700">
             {aviso.marks} {aviso.marks === 1 ? 'marca' : 'marcas'} de desactualizado

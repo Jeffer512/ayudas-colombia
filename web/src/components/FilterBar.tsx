@@ -21,7 +21,7 @@ interface FilterBarProps<T> {
 }
 
 const selectClass =
-  'rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700 focus:border-sky-500 focus:outline-none'
+  'rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-text-muted focus:border-sky-500 focus:outline-none'
 
 export default function FilterBar<T extends object>({
   value,
@@ -36,14 +36,14 @@ export default function FilterBar<T extends object>({
   const current = value as object as Record<string, string | undefined>
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3 shadow-sm">
       <input
         type="search"
         placeholder={searchPlaceholder}
         value={current.q ?? ''}
         onChange={(e) => patch('q', e.target.value)}
         aria-label={searchLabel}
-        className="min-w-48 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm placeholder:text-slate-400 focus:border-sky-500 focus:outline-none"
+        className="min-w-48 flex-1 rounded-md border border-line bg-surface px-2 py-1.5 text-sm placeholder:text-text-muted focus:border-sky-500 focus:outline-none"
       />
 
       {selects.map((select) => (

@@ -15,7 +15,7 @@ import { formatDate } from '../lib/format'
 import type { StatusUpdate } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
 export default function OfferDetailPage() {
   const { id = '' } = useParams()
@@ -58,7 +58,7 @@ export default function OfferDetailPage() {
 
   if (isError || !offer) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-700">
+      <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-center text-red-700 dark:text-red-300">
         <p className="font-medium">No encontramos esta oferta</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -81,37 +81,37 @@ export default function OfferDetailPage() {
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <StatusBadge status={offer.status} meta={OFFER_STATUS_META} />
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-text-muted">
           {typeLabel} · {offer.city.name}
         </span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      <h1 className="mt-2 text-2xl font-bold tracking-tight text-text-main">
         {offer.title}
       </h1>
 
-      <p className="mt-3 whitespace-pre-line text-slate-700">
+      <p className="mt-3 whitespace-pre-line text-text-muted">
         {offer.description}
       </p>
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {offer.transport && (
           <div>
-            <dt className="font-medium text-slate-500">Transporte</dt>
-            <dd className="text-slate-800">
+            <dt className="font-medium text-text-muted">Transporte</dt>
+            <dd className="text-text-main">
               {TRANSPORT_LABELS[offer.transport]}
             </dd>
           </div>
         )}
         {offer.address && (
           <div>
-            <dt className="font-medium text-slate-500">Dirección</dt>
-            <dd className="text-slate-800">{offer.address}</dd>
+            <dt className="font-medium text-text-muted">Dirección</dt>
+            <dd className="text-text-main">{offer.address}</dd>
           </div>
         )}
         <div>
-          <dt className="font-medium text-slate-500">Publicado</dt>
-          <dd className="text-slate-800">{formatDate(offer.createdAt)}</dd>
+          <dt className="font-medium text-text-muted">Publicado</dt>
+          <dd className="text-text-main">{formatDate(offer.createdAt)}</dd>
         </div>
         <ReporterContact
           reporter={offer.reporter}
@@ -125,11 +125,11 @@ export default function OfferDetailPage() {
       </div>
 
       {inTransit && offer.claim && (
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <h2 className="text-sm font-semibold text-amber-900">
+        <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-4">
+          <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-300">
             Compromiso de entrega
           </h2>
-          <p className="mt-1 text-sm text-amber-800">
+          <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
             {offer.claim.claimerName
               ? `${offer.claim.claimerName} se comprometió a llevar esta oferta el ${formatDate(offer.claim.claimedAt)}.`
               : 'Alguien se comprometió a llevar esta oferta.'}{' '}
@@ -140,7 +140,7 @@ export default function OfferDetailPage() {
               {cancelClaimMutation.isError && (
                 <div
                   role="alert"
-                  className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                  className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
                 >
                   {(cancelClaimMutation.error as Error).message}
                 </div>
@@ -148,7 +148,7 @@ export default function OfferDetailPage() {
               <button
                 onClick={() => cancelClaimMutation.mutate()}
                 disabled={cancelClaimMutation.isPending}
-                className="mt-3 inline-block rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                className="mt-3 inline-block rounded-md border border-amber-300 dark:border-amber-900 bg-surface px-4 py-2 text-sm font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 disabled:opacity-50"
               >
                 {cancelClaimMutation.isPending
                   ? 'Cancelando…'
@@ -168,11 +168,11 @@ export default function OfferDetailPage() {
         </div>
       )}
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-700">
+      <section className="mt-6 rounded-lg border border-line bg-surface p-4">
+        <h2 className="text-sm font-semibold text-text-muted">
           Gestionar esta oferta
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-text-muted">
           {offer.status === 'open' &&
             'Si la oferta ya no está disponible, ciérrala con tu código para que otros no te busquen en vano.'}
           {offer.status === 'in_transit' &&
@@ -186,7 +186,7 @@ export default function OfferDetailPage() {
         {mutation.isError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
           >
             {(mutation.error as Error).message}
           </div>
@@ -232,7 +232,7 @@ export default function OfferDetailPage() {
                   setCloseAs('open')
                   setMode('close')
                 }}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
               >
                 Reabrir oferta
               </button>
@@ -256,7 +256,7 @@ export default function OfferDetailPage() {
           >
             {!canCloseWithoutCode && (
               <div>
-                <label htmlFor="offerResolveCode" className="text-sm font-medium text-slate-700">
+                <label htmlFor="offerResolveCode" className="text-sm font-medium text-text-muted">
                   Código de cierre (4 dígitos)
                 </label>
                 <input
@@ -269,13 +269,13 @@ export default function OfferDetailPage() {
                   onChange={(e) => setResolveCode(e.target.value)}
                   className={`mt-1 ${inputClass}`}
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-text-muted">
                   Se entregó al publicar la oferta. Solo tú puedes cerrarla o reabrirla.
                 </p>
               </div>
             )}
             <div>
-              <label htmlFor="note" className="text-sm font-medium text-slate-700">
+              <label htmlFor="note" className="text-sm font-medium text-text-muted">
                 Nota (opcional)
               </label>
               <input
@@ -307,7 +307,7 @@ export default function OfferDetailPage() {
               <button
                 type="button"
                 onClick={() => setMode(null)}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
               >
                 Cancelar
               </button>
@@ -321,7 +321,7 @@ export default function OfferDetailPage() {
               setCloseAs('open')
               setMode('close')
             }}
-            className="mt-3 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            className="mt-3 rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
           >
             Reabrir oferta
           </button>

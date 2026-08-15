@@ -21,21 +21,21 @@ export default function SuccessScreen({
 }: SuccessScreenProps) {
   return (
     <div className="mx-auto max-w-2xl text-center">
-      <div className="rounded-2xl border border-green-200 bg-green-50 p-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+      <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-8">
+        <h1 className="text-2xl font-bold tracking-tight text-text-main">
           {title}
         </h1>
-        <p className="mt-2 text-slate-700">{intro}</p>
+        <p className="mt-2 text-text-muted">{intro}</p>
 
         {code !== undefined && (
           <>
             <p
-              className="mx-auto mt-4 inline-block rounded-lg bg-white px-6 py-3 font-mono text-3xl font-bold tracking-widest text-green-800 shadow-sm"
+              className="mx-auto mt-4 inline-block rounded-lg bg-surface px-6 py-3 font-mono text-3xl font-bold tracking-widest text-green-800 dark:text-green-300 shadow-sm"
               aria-label="Código de cierre"
             >
               {code}
             </p>
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-3 text-xs text-text-muted">
               {codeFootnote ?? 'Nadie más podrá ver este código por la aplicación.'}
             </p>
           </>
@@ -50,7 +50,7 @@ export default function SuccessScreen({
           </Link>
           <button
             onClick={onReset}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
           >
             Publicar otro
           </button>

@@ -37,7 +37,7 @@ export default function AvisoDetailPage() {
 
   if (isError || !aviso) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-700">
+      <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-center text-red-700 dark:text-red-300">
         <p className="font-medium">No encontramos este aviso</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -61,7 +61,7 @@ export default function AvisoDetailPage() {
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <StatusBadge status={aviso.status} meta={AVISO_STATUS_META} />
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-text-muted">
           {typeLabel} · {aviso.city.name}
         </span>
         <span
@@ -76,24 +76,24 @@ export default function AvisoDetailPage() {
         </span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+      <h1 className="mt-2 text-2xl font-bold tracking-tight text-text-main">
         {aviso.title}
       </h1>
 
-      <p className="mt-3 whitespace-pre-line text-slate-700">
+      <p className="mt-3 whitespace-pre-line text-text-muted">
         {aviso.description}
       </p>
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {aviso.address && (
           <div>
-            <dt className="font-medium text-slate-500">Dirección</dt>
-            <dd className="text-slate-800">{aviso.address}</dd>
+            <dt className="font-medium text-text-muted">Dirección</dt>
+            <dd className="text-text-main">{aviso.address}</dd>
           </div>
         )}
         <div>
-          <dt className="font-medium text-slate-500">Publicado</dt>
-          <dd className="text-slate-800">{formatDate(aviso.createdAt)}</dd>
+          <dt className="font-medium text-text-muted">Publicado</dt>
+          <dd className="text-text-main">{formatDate(aviso.createdAt)}</dd>
         </div>
         <ReporterContact
           reporter={aviso.reporter}
@@ -115,11 +115,11 @@ export default function AvisoDetailPage() {
         </div>
       )}
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-700">
+      <section className="mt-6 rounded-lg border border-line bg-surface p-4">
+        <h2 className="text-sm font-semibold text-text-muted">
           ¿Sigue siendo útil este aviso?
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-text-muted">
           {aviso.status === 'open' &&
             `Si la información ya no es válida, márcalo como desactualizado. Cuando ${remaining} ${remaining === 1 ? 'persona más lo' : 'personas más lo'} hagan, se cierra para todos.`}
           {aviso.status === 'closed' &&
@@ -129,7 +129,7 @@ export default function AvisoDetailPage() {
         {mutation.isError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
           >
             {(mutation.error as Error).message}
           </div>
@@ -145,7 +145,7 @@ export default function AvisoDetailPage() {
               >
                 Marcarlo como desactualizado
               </button>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-text-muted">
                 {aviso.marks} de {MARK_THRESHOLD} marcas
               </span>
             </>

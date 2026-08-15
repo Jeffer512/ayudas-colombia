@@ -5,9 +5,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
-const labelClass = 'text-sm font-medium text-slate-700'
+const labelClass = 'text-sm font-medium text-text-muted'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -40,7 +40,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-2xl font-bold tracking-tight">Iniciar sesión</h1>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-text-muted">
         Accede a tu organización para gestionar su información y publicar
         pedidos.
       </p>
@@ -48,7 +48,7 @@ export default function LoginPage() {
       {mutation.isError && !unverified && !pending && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
         >
           {error?.message ?? 'No pudimos iniciar sesión'}
         </div>
@@ -57,26 +57,26 @@ export default function LoginPage() {
       {unverified && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+          className="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-300"
         >
           <p>
             Tu correo todavía no está verificado. Revisa tu bandeja de entrada
             o{' '}
             <Link
               to="/verificar-correo"
-              className="font-medium text-amber-900 underline"
+              className="font-medium text-amber-900 dark:text-amber-300 underline"
             >
               reenvía el enlace
             </Link>
             .
           </p>
           {resend.isSuccess && (
-            <p className="mt-2 text-emerald-700">
+            <p className="mt-2 text-emerald-700 dark:text-emerald-300">
               Correo reenviado. Revisa tu bandeja de entrada.
             </p>
           )}
           {resend.isError && (
-            <p className="mt-2 text-red-700">
+            <p className="mt-2 text-red-700 dark:text-red-300">
               {(resend.error as Error).message}
             </p>
           )}
@@ -84,7 +84,7 @@ export default function LoginPage() {
             type="button"
             disabled={resend.isPending}
             onClick={() => resend.mutate()}
-            className="mt-2 rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+            className="mt-2 rounded-md border border-amber-300 dark:border-amber-900 bg-surface px-3 py-1 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 disabled:opacity-50"
           >
             {resend.isPending ? 'Enviando…' : 'Reenviar correo'}
           </button>
@@ -94,7 +94,7 @@ export default function LoginPage() {
       {pending && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+          className="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-300"
         >
           {error?.message}. Cuando el manager de la organización apruebe tu
           solicitud podrás ingresar.
@@ -140,13 +140,13 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-text-muted">
         ¿No tienes cuenta?{' '}
         <Link to="/registro" className="font-medium text-sky-700 hover:underline">
           Regístrate
         </Link>
       </p>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-text-muted">
         ¿Olvidaste tu contraseña?{' '}
         <Link to="/recuperar-contrasena" className="font-medium text-sky-700 hover:underline">
           Recupérala
