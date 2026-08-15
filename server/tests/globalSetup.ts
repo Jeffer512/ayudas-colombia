@@ -1,4 +1,7 @@
 import { execSync } from 'node:child_process'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { Client } from 'pg'
 import { env } from '../src/config.js'
 
@@ -6,6 +9,14 @@ const SINGLE_COMMITTED_CLAIM_INDEX = `
 CREATE UNIQUE INDEX IF NOT EXISTS "offer_claims_single_committed_idx"
 ON "offer_claims" ("offer_id") WHERE "status" = 'committed';
 `
+
+const migrationsDir = fileURLToPath(new URL('../prisma/migrations', import.meta.url))
+
+function readMigrationSql(folderHint: string): string | null {
+  const folder = readdirSync(migrationsDir).find((name) => name.includes(folderHint))
+  if (!folder) return null
+  return readFileSync(join(migrationsDir, folder, 'migration.sql'), 'utf8')
+}
 
 export default async function globalSetup() {
   const url = new URL(env.databaseUrl)
@@ -43,6 +54,8 @@ export default async function globalSetup() {
   try {
     await db.connect()
     await db.query(SINGLE_COMMITTED_CLAIM_INDEX)
+    const checkSql = readMigrationSql('domain_value_checks')
+    if (checkSql) await db.query(checkSql)
   } finally {
     await db.end()
   }
