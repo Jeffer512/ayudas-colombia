@@ -70,6 +70,7 @@ export interface Request {
   status: RequestStatus
   title: string
   description: string
+  photo?: string | null
   address: string | null
   lat: number | null
   lng: number | null
@@ -191,6 +192,7 @@ export type NewRequest = {
   transport?: TransportOption
   title: string
   description: string
+  photo?: string
   address?: string
   lat?: number
   lng?: number

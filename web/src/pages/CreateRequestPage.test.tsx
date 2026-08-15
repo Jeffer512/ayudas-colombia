@@ -189,6 +189,22 @@ it('muestra error del servidor si falla la publicación', async () => {
     )
   })
 
+  it('muestra el selector de foto solo para personas y mascotas desaparecidas', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(screen.queryByLabelText('Foto (opcional)')).not.toBeInTheDocument()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
+    expect(screen.queryByLabelText('Foto (opcional)')).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'missing_person')
+    expect(screen.getByLabelText('Foto (opcional)')).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'missing_pet')
+    expect(screen.getByLabelText('Foto (opcional)')).toBeInTheDocument()
+  })
+
   it('pide al menos un medio de contacto', async () => {
     const user = userEvent.setup()
     renderPage()

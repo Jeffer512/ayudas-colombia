@@ -20,6 +20,16 @@ const validRequest = {
   },
 }
 
+const tinyPng =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+
+const validMissingPerson = {
+  ...validRequest,
+  type: 'missing_person',
+  title: 'Se busca a Carlos Ramírez, 62 años',
+  description: 'Salió ayer por la mañana y no ha regresado a casa.',
+}
+
 describe('GET /api/requests', () => {
   it('devuelve listado vacío sin solicitudes', async () => {
     const res = await request(app).get('/api/requests')
@@ -216,6 +226,60 @@ describe('POST /api/requests', () => {
       .post('/api/requests')
       .send({ ...validRequest, cityCode: 'bogota-desconocida' })
     expect(noCity.status).toBe(400)
+  })
+
+  it('acepta una foto para personas desaparecidas', async () => {
+    const res = await request(app)
+      .post('/api/requests')
+      .send({ ...validMissingPerson, photo: tinyPng })
+
+    expect(res.status).toBe(201)
+    expect(res.body.photo).toBe(tinyPng)
+
+    const stored = await prisma.request.findUnique({ where: { id: res.body.id } })
+    expect(stored?.photoUrl).toBe(tinyPng)
+  })
+
+  it('la foto solo aplica a personas y mascotas desaparecidas', async () => {
+    const bad = await request(app)
+      .post('/api/requests')
+      .send({ ...validRequest, photo: tinyPng })
+    expect(bad.status).toBe(400)
+
+    const missingPet = await request(app)
+      .post('/api/requests')
+      .send({
+        ...validMissingPerson,
+        type: 'missing_pet',
+        title: 'Perro Golden perdido en Villa Verde',
+        description: 'Se escapó ayer del parque, es muy amigable.',
+        photo: tinyPng,
+      })
+    expect(missingPet.status).toBe(201)
+  })
+
+  it('rechaza una foto que no es imagen o demasiado grande', async () => {
+    const notImage = await request(app)
+      .post('/api/requests')
+      .send({ ...validMissingPerson, photo: 'data:text/plain;base64,hola' })
+    expect(notImage.status).toBe(400)
+
+    const huge = await request(app)
+      .post('/api/requests')
+      .send({ ...validMissingPerson, photo: `data:image/jpeg;base64,${'A'.repeat(8_000_001)}` })
+    expect(huge.status).toBe(400)
+  })
+
+  it('el listado omite la foto y el detalle la incluye', async () => {
+    const res = await request(app)
+      .post('/api/requests')
+      .send({ ...validMissingPerson, photo: tinyPng })
+
+    const list = await request(app).get('/api/requests')
+    expect(list.body.requests[0].photo).toBeUndefined()
+
+    const detail = await request(app).get(`/api/requests/${res.body.id}`)
+    expect(detail.body.photo).toBe(tinyPng)
   })
 })
 

@@ -7,6 +7,7 @@ import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { REQUEST_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS, URGENCY_META } from '../lib/constants'
+import { compressImage } from '../lib/image'
 import type {
   CreatedRequest,
   NewRequest,
@@ -14,6 +15,8 @@ import type {
   TransportOption,
   Urgency,
 } from '../lib/types'
+
+const MISSING_TYPES: ReadonlySet<string> = new Set(['missing_person', 'missing_pet'])
 
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none'
@@ -49,6 +52,8 @@ export default function CreateRequestPage() {
   const [transport, setTransport] = useState<TransportOption | ''>('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [photo, setPhoto] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
   const [location, setLocation] = useState<LocationState>(initialLocation)
   const [reporter, setReporter] = useState<ReporterState>(initialReporter)
   const [submitting, setSubmitting] = useState(false)
@@ -86,6 +91,7 @@ export default function CreateRequestPage() {
       ...(type === 'supplies_request' && transport ? { transport } : {}),
       title: title.trim(),
       description: description.trim(),
+      ...(photo ? { photo } : {}),
       cityCode: location.cityCode,
       ...(location.address.trim() ? { address: location.address.trim() } : {}),
       ...(location.lat !== null && location.lng !== null
@@ -129,6 +135,8 @@ export default function CreateRequestPage() {
           setType('')
           setTitle('')
           setDescription('')
+          setPhoto(null)
+          setPhotoError(null)
           setTransport('')
           setLocation(initialLocation)
           setReporter(initialReporter)
@@ -259,6 +267,65 @@ export default function CreateRequestPage() {
               className={`mt-1 ${inputClass}`}
             />
           </div>
+
+          {type !== '' && MISSING_TYPES.has(type) && (
+            <div className="mt-4">
+              <label htmlFor="photo" className={labelClass}>
+                Foto (opcional)
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Una foto ayuda a identificar a la persona o la mascota. Se
+                reduce automáticamente al enviarla.
+              </p>
+              {photo ? (
+                <div className="mt-2 flex items-start gap-3">
+                  <img
+                    src={photo}
+                    alt="Vista previa de la foto"
+                    className="h-40 w-40 rounded-md border border-slate-200 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhoto(null)
+                      setPhotoError(null)
+                    }}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    Quitar foto
+                  </button>
+                </div>
+              ) : (
+                <input
+                  id="photo"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="mt-2 block w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-sky-700 hover:file:bg-sky-100"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    setPhotoError(null)
+                    try {
+                      setPhoto(await compressImage(file))
+                    } catch (err) {
+                      setPhotoError(
+                        err instanceof Error
+                          ? err.message
+                          : 'No se pudo procesar la foto',
+                      )
+                    } finally {
+                      e.target.value = ''
+                    }
+                  }}
+                />
+              )}
+              {photoError && (
+                <p role="alert" className="mt-1 text-sm text-red-600">
+                  {photoError}
+                </p>
+              )}
+            </div>
+          )}
         </fieldset>
 
         <LocationSection

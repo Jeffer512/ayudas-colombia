@@ -1,6 +1,7 @@
 import type { City, HelpOrg, Reporter, Request, RequestEvent } from '@prisma/client'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
+import { uploadPhoto } from './uploads.js'
 import type {
   CreateRequestInput,
   HelpRequestInput,
@@ -37,6 +38,7 @@ export function serializeRequest(
   request: SerializedRequest,
   helperCount = 0,
   helperList?: { name: string | null; note: string | null; createdAt: Date }[],
+  includePhoto = false,
 ) {
   return {
     id: request.id,
@@ -46,6 +48,7 @@ export function serializeRequest(
     status: request.status,
     title: request.title,
     description: request.description,
+    photo: includePhoto ? request.photoUrl ?? null : undefined,
     address: request.address ?? null,
     lat: request.lat ?? null,
     lng: request.lng ?? null,
@@ -158,7 +161,7 @@ export async function getRequest(id: string) {
     }),
   ])
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
-  return serializeRequest(request, helpers, helperList)
+  return serializeRequest(request, helpers, helperList, true)
 }
 
 export async function createRequest(input: CreateRequestInput) {
@@ -171,6 +174,15 @@ export async function createRequest(input: CreateRequestInput) {
       'El campo de transporte solo aplica a solicitudes de suministros',
     )
   }
+
+  if (input.photo && input.type !== 'missing_person' && input.type !== 'missing_pet') {
+    throw new ApiError(
+      400,
+      'La foto solo aplica a personas y mascotas desaparecidas',
+    )
+  }
+
+  const photoUrl = input.photo ? await uploadPhoto(input.photo) : null
 
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
@@ -190,6 +202,7 @@ export async function createRequest(input: CreateRequestInput) {
         status: 'open',
         title: input.title,
         description: input.description,
+        photoUrl,
         address: input.address ?? null,
         lat: input.lat ?? null,
         lng: input.lng ?? null,
@@ -210,7 +223,7 @@ export async function createRequest(input: CreateRequestInput) {
     })
   })
 
-  return { ...serializeRequest(created), resolveCode: created.resolveCode }
+  return { ...serializeRequest(created, 0, undefined, true), resolveCode: created.resolveCode }
 }
 
 export async function helpRequest(id: string, input: HelpRequestInput) {

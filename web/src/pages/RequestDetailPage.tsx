@@ -110,6 +110,14 @@ export default function RequestDetailPage() {
         {request.title}
       </h1>
 
+      {request.photo && (
+        <img
+          src={request.photo}
+          alt={`Foto de: ${request.title}`}
+          className="mt-4 w-full max-w-md rounded-lg border border-slate-200 object-cover"
+        />
+      )}
+
       <p className="mt-3 whitespace-pre-line text-slate-700">
         {request.description}
       </p>

@@ -7,9 +7,18 @@ import {
 } from '../constants.js'
 import { cityCodeSchema, coordinatesSchema, reporterSchema } from './common.js'
 
+const PHOTO_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]*={0,2}$/
+
+export const photoDataUrlSchema = z
+  .string()
+  .trim()
+  .regex(PHOTO_DATA_URL, 'Foto inválida')
+  .max(8_000_000, 'La foto es demasiado grande')
+
 const base = z.object({
   title: z.string().trim().min(5, 'Título muy corto').max(140),
   description: z.string().trim().min(10, 'Descripción muy corta').max(4000),
+  photo: photoDataUrlSchema.optional(),
   address: z.string().trim().max(300).optional(),
   ...coordinatesSchema.shape,
   cityCode: cityCodeSchema,

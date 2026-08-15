@@ -67,6 +67,7 @@ model Request {
   status      String   @default("open")
   title       String
   description String
+  photoUrl    String?  @map("photo_url")
   address     String?
   lat         Float?
   lng         Float?

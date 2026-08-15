@@ -25,7 +25,7 @@ export function createApp() {
   }
 
   app.use(cors())
-  app.use(express.json())
+  app.use(express.json({ limit: '10mb' }))
 
   const servesWeb = env.production && fs.existsSync(WEB_DIST)
   if (servesWeb) {
