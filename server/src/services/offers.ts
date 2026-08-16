@@ -21,6 +21,14 @@ type SerializedOffer = Offer & {
   city: City
   reporter: Reporter
   claims?: ClaimWithUser[]
+  volunteerDetails?: {
+    capabilities: string[]
+    availability: string | null
+  } | null
+  transportDetails?: {
+    vehicleType: string | null
+    capacity: string | null
+  } | null
 }
 
 const OFFER_TRANSITIONS: Record<string, string[]> = {
@@ -48,6 +56,20 @@ export function serializeOffer(offer: SerializedOffer, viewer?: Viewer) {
     isOwner: isOwner(viewer, ownerId),
     type: offer.type,
     transport: offer.transport ?? null,
+    items: offer.items ?? [],
+    zone: offer.zone ?? null,
+    volunteer: offer.volunteerDetails
+      ? {
+          capabilities: offer.volunteerDetails.capabilities,
+          availability: offer.volunteerDetails.availability ?? null,
+        }
+      : null,
+    vehicle: offer.transportDetails
+      ? {
+          vehicleType: offer.transportDetails.vehicleType ?? null,
+          capacity: offer.transportDetails.capacity ?? null,
+        }
+      : null,
     status: offer.status,
     title: offer.title,
     description: offer.description,
@@ -96,6 +118,8 @@ export function canClaimOffer(offer: SerializedOffer): boolean {
 const OFFER_INCLUDE = {
   city: true,
   reporter: true,
+  volunteerDetails: true,
+  transportDetails: true,
   claims: {
     include: { claimer: { select: { name: true } } },
     orderBy: { claimedAt: 'desc' as const },
@@ -262,6 +286,21 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
     )
   }
 
+  if (input.items?.length && input.type !== 'supplies_offered') {
+    throw new ApiError(400, 'El listado de ítems solo aplica a ofertas de suministros')
+  }
+
+  if (input.volunteer && input.type !== 'volunteers_offered') {
+    throw new ApiError(
+      400,
+      'Los datos de voluntario solo aplican a ofertas de voluntariado',
+    )
+  }
+
+  if (input.vehicle && input.type !== 'transport_offered') {
+    throw new ApiError(400, 'Los datos de vehículo solo aplican a ofertas de transporte')
+  }
+
   const audience: OfferAudience =
     input.audience ??
     (input.type === 'volunteers_offered' ? 'users' : 'public')
@@ -281,6 +320,24 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
       data: {
         type: input.type,
         transport: input.transport ?? null,
+        items: input.items ?? [],
+        zone: input.zone ?? null,
+        volunteerDetails: input.volunteer
+          ? {
+              create: {
+                capabilities: input.volunteer.capabilities ?? [],
+                availability: input.volunteer.availability ?? null,
+              },
+            }
+          : undefined,
+        transportDetails: input.vehicle
+          ? {
+              create: {
+                vehicleType: input.vehicle.vehicleType ?? null,
+                capacity: input.vehicle.capacity ?? null,
+              },
+            }
+          : undefined,
         status: 'open',
         title: input.title,
         description: input.description,
@@ -293,7 +350,7 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
         audience,
         resolveCode: generateResolveCode(),
       },
-      include: { reporter: true, city: true },
+      include: OFFER_INCLUDE,
     })
   })
 

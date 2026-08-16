@@ -166,6 +166,30 @@ describe('POST /api/requests', () => {
     expect(bad.status).toBe(400)
   })
 
+  it('guarda y devuelve la lista de ítems solicitados', async () => {
+    const res = await request(app)
+      .post('/api/requests')
+      .send({ ...validRequest, items: ['Agua', 'Comida', 'Mantas'] })
+
+    expect(res.status).toBe(201)
+    expect(res.body.items).toEqual(['Agua', 'Comida', 'Mantas'])
+
+    const detail = await request(app).get(`/api/requests/${res.body.id}`)
+    expect(detail.body.items).toEqual(['Agua', 'Comida', 'Mantas'])
+  })
+
+  it('rechaza listas de ítems vacías o demasiado largas', async () => {
+    const tooMany = await request(app)
+      .post('/api/requests')
+      .send({ ...validRequest, items: Array.from({ length: 11 }, (_, i) => `Ítem ${i}`) })
+    expect(tooMany.status).toBe(400)
+
+    const blank = await request(app)
+      .post('/api/requests')
+      .send({ ...validRequest, items: ['Agua', '   '] })
+    expect(blank.status).toBe(400)
+  })
+
   it('usa urgencia media por defecto', async () => {
     const res = await request(app)
       .post('/api/requests')

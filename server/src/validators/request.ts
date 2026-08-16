@@ -5,7 +5,7 @@ import {
   TRANSPORT_OPTIONS,
   URGENCIES,
 } from '../constants.js'
-import { cityCodeSchema, contactVisibilitySchema, coordinatesSchema, reporterSchema } from './common.js'
+import { cityCodeSchema, contactVisibilitySchema, coordinatesSchema, reporterSchema, tagListSchema } from './common.js'
 
 const PHOTO_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]*={0,2}$/
 
@@ -30,6 +30,7 @@ export const createRequestSchema = base.extend({
   type: z.enum(REQUEST_TYPES, { message: 'Tipo de solicitud inválido' }),
   urgency: z.enum(URGENCIES).default('medium'),
   transport: z.enum(TRANSPORT_OPTIONS).optional(),
+  items: tagListSchema.optional(),
 })
 
 export type CreateRequestInput = z.infer<typeof createRequestSchema>

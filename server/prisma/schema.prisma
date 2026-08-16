@@ -72,6 +72,7 @@ model Request {
   status      String   @default("open")
   title       String
   description String
+  items       String[] @default([])
   photoUrl    String?  @map("photo_url")
   address     String?
   lat         Float?
@@ -133,6 +134,8 @@ model Offer {
   status      String   @default("open")
   title       String
   description String
+  items       String[] @default([])
+  zone        String?
   address     String?
   lat         Float?
   lng         Float?
@@ -145,13 +148,33 @@ model Offer {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  city     City          @relation(fields: [cityId], references: [id])
-  reporter Reporter      @relation(fields: [reporterId], references: [id], onDelete: Cascade)
-  claims   OfferClaim[]
+  city             City              @relation(fields: [cityId], references: [id])
+  reporter         Reporter          @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  claims           OfferClaim[]
+  volunteerDetails VolunteerDetails?
+  transportDetails TransportDetails?
 
   @@index([cityId, status])
   @@index([type])
   @@map("offers")
+}
+
+model VolunteerDetails {
+  offerId      String @id @map("offer_id")
+  capabilities String[] @default([])
+  availability String?
+  offer        Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("volunteer_details")
+}
+
+model TransportDetails {
+  offerId     String @id @map("offer_id")
+  vehicleType String?
+  capacity    String?
+  offer       Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@map("transport_details")
 }
 
 model OfferClaim {

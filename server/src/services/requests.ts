@@ -50,6 +50,7 @@ export function serializeRequest(
     isOwner: isOwner(viewer, ownerId),
     type: request.type,
     transport: request.transport ?? null,
+    items: request.items ?? [],
     urgency: request.urgency,
     status: request.status,
     title: request.title,
@@ -207,6 +208,7 @@ export async function createRequest(input: CreateRequestInput, viewer?: Viewer) 
       data: {
         type: input.type,
         transport: input.transport ?? null,
+        items: input.items ?? [],
         urgency: input.urgency,
         status: 'open',
         title: input.title,

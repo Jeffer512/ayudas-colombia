@@ -9,11 +9,28 @@ import {
   contactVisibilitySchema,
   coordinatesSchema,
   reporterSchema,
+  tagListSchema,
 } from './common.js'
 
 export const createOfferSchema = z.object({
   type: z.enum(OFFER_TYPES, { message: 'Tipo de oferta inválido' }),
   transport: z.enum(TRANSPORT_OPTIONS).optional(),
+  items: tagListSchema.optional(),
+  zone: z.string().trim().max(80, 'Zona muy larga').optional(),
+  volunteer: z
+    .object({
+      capabilities: tagListSchema.optional(),
+      availability: z.string().trim().max(200, 'Disponibilidad muy larga').optional(),
+    })
+    .strict()
+    .optional(),
+  vehicle: z
+    .object({
+      vehicleType: z.string().trim().max(40, 'Tipo de vehículo muy largo').optional(),
+      capacity: z.string().trim().max(60, 'Capacidad muy larga').optional(),
+    })
+    .strict()
+    .optional(),
   title: z.string().trim().min(5, 'Título muy corto').max(140),
   description: z.string().trim().min(10, 'Descripción muy corta').max(4000),
   address: z.string().trim().max(300).optional(),

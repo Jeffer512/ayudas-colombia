@@ -44,3 +44,7 @@ export const contactVisibilitySchema = z
     message: 'Visibilidad de contacto inválida',
   })
   .default('public')
+
+export const tagListSchema = z
+  .array(z.string().trim().min(1, 'Ítem vacío').max(40, 'Ítem muy largo'))
+  .max(10, 'Demasiados ítems')

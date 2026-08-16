@@ -115,6 +115,112 @@ describe('POST /api/offers', () => {
       .send({ ...validOffer, lat: 120 })
     expect(badLat.status).toBe(400)
   })
+
+  it('guarda ítems y zona en ofertas de suministros', async () => {
+    const res = await request(app)
+      .post('/api/offers')
+      .send({
+        ...validOffer,
+        items: ['Agua', 'Galletas'],
+        zone: 'Barrio San Nicolás',
+        transport: 'can_transport',
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body.items).toEqual(['Agua', 'Galletas'])
+    expect(res.body.zone).toBe('Barrio San Nicolás')
+    expect(res.body.transport).toBe('can_transport')
+
+    const detail = await request(app).get(`/api/offers/${res.body.id}`)
+    expect(detail.body.items).toEqual(['Agua', 'Galletas'])
+    expect(detail.body.zone).toBe('Barrio San Nicolás')
+  })
+
+  it('guarda la ficha de voluntario y la zona en ofertas de voluntariado', async () => {
+    const agent = await loginCitizen()
+    const res = await agent
+      .post('/api/offers')
+      .send({
+        ...validOffer,
+        type: 'volunteers_offered',
+        title: 'Voluntaria para atender albergue',
+        description: 'Ayudo en la recepción y entrega de donaciones en el albergue.',
+        zone: 'Dosquebradas',
+        volunteer: {
+          capabilities: ['Atención al público', 'Primeros auxilios'],
+          availability: 'Fines de semana y tarde de lunes a viernes',
+        },
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body.zone).toBe('Dosquebradas')
+    expect(res.body.volunteer).toEqual({
+      capabilities: ['Atención al público', 'Primeros auxilios'],
+      availability: 'Fines de semana y tarde de lunes a viernes',
+    })
+
+    const detail = await agent.get(`/api/offers/${res.body.id}`)
+    expect(detail.body.volunteer.capabilities).toEqual([
+      'Atención al público',
+      'Primeros auxilios',
+    ])
+  })
+
+  it('guarda los datos del vehículo en ofertas de transporte', async () => {
+    const res = await request(app)
+      .post('/api/offers')
+      .send({
+        ...validOffer,
+        type: 'transport_offered',
+        title: 'Camioneta disponible para carga',
+        description: 'Ofrezco mi camioneta para trasladar donaciones dentro de la ciudad.',
+        vehicle: { vehicleType: 'Camioneta', capacity: '2 toneladas' },
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body.vehicle).toEqual({
+      vehicleType: 'Camioneta',
+      capacity: '2 toneladas',
+    })
+
+    const detail = await request(app).get(`/api/offers/${res.body.id}`)
+    expect(detail.body.vehicle).toEqual({
+      vehicleType: 'Camioneta',
+      capacity: '2 toneladas',
+    })
+  })
+
+  it('rechaza datos de rol que no corresponden al tipo de oferta', async () => {
+    const volunteerOnSupplies = await request(app)
+      .post('/api/offers')
+      .send({
+        ...validOffer,
+        volunteer: { capabilities: ['Cocina'] },
+      })
+    expect(volunteerOnSupplies.status).toBe(400)
+
+    const vehicleOnVolunteers = await request(app)
+      .post('/api/offers')
+      .send({
+        ...validOffer,
+        type: 'volunteers_offered',
+        title: 'Voluntaria en cocina',
+        description: 'Ayudo a preparar alimentos en la sede de la cruz roja.',
+        vehicle: { vehicleType: 'Motocicleta' },
+      })
+    expect(vehicleOnVolunteers.status).toBe(400)
+
+    const itemsOnVolunteers = await request(app)
+      .post('/api/offers')
+      .send({
+        ...validOffer,
+        type: 'volunteers_offered',
+        title: 'Voluntaria en cocina',
+        description: 'Ayudo a preparar alimentos en la sede de la cruz roja.',
+        items: ['Harina'],
+      })
+    expect(itemsOnVolunteers.status).toBe(400)
+  })
 })
 
 describe('POST /api/offers/:id/status', () => {
