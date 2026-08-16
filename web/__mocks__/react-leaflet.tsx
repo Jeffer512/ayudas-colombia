@@ -19,3 +19,8 @@ export const Popup = ({ children }: { children?: ReactNode }) => (
 )
 
 export const useMapEvents = () => null
+
+export const useMap = () => ({
+  flyTo: () => undefined,
+  getZoom: () => 13,
+})

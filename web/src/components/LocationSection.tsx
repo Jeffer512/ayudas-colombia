@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
+import { defaultCity } from '../lib/geo'
 import type { City } from '../lib/types'
 import Map from './Map'
 
@@ -83,8 +84,8 @@ export default function LocationSection({
       <div className="mt-2">
         <Map
           center={{
-            lat: cities[0]?.centerLat ?? 4.8133,
-            lng: cities[0]?.centerLng ?? -75.6961,
+            lat: defaultCity(cities)?.centerLat ?? 4.8133,
+            lng: defaultCity(cities)?.centerLng ?? -75.6961,
           }}
           marker={lat !== null && lng !== null ? { lat, lng } : null}
           onPick={(pickedLat, pickedLng) =>

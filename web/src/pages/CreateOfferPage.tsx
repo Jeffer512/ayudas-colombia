@@ -17,6 +17,7 @@ import {
   VEHICLE_TYPE_OPTIONS,
   VOLUNTEER_CAPABILITY_OPTIONS,
 } from '../lib/constants'
+import { defaultCity } from '../lib/geo'
 import type {
   ContactVisibility,
   CreatedOffer,
@@ -89,7 +90,7 @@ export default function CreateOfferPage() {
 
   useEffect(() => {
     if (!location.cityCode && cities.length > 0) {
-      setLocation((prev) => ({ ...prev, cityCode: cities[0].code }))
+      setLocation((prev) => ({ ...prev, cityCode: defaultCity(cities)!.code }))
     }
   }, [cities, location.cityCode])
 

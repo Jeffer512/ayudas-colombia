@@ -15,6 +15,7 @@ import {
   TRANSPORT_OPTIONS,
   URGENCY_META,
 } from '../lib/constants'
+import { defaultCity } from '../lib/geo'
 import { compressImage } from '../lib/image'
 import type {
   ContactVisibility,
@@ -77,7 +78,7 @@ export default function CreateRequestPage() {
 
   useEffect(() => {
     if (!location.cityCode && cities.length > 0) {
-      setLocation((prev) => ({ ...prev, cityCode: cities[0].code }))
+      setLocation((prev) => ({ ...prev, cityCode: defaultCity(cities)!.code }))
     }
   }, [cities, location.cityCode])
 

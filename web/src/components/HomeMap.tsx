@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { HELP_ORG_CATEGORY_LABELS, MARKER_COLORS } from '../lib/constants'
 import type { Aviso, HelpOrg, Offer, Request } from '../lib/types'
 import { L } from './leaflet'
@@ -12,6 +13,19 @@ function divIcon(color: string) {
     iconAnchor: [9, 9],
     popupAnchor: [0, -10],
   })
+}
+
+function MapFollower({ center }: { center: { lat: number; lng: number } }) {
+  const map = useMap()
+  const [initial, setInitial] = useState(true)
+  useEffect(() => {
+    if (initial) {
+      setInitial(false)
+      return
+    }
+    map.flyTo([center.lat, center.lng], map.getZoom())
+  }, [map, initial, center.lat, center.lng])
+  return null
 }
 
 interface HomeMapProps {
@@ -47,6 +61,8 @@ export default function HomeMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <MapFollower center={center} />
 
       {showNeeds &&
         requests.map((request) =>

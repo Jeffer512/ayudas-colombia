@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
 import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
+import { defaultCity } from '../lib/geo'
 import type { HelpOrgCategory } from '../lib/types'
 
 interface OrgForm {
@@ -59,7 +60,7 @@ export default function NewOrgPage() {
 
   useEffect(() => {
     if (!form.cityCode && cities.length > 0) {
-      setForm((f) => ({ ...f, cityCode: cities[0].code }))
+      setForm((f) => ({ ...f, cityCode: defaultCity(cities)!.code }))
     }
   }, [cities, form.cityCode])
 
@@ -271,8 +272,8 @@ export default function NewOrgPage() {
           <div className="mt-2">
             <Map
               center={{
-                lat: cities[0]?.centerLat ?? 4.8133,
-                lng: cities[0]?.centerLng ?? -75.6961,
+                lat: defaultCity(cities)?.centerLat ?? 4.8133,
+                lng: defaultCity(cities)?.centerLng ?? -75.6961,
               }}
               marker={
                 form.lat !== null && form.lng !== null

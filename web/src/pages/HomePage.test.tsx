@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api/client'
 import type {
   AvisoListResponse,
@@ -23,11 +23,13 @@ vi.mock('react-leaflet', () => ({
     <div data-testid="popup">{children}</div>
   ),
   useMapEvents: () => null,
+  useMap: () => ({ flyTo: () => undefined, getZoom: () => 13 }),
 }))
 
 vi.mock('../api/client', () => ({
   api: {
     cities: vi.fn(),
+    geo: vi.fn(),
     requests: vi.fn(),
     request: vi.fn(),
     createRequest: vi.fn(),
@@ -50,6 +52,40 @@ const mockedOffers = vi.mocked(api.offers)
 const mockedAvisos = vi.mocked(api.avisos)
 const mockedCities = vi.mocked(api.cities)
 const mockedHelpOrgs = vi.mocked(api.helpOrgs)
+const mockedGeo = vi.mocked(api.geo)
+
+class MemoryStorage {
+  private data = new Map<string, string>()
+  get length() {
+    return this.data.size
+  }
+  key(index: number) {
+    return Array.from(this.data.keys())[index] ?? null
+  }
+  getItem(key: string) {
+    return this.data.get(key) ?? null
+  }
+  setItem(key: string, value: string) {
+    this.data.set(String(key), String(value))
+  }
+  removeItem(key: string) {
+    this.data.delete(String(key))
+  }
+  clear() {
+    this.data.clear()
+  }
+}
+
+beforeAll(() => {
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: new MemoryStorage(),
+  })
+})
+
+afterAll(() => {
+  delete (window as { localStorage?: unknown }).localStorage
+})
 
 function renderHomePage() {
   const queryClient = new QueryClient({
@@ -165,11 +201,13 @@ const avisosResponse: AvisoListResponse = {
 
 describe('HomePage', () => {
   beforeEach(() => {
+    window.localStorage.clear()
     mockedCities.mockReset()
     mockedRequests.mockReset()
     mockedOffers.mockReset()
     mockedAvisos.mockReset()
     mockedHelpOrgs.mockReset()
+    mockedGeo.mockReset()
 
     mockedCities.mockResolvedValue({
       cities: [
@@ -184,6 +222,7 @@ describe('HomePage', () => {
       ],
     })
     mockedHelpOrgs.mockResolvedValue({ helpOrgs: [], total: 0, limit: 50, offset: 0 })
+    mockedGeo.mockRejectedValue(new Error('red sin conexión'))
   })
 
   it('muestra las tres secciones con sus conteos y listados', async () => {
@@ -294,5 +333,74 @@ describe('HomePage', () => {
     expect(
       screen.getByRole('checkbox', { name: 'Mostrar Red de ayudas' }),
     ).toBeInTheDocument()
+  })
+
+  it('centra el mapa en la ciudad elegida y actualiza el encabezado', async () => {
+    mockedCities.mockResolvedValue({
+      cities: [
+        { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
+        { id: 2, code: 'manizales', name: 'Manizales', department: 'Caldas', centerLat: 5.0689, centerLng: -75.5174 },
+      ],
+    })
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    const citySelect = screen.getByLabelText('Centrar el mapa en')
+    await within(citySelect).findByRole('option', { name: 'Manizales' })
+    await userEvent.selectOptions(citySelect, 'manizales')
+
+    expect(
+      screen.getByRole('heading', { name: 'Ayuda en Manizales' }),
+    ).toBeInTheDocument()
+    expect(citySelect).toHaveValue('manizales')
+    expect(window.localStorage.getItem('ayudas_map_city')).toBe('manizales')
+  })
+
+  it('usa la ciudad detectada por IP cuando no hay una elección previa', async () => {
+    mockedGeo.mockResolvedValue({
+      lat: 4.8133,
+      lng: -75.6961,
+      city: 'Pereira',
+      region: 'Risaralda',
+      country: 'Colombia',
+    })
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    const citySelect = await screen.findByLabelText('Centrar el mapa en')
+    await waitFor(() => expect(citySelect).toHaveValue('pereira'))
+  })
+
+  it('ignora la detección por IP cuando ya hay una ciudad guardada', async () => {
+    window.localStorage.setItem('ayudas_map_city', 'pereira')
+    mockedGeo.mockResolvedValue({
+      lat: 3.4516,
+      lng: -76.532,
+      city: 'Cali',
+      region: 'Valle del Cauca',
+      country: 'Colombia',
+    })
+    mockedCities.mockResolvedValue({
+      cities: [
+        { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
+        { id: 3, code: 'cali', name: 'Cali', department: 'Valle del Cauca', centerLat: 3.4516, centerLng: -76.532 },
+      ],
+    })
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    const citySelect = screen.getByLabelText('Centrar el mapa en')
+    await within(citySelect).findByRole('option', { name: 'Pereira' })
+    expect(citySelect).toHaveValue('pereira')
+    expect(mockedGeo).not.toHaveBeenCalled()
   })
 })

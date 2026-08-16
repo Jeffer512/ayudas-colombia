@@ -8,6 +8,7 @@ import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
 import { URGENCY_META } from '../lib/constants'
+import { defaultCity } from '../lib/geo'
 import type {
   ContactVisibility,
   CreatedAviso,
@@ -60,7 +61,7 @@ export default function CreateAvisoPage() {
 
   useEffect(() => {
     if (!location.cityCode && cities.length > 0) {
-      setLocation((prev) => ({ ...prev, cityCode: cities[0].code }))
+      setLocation((prev) => ({ ...prev, cityCode: defaultCity(cities)!.code }))
     }
   }, [cities, location.cityCode])
 

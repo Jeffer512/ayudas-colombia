@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
@@ -10,6 +10,7 @@ import OfferCard from '../components/OfferCard'
 import OfferFiltersUi from '../components/OfferFilters'
 import RequestCard from '../components/RequestCard'
 import RequestFiltersUi from '../components/RequestFilters'
+import { defaultCity, nearestCity } from '../lib/geo'
 import type {
   HelpOrg,
   Aviso,
@@ -20,6 +21,27 @@ import type {
   Request,
   RequestFilters,
 } from '../lib/types'
+
+const MAP_CITY_KEY = 'ayudas_map_city'
+const MAX_DETECTED_DISTANCE_KM = 80
+
+function readStoredMapCity(): string {
+  try {
+    if (typeof window === 'undefined') return ''
+    return window.localStorage.getItem(MAP_CITY_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function storeMapCity(code: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(MAP_CITY_KEY, code)
+  } catch {
+    /* almacenamiento no disponible */
+  }
+}
 
 const SECTION_STYLES: Record<string, { color: string; dot: string }> = {
   needs: { color: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-600' },
@@ -226,6 +248,15 @@ export default function HomePage() {
   const [showAvisos, setShowAvisos] = useState(true)
   const [showOrgs, setShowOrgs] = useState(true)
 
+  const [mapCityCode, setMapCityCodeState] = useState<string>(() => readStoredMapCity())
+  const mapCityLocked = useRef(false)
+
+  const setMapCity = (code: string) => {
+    mapCityLocked.current = true
+    setMapCityCodeState(code)
+    storeMapCity(code)
+  }
+
   const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
 
   const needsQuery = useQuery({
@@ -251,9 +282,28 @@ export default function HomePage() {
   const avisos: Aviso[] = avisosQuery.data?.avisos ?? []
   const orgs: HelpOrg[] = orgsQuery.data?.helpOrgs ?? []
 
+  useEffect(() => {
+    if (mapCityCode || cities.length === 0) return
+    const fallback = defaultCity(cities)
+    if (fallback) setMapCityCodeState(fallback.code)
+  }, [cities, mapCityCode])
+
+  useEffect(() => {
+    if (mapCityCode || mapCityLocked.current || cities.length === 0) return
+    mapCityLocked.current = true
+    api
+      .geo()
+      .then((point) => {
+        const near = nearestCity(point, cities, MAX_DETECTED_DISTANCE_KM)
+        if (near) setMapCity(near.code)
+      })
+      .catch(() => {})
+  }, [cities, mapCityCode])
+
+  const selectedCity = cities.find((c) => c.code === mapCityCode) ?? defaultCity(cities)
   const mapCenter = {
-    lat: cities[0]?.centerLat ?? 4.8133,
-    lng: cities[0]?.centerLng ?? -75.6961,
+    lat: selectedCity?.centerLat ?? 4.8133,
+    lng: selectedCity?.centerLng ?? -75.6961,
   }
 
   const toggles: { key: string; label: string; dot: string; checked: boolean }[] = [
@@ -274,7 +324,7 @@ export default function HomePage() {
     <div>
       <div className="mb-3">
         <h1 className="text-2xl font-bold tracking-tight">
-          Ayuda en {cities[0]?.name ?? 'Pereira'}
+          Ayuda en {selectedCity?.name ?? 'Pereira'}
         </h1>
         <p className="mt-1 text-sm text-text-muted">
           Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
@@ -286,6 +336,22 @@ export default function HomePage() {
           Llevar suministros (centro de carga)
         </Link>
       </div>
+
+      <select
+        value={mapCityCode}
+        onChange={(e) => setMapCity(e.target.value)}
+        aria-label="Centrar el mapa en"
+        className="mb-3 rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-text-muted focus:border-sky-500 focus:outline-none"
+      >
+        <option value="" disabled>
+          Elegir ciudad
+        </option>
+        {cities.map((c) => (
+          <option key={c.code} value={c.code}>
+            {c.name}
+          </option>
+        ))}
+      </select>
 
       <HomeMap
         requests={requests}

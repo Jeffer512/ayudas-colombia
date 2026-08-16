@@ -1,0 +1,43 @@
+import type { City, GeoPoint } from './types'
+
+export function defaultCity(cities: City[]): City | undefined {
+  return cities.find((c) => c.code === 'pereira') ?? cities[0]
+}
+
+function toRadians(deg: number): number {
+  return (deg * Math.PI) / 180
+}
+
+const EARTH_RADIUS_KM = 6371
+
+export function distanceKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
+  const dLat = toRadians(lat2 - lat1)
+  const dLng = toRadians(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLng / 2) ** 2
+  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+export function nearestCity(
+  point: GeoPoint,
+  cities: City[],
+  maxDistanceKm: number,
+): City | undefined {
+  let nearest: City | undefined
+  let best = Infinity
+  for (const city of cities) {
+    if (city.centerLat === null || city.centerLng === null) continue
+    const d = distanceKm(point.lat, point.lng, city.centerLat, city.centerLng)
+    if (d <= maxDistanceKm && d < best) {
+      nearest = city
+      best = d
+    }
+  }
+  return nearest
+}

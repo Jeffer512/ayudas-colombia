@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { formatItemQuantity } from '../lib/format'
+import { defaultCity } from '../lib/geo'
 import RequestCard from '../components/RequestCard'
 import {
   HELP_ORG_CATEGORY_LABELS,
@@ -74,7 +75,7 @@ export default function MyOrgPage() {
         title: reqTitle,
         description: reqDescription,
         address: reqAddress || undefined,
-        cityCode: orgQuery.data?.city.code ?? cities[0]?.code ?? 'pereira',
+        cityCode: orgQuery.data?.city.code ?? defaultCity(cities)?.code ?? 'pereira',
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['requests'] })

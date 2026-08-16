@@ -39,6 +39,14 @@ export interface City {
   centerLng: number | null
 }
 
+export interface GeoPoint {
+  lat: number
+  lng: number
+  city: string | null
+  region: string | null
+  country: string | null
+}
+
 export interface RequestEvent {
   id: string
   status: RequestStatus
