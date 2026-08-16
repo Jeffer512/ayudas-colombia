@@ -15,8 +15,8 @@ export function errorHandler(
     res.status(400).json({ error: 'Datos inválidos', details: err.flatten() })
     return
   }
-  console.error(err)
   const status = (err as { status?: number }).status ?? 500
+  if (status >= 500) console.error(err)
   const message =
     status >= 500
       ? 'Error interno del servidor'

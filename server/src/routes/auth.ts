@@ -3,7 +3,7 @@ import type { Response } from 'express'
 import rateLimit from 'express-rate-limit'
 import { env } from '../config.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
-import { requireSession } from '../middleware/requireSession.js'
+import { currentSession } from '../middleware/requireSession.js'
 import { SESSION_COOKIE, signSession } from '../lib/jwt.js'
 import {
   getSessionUser,
@@ -140,12 +140,16 @@ authRouter.post('/logout', (_req, res) => {
 
 authRouter.get(
   '/me',
-  requireSession,
   asyncHandler(async (req, res) => {
-    const sessionUser = await getSessionUser(req.staff!.sub)
+    const session = currentSession(req)
+    if (!session) {
+      res.json({ authenticated: false, name: null, email: null, staff: null })
+      return
+    }
+    const sessionUser = await getSessionUser(session.sub)
     if (!sessionUser) {
       res.clearCookie(SESSION_COOKIE, { path: '/' })
-      res.status(401).json({ error: 'Sesión expirada' })
+      res.json({ authenticated: false, name: null, email: null, staff: null })
       return
     }
     res.json({

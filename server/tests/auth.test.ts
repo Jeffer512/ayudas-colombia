@@ -274,9 +274,10 @@ describe('POST /api/auth/resend-verification', () => {
 })
 
 describe('GET /api/auth/me', () => {
-  it('devuelve 401 sin cookie de sesión', async () => {
+  it('devuelve autenticado:false sin cookie de sesión', async () => {
     const res = await request(app).get('/api/auth/me')
-    expect(res.status).toBe(401)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ authenticated: false, staff: null })
   })
 
   it('incluye el nombre y el correo del usuario autenticado', async () => {
@@ -385,6 +386,7 @@ describe('POST /api/auth/logout', () => {
     expect(logout.status).toBe(200)
 
     const me = await agent.get('/api/auth/me')
-    expect(me.status).toBe(401)
+    expect(me.status).toBe(200)
+    expect(me.body.authenticated).toBe(false)
   })
 })
