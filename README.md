@@ -71,7 +71,7 @@ Además de las de `server/.env.example`, en producción **son obligatorias**:
 | `FRONTEND_URL` | URL pública del frontend (usada en los enlaces de verificación) |
 | `TRUST_PROXY` | `true` cuando hay un proxy reverso (nginx/caddy o el de Render/Railway) |
 
-Opcionales: `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` para fotos en Supabase
+Opcionales: `SUPABASE_URL`/`SUPABASE_SECRET_KEY` para fotos en Supabase
 (sin ellas, las fotos se guardan como base64 en la base de datos) y `CORS_ORIGIN`
 (origins permitidos, separados por coma; vacío = sin CORS, sirviendo todo en
 mismo origen).

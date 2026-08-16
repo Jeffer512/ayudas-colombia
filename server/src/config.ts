@@ -49,6 +49,6 @@ export const env = {
   frontendUrl:
     process.env.FRONTEND_URL ?? process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:5173',
   supabaseUrl: process.env.SUPABASE_URL ?? '',
-  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+  supabaseSecretKey: process.env.SUPABASE_SECRET_KEY ?? '',
   supabaseBucket: process.env.SUPABASE_BUCKET ?? 'fotos',
 }

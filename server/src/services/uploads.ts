@@ -6,7 +6,7 @@ import { ApiError } from '../lib/errors.js'
 const DATA_URL_PREFIX = /^data:image\/(jpeg|png|webp);base64,/
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(env.supabaseUrl && env.supabaseServiceRoleKey)
+  return Boolean(env.supabaseUrl && env.supabaseSecretKey)
 }
 
 export async function uploadPhoto(dataUrl: string): Promise<string> {
@@ -25,7 +25,7 @@ export async function uploadPhoto(dataUrl: string): Promise<string> {
   const ext = mime === 'jpeg' ? 'jpg' : mime
   const storagePath = `requests/${randomUUID()}.${ext}`
 
-  const supabase = createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+  const supabase = createClient(env.supabaseUrl, env.supabaseSecretKey, {
     auth: { persistSession: false },
   })
 
