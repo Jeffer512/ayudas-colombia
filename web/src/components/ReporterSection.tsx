@@ -45,7 +45,7 @@ export default function ReporterSection({
           <input
             id="name"
             required
-            placeholder="Como el que firmarías junto al teléfono"
+            placeholder="Tu nombre (visible para coordinar la ayuda)"
             value={name}
             onChange={(e) => onPatch((prev) => ({ ...prev, name: e.target.value }))}
             className={`mt-1 ${inputClass}`}
