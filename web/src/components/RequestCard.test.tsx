@@ -9,6 +9,7 @@ function makeRequest(overrides: Partial<Request> = {}): Request {
     id: 'r1',
     type: 'missing_pet',
     transport: null,
+    items: [],
     urgency: 'medium',
     status: 'open',
     title: 'Perro perdido',
@@ -45,5 +46,15 @@ describe('RequestCard', () => {
       </MemoryRouter>,
     )
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('muestra los ítems del pedido cuando existen', () => {
+    render(
+      <MemoryRouter>
+        <RequestCard request={makeRequest({ items: ['Agua', 'Comida'] })} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Agua')).toBeInTheDocument()
+    expect(screen.getByText('Comida')).toBeInTheDocument()
   })
 })

@@ -58,6 +58,24 @@ export default function RequestCard({ request }: { request: Request }) {
         {request.description}
       </p>
 
+      {request.items.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {request.items.slice(0, 5).map((item) => (
+            <span
+              key={item}
+              className="inline-block rounded-full bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 text-xs text-rose-700 dark:text-rose-300"
+            >
+              {item}
+            </span>
+          ))}
+          {request.items.length > 5 && (
+            <span className="text-xs text-text-muted">
+              +{request.items.length - 5} más
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-muted">
         {request.transport && (
           <span className="inline-block rounded-full bg-page dark:bg-white/10 px-2 py-0.5">

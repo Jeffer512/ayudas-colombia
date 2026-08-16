@@ -31,6 +31,24 @@ export default function OfferCard({ offer }: { offer: Offer }) {
         {offer.description}
       </p>
 
+      {offer.items.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {offer.items.slice(0, 5).map((item) => (
+            <span
+              key={item}
+              className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
+            >
+              {item}
+            </span>
+          ))}
+          {offer.items.length > 5 && (
+            <span className="text-xs text-text-muted">
+              +{offer.items.length - 5} más
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-muted">
         {offer.transport && (
           <span className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">

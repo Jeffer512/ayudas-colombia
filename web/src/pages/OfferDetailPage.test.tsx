@@ -28,6 +28,10 @@ const baseOffer: Offer = {
   id: 'o1',
   type: 'supplies_offered',
   transport: 'can_transport',
+  items: ['Kits de aseo'],
+  zone: 'Centro',
+  volunteer: null,
+  vehicle: null,
   status: 'open',
   title: 'Ofrezco 100 kits de aseo',
   description: 'Entrego kits de aseo en cualquier punto de la ciudad.',
@@ -82,6 +86,52 @@ describe('OfferDetailPage', () => {
     expect(screen.queryByText(/Urgencia/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Historial/)).not.toBeInTheDocument()
     expect(screen.getByTestId('map')).toBeInTheDocument()
+  })
+
+  it('muestra ítems, zona y ficha de voluntario o vehículo según el tipo', async () => {
+    const volunteerOffer: Offer = {
+      ...baseOffer,
+      type: 'volunteers_offered',
+      items: [],
+      zone: 'Dosquebradas',
+      volunteer: {
+        capabilities: ['Cocina', 'Primeros auxilios'],
+        availability: 'Fines de semana',
+      },
+      vehicle: null,
+    }
+    renderPage(volunteerOffer)
+
+    expect(await screen.findByText('Dosquebradas')).toBeInTheDocument()
+    expect(screen.getByText('Cocina')).toBeInTheDocument()
+    expect(screen.getByText('Primeros auxilios')).toBeInTheDocument()
+    expect(screen.getByText('Fines de semana')).toBeInTheDocument()
+    expect(screen.queryByText('Camioneta')).not.toBeInTheDocument()
+  })
+
+  it('muestra los ítems y la zona de una oferta de suministros', async () => {
+    renderPage()
+
+    expect(
+      await screen.findByText('Kits de aseo'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Centro')).toBeInTheDocument()
+  })
+
+  it('muestra los datos del vehículo en una oferta de transporte', async () => {
+    const transportOffer: Offer = {
+      ...baseOffer,
+      type: 'transport_offered',
+      transport: null,
+      items: [],
+      zone: null,
+      volunteer: null,
+      vehicle: { vehicleType: 'Camioneta', capacity: '2 toneladas' },
+    }
+    renderPage(transportOffer)
+
+    expect(await screen.findByText('Camioneta')).toBeInTheDocument()
+    expect(screen.getByText('2 toneladas')).toBeInTheDocument()
   })
 
   it('marca la oferta como entregada con el código', async () => {

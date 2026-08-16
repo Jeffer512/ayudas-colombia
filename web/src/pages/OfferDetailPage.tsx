@@ -103,6 +103,68 @@ export default function OfferDetailPage() {
             </dd>
           </div>
         )}
+        {offer.items.length > 0 && (
+          <div>
+            <dt className="font-medium text-text-muted">Qué se ofrece</dt>
+            <dd className="mt-1 flex flex-wrap gap-1.5">
+              {offer.items.map((item) => (
+                <span
+                  key={item}
+                  className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
+                >
+                  {item}
+                </span>
+              ))}
+            </dd>
+          </div>
+        )}
+        {offer.zone && (
+          <div>
+            <dt className="font-medium text-text-muted">Zona de entrega</dt>
+            <dd className="text-text-main">{offer.zone}</dd>
+          </div>
+        )}
+        {offer.volunteer && (
+          <>
+            {offer.volunteer.capabilities.length > 0 && (
+              <div>
+                <dt className="font-medium text-text-muted">En qué ayuda</dt>
+                <dd className="mt-1 flex flex-wrap gap-1.5">
+                  {offer.volunteer.capabilities.map((capability) => (
+                    <span
+                      key={capability}
+                      className="inline-block rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 text-xs text-indigo-700 dark:text-indigo-300"
+                    >
+                      {capability}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+            {offer.volunteer.availability && (
+              <div>
+                <dt className="font-medium text-text-muted">Disponibilidad</dt>
+                <dd className="text-text-main">{offer.volunteer.availability}</dd>
+              </div>
+            )}
+          </>
+        )}
+        {offer.vehicle && (
+          <>
+            {offer.vehicle.vehicleType && (
+              <div>
+                <dt className="font-medium text-text-muted">Vehículo</dt>
+                <dd className="text-text-main">{offer.vehicle.vehicleType}</dd>
+              </div>
+            )}
+            {offer.vehicle.capacity && (
+              <div>
+                <dt className="font-medium text-text-muted">Capacidad</dt>
+                <dd className="text-text-main">{offer.vehicle.capacity}</dd>
+              </div>
+            )}
+          </>
+        )}
         {offer.address && (
           <div>
             <dt className="font-medium text-text-muted">Dirección</dt>

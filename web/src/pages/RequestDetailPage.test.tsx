@@ -29,6 +29,7 @@ const baseRequest: Request = {
   id: 'r1',
   type: 'supplies_request',
   transport: null,
+  items: ['Agua', 'Comida'],
   urgency: 'high',
   status: 'open',
   title: 'Necesitamos agua potable',
@@ -93,6 +94,21 @@ describe('RequestDetailPage', () => {
     expect(screen.getAllByText('Abierto').length).toBeGreaterThan(0)
     expect(screen.getByTestId('map')).toBeInTheDocument()
     expect(screen.getByText('Pedido creado')).toBeInTheDocument()
+  })
+
+  it('muestra la lista de ítems que se necesitan', async () => {
+    renderPage()
+
+    expect(await screen.findByText('Agua')).toBeInTheDocument()
+    expect(screen.getByText('Comida')).toBeInTheDocument()
+  })
+
+  it('no muestra la lista de ítems cuando está vacía', async () => {
+    renderPage({ ...baseRequest, items: [] })
+
+    expect(await screen.findByRole('heading', { name: 'Necesitamos agua potable' }))
+      .toBeInTheDocument()
+    expect(screen.queryByText('Agua')).not.toBeInTheDocument()
   })
 
   it('registra que una persona va a ayudar', async () => {

@@ -51,6 +51,13 @@ function offerTypeChoices(includeTransport: boolean) {
   )
 }
 
+function toList(value: string): string[] {
+  return value
+    .split(/[,;]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
 export default function CreateOfferPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -59,6 +66,12 @@ export default function CreateOfferPage() {
     transportEntry ? 'transport_offered' : '',
   )
   const [transport, setTransport] = useState<TransportOption | ''>('')
+  const [items, setItems] = useState('')
+  const [zone, setZone] = useState('')
+  const [capabilities, setCapabilities] = useState('')
+  const [availability, setAvailability] = useState('')
+  const [vehicleType, setVehicleType] = useState('')
+  const [capacity, setCapacity] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState<LocationState>(initialLocation)
@@ -100,6 +113,28 @@ export default function CreateOfferPage() {
     const body: NewOffer = {
       type: type as OfferType,
       ...(canTransport && transport ? { transport } : {}),
+      ...(type === 'supplies_offered'
+        ? {
+            ...(items.trim() ? { items: toList(items) } : {}),
+            ...(zone.trim() ? { zone: zone.trim() } : {}),
+          }
+        : {}),
+      ...(type === 'volunteers_offered'
+        ? {
+            volunteer: {
+              ...(capabilities.trim() ? { capabilities: toList(capabilities) } : {}),
+              ...(availability.trim() ? { availability: availability.trim() } : {}),
+            },
+          }
+        : {}),
+      ...(type === 'transport_offered'
+        ? {
+            vehicle: {
+              ...(vehicleType.trim() ? { vehicleType: vehicleType.trim() } : {}),
+              ...(capacity.trim() ? { capacity: capacity.trim() } : {}),
+            },
+          }
+        : {}),
       title: title.trim(),
       description: description.trim(),
       cityCode: location.cityCode,
@@ -148,6 +183,12 @@ export default function CreateOfferPage() {
           setTitle('')
           setDescription('')
           setTransport('')
+          setItems('')
+          setZone('')
+          setCapabilities('')
+          setAvailability('')
+          setVehicleType('')
+          setCapacity('')
           setLocation(initialLocation)
           setReporter(initialReporter)
         }}
@@ -231,6 +272,99 @@ export default function CreateOfferPage() {
                 </p>
               )}
             </div>
+          )}
+
+          {type === 'supplies_offered' && (
+            <>
+              <div className="mt-4">
+                <label htmlFor="items" className={labelClass}>
+                  Qué ofreces (opcional)
+                </label>
+                <input
+                  id="items"
+                  maxLength={400}
+                  placeholder="Ej: agua, galletas, mantas (separa con comas)"
+                  value={items}
+                  onChange={(e) => setItems(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+              <div className="mt-4">
+                <label htmlFor="zone" className={labelClass}>
+                  Zona o punto de entrega (opcional)
+                </label>
+                <input
+                  id="zone"
+                  maxLength={80}
+                  placeholder="Ej: Barrio San Nicolás"
+                  value={zone}
+                  onChange={(e) => setZone(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+            </>
+          )}
+
+          {type === 'volunteers_offered' && (
+            <>
+              <div className="mt-4">
+                <label htmlFor="capabilities" className={labelClass}>
+                  En qué puedes ayudar (opcional)
+                </label>
+                <input
+                  id="capabilities"
+                  maxLength={400}
+                  placeholder="Ej: primeros auxilios, cocina, atención al público"
+                  value={capabilities}
+                  onChange={(e) => setCapabilities(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+              <div className="mt-4">
+                <label htmlFor="availability" className={labelClass}>
+                  Disponibilidad (opcional)
+                </label>
+                <input
+                  id="availability"
+                  maxLength={200}
+                  placeholder="Ej: fines de semana y tardes"
+                  value={availability}
+                  onChange={(e) => setAvailability(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+            </>
+          )}
+
+          {type === 'transport_offered' && (
+            <>
+              <div className="mt-4">
+                <label htmlFor="vehicleType" className={labelClass}>
+                  Tipo de vehículo (opcional)
+                </label>
+                <input
+                  id="vehicleType"
+                  maxLength={40}
+                  placeholder="Ej: camioneta, motocicleta"
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+              <div className="mt-4">
+                <label htmlFor="capacity" className={labelClass}>
+                  Capacidad (opcional)
+                </label>
+                <input
+                  id="capacity"
+                  maxLength={60}
+                  placeholder="Ej: 2 toneladas, 5 pasajeros"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+            </>
           )}
 
           <div className="mt-4">

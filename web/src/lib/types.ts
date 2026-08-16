@@ -85,6 +85,7 @@ export interface Request {
   isOwner?: boolean
   type: RequestType
   transport: TransportOption | null
+  items: string[]
   urgency: Urgency
   status: RequestStatus
   title: string
@@ -115,11 +116,25 @@ export interface OfferClaim {
   claimedAt: string
 }
 
+export interface OfferVolunteer {
+  capabilities: string[]
+  availability: string | null
+}
+
+export interface OfferVehicle {
+  vehicleType: string | null
+  capacity: string | null
+}
+
 export interface Offer {
   id: string
   isOwner?: boolean
   type: OfferType
   transport: TransportOption | null
+  items: string[]
+  zone: string | null
+  volunteer: OfferVolunteer | null
+  vehicle: OfferVehicle | null
   status: OfferStatus
   title: string
   description: string
@@ -218,6 +233,7 @@ export type NewRequest = {
   type: RequestType
   urgency: Urgency
   transport?: TransportOption
+  items?: string[]
   title: string
   description: string
   photo?: string
@@ -232,6 +248,10 @@ export type NewRequest = {
 export type NewOffer = {
   type: OfferType
   transport?: TransportOption
+  items?: string[]
+  zone?: string
+  volunteer?: OfferVolunteerInput
+  vehicle?: OfferVehicleInput
   title: string
   description: string
   address?: string
@@ -260,6 +280,16 @@ type ReporterInput = {
   phone?: string
   whatsapp?: string
   email?: string
+}
+
+type OfferVolunteerInput = {
+  capabilities?: string[]
+  availability?: string
+}
+
+type OfferVehicleInput = {
+  vehicleType?: string
+  capacity?: string
 }
 
 export type StatusUpdate = {

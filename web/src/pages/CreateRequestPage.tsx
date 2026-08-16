@@ -52,6 +52,7 @@ export default function CreateRequestPage() {
   const [type, setType] = useState<RequestType | ''>('')
   const [urgency, setUrgency] = useState<Urgency>('medium')
   const [transport, setTransport] = useState<TransportOption | ''>('')
+  const [items, setItems] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
@@ -93,6 +94,14 @@ export default function CreateRequestPage() {
       type: type as RequestType,
       urgency,
       ...(type === 'supplies_request' && transport ? { transport } : {}),
+      ...(type === 'supplies_request' && items.trim()
+        ? {
+            items: items
+              .split(/[,;]/)
+              .map((part) => part.trim())
+              .filter(Boolean),
+          }
+        : {}),
       title: title.trim(),
       description: description.trim(),
       ...(photo ? { photo } : {}),
@@ -143,6 +152,7 @@ export default function CreateRequestPage() {
           setPhoto(null)
           setPhotoError(null)
           setTransport('')
+          setItems('')
           setLocation(initialLocation)
           setReporter(initialReporter)
         }}
@@ -237,6 +247,22 @@ export default function CreateRequestPage() {
                 Si marcas "Necesito transporte", quien ofrezca suministros sabrá
                 que también debe poder llevarlos.
               </p>
+            </div>
+          )}
+
+          {type === 'supplies_request' && (
+            <div className="mt-4">
+              <label htmlFor="items" className={labelClass}>
+                Qué necesitas (opcional)
+              </label>
+              <input
+                id="items"
+                maxLength={400}
+                placeholder="Ej: agua, comida, mantas (separa con comas)"
+                value={items}
+                onChange={(e) => setItems(e.target.value)}
+                className={`mt-1 ${inputClass}`}
+              />
             </div>
           )}
 

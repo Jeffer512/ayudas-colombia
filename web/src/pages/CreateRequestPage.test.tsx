@@ -135,7 +135,44 @@ describe('CreateRequestPage', () => {
     )
   })
 
-it('muestra error del servidor si falla la publicación', async () => {
+it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-3',
+      resolveCode: '3333',
+    } as unknown as CreatedRequest)
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(screen.queryByLabelText('Qué necesitas (opcional)')).not.toBeInTheDocument()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'shelter_request')
+    expect(screen.queryByLabelText('Qué necesitas (opcional)')).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'supplies_request')
+    await user.type(
+      await screen.findByLabelText('Qué necesitas (opcional)'),
+      'Agua, comida; mantas',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Las familias del sector requieren agua para cocinar y beber.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
+    await user.type(screen.getByLabelText('Teléfono'), '3158765432')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items: ['Agua', 'comida', 'mantas'],
+        }),
+      ),
+    )
+  })
+
+  it('muestra error del servidor si falla la publicación', async () => {
     mockedCreate.mockRejectedValue(new Error('Ciudad no encontrada: pereira'))
     const user = userEvent.setup()
     renderPage()

@@ -235,6 +235,120 @@ describe('CreateOfferPage', () => {
     )
   })
 
+  it('envía ítems y zona en ofertas de suministros', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-6',
+      resolveCode: '6666',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await user.type(
+      screen.getByLabelText('Qué ofreces (opcional)'),
+      'Agua, galletas; mantas',
+    )
+    await user.type(
+      screen.getByLabelText('Zona o punto de entrega (opcional)'),
+      'Barrio San Nicolás',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Pongo a disposición agua y alimentos para las familias afectadas.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items: ['Agua', 'galletas', 'mantas'],
+          zone: 'Barrio San Nicolás',
+        }),
+      ),
+    )
+  })
+
+  it('envía capacidades y disponibilidad en ofertas de voluntariado', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-7',
+      resolveCode: '7777',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'volunteers_offered')
+    await user.type(
+      screen.getByLabelText('En qué puedes ayudar (opcional)'),
+      'Cocina, primeros auxilios',
+    )
+    await user.type(
+      screen.getByLabelText('Disponibilidad (opcional)'),
+      'Fines de semana',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Me ofrezco como voluntario')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Ayudo a preparar alimentos en la sede de la cruz roja.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          volunteer: {
+            capabilities: ['Cocina', 'primeros auxilios'],
+            availability: 'Fines de semana',
+          },
+        }),
+      ),
+    )
+  })
+
+  it('envía los datos del vehículo en ofertas de transporte', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-8',
+      resolveCode: '8888',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage('/ofrecer-ayuda?tipo=transport_offered')
+
+    await user.type(
+      screen.getByLabelText('Tipo de vehículo (opcional)'),
+      'Camioneta',
+    )
+    await user.type(
+      screen.getByLabelText('Capacidad (opcional)'),
+      '2 toneladas',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Camioneta disponible para llevar suministros durante la semana.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
+    await user.type(screen.getByLabelText('Teléfono'), '3105558888')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vehicle: {
+            vehicleType: 'Camioneta',
+            capacity: '2 toneladas',
+          },
+        }),
+      ),
+    )
+  })
+
   it('permite restringir el contacto a usuarios registrados', async () => {
     mockedCreate.mockResolvedValue({
       id: 'new-5',

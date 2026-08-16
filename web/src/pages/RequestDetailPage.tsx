@@ -131,6 +131,21 @@ export default function RequestDetailPage() {
             </dd>
           </div>
         )}
+        {request.items.length > 0 && (
+          <div>
+            <dt className="font-medium text-text-muted">Qué se necesita</dt>
+            <dd className="mt-1 flex flex-wrap gap-1.5">
+              {request.items.map((item) => (
+                <span
+                  key={item}
+                  className="inline-block rounded-full bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 text-xs text-rose-700 dark:text-rose-300"
+                >
+                  {item}
+                </span>
+              ))}
+            </dd>
+          </div>
+        )}
         {request.address && (
           <div>
             <dt className="font-medium text-text-muted">Dirección</dt>
