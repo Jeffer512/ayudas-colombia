@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: proyecto-ayudas
+    name: ayudas-colombia
     runtime: docker
     dockerfilePath: ./Dockerfile
     region: virginia
