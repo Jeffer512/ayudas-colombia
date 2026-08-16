@@ -28,6 +28,8 @@ export default function MyOrgPage() {
     queryFn: () => api.helpOrg(staff!.orgId),
     enabled: !!staff,
   })
+  const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
+  const cities = citiesQuery.data?.cities ?? []
   const membersQuery = useQuery({
     queryKey: ['members', staff?.orgId],
     queryFn: () => api.orgMembers(staff!.orgId),
@@ -72,7 +74,7 @@ export default function MyOrgPage() {
         title: reqTitle,
         description: reqDescription,
         address: reqAddress || undefined,
-        cityCode: orgQuery.data?.city.code ?? 'pereira',
+        cityCode: orgQuery.data?.city.code ?? cities[0]?.code ?? 'pereira',
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['requests'] })

@@ -36,7 +36,7 @@ export default function Layout() {
       <header className="bg-sky-800 text-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <Link to="/" className="text-lg font-bold tracking-tight">
-            Ayudas Pereira
+            Red de ayudas
           </Link>
           <nav
             className="flex flex-wrap items-center gap-2 text-sm"
@@ -101,7 +101,7 @@ export default function Layout() {
 
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-4 text-center text-sm text-text-muted">
-          Red de ayuda ciudadana — Pereira, Risaralda
+          Red de ayuda ciudadana
         </div>
       </footer>
     </div>

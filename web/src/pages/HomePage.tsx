@@ -273,7 +273,9 @@ export default function HomePage() {
   return (
     <div>
       <div className="mb-3">
-        <h1 className="text-2xl font-bold tracking-tight">Ayuda en Pereira</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Ayuda en {cities[0]?.name ?? 'Pereira'}
+        </h1>
         <p className="mt-1 text-sm text-text-muted">
           Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
         </p>

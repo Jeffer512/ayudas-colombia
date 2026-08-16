@@ -13,6 +13,7 @@ vi.mock('../api/client', () => ({
     helpOrg: vi.fn(),
     orgMembers: vi.fn(),
     requests: vi.fn(),
+    cities: vi.fn(),
     createOrgRequest: vi.fn(),
     orgItems: vi.fn(),
     createOrgItem: vi.fn(),
@@ -28,6 +29,7 @@ const mockedMe = vi.mocked(api.me)
 const mockedHelpOrg = vi.mocked(api.helpOrg)
 const mockedOrgMembers = vi.mocked(api.orgMembers)
 const mockedRequests = vi.mocked(api.requests)
+const mockedCities = vi.mocked(api.cities)
 const mockedOrgItems = vi.mocked(api.orgItems)
 const mockedCreateOrgItem = vi.mocked(api.createOrgItem)
 const mockedUpdateOrgItem = vi.mocked(api.updateOrgItem)
@@ -97,6 +99,7 @@ beforeEach(() => {
   mockedHelpOrg.mockReset()
   mockedOrgMembers.mockReset()
   mockedRequests.mockReset()
+  mockedCities.mockReset()
   mockedOrgItems.mockReset()
   mockedCreateOrgItem.mockReset()
   mockedUpdateOrgItem.mockReset()
@@ -113,6 +116,11 @@ beforeEach(() => {
   mockedHelpOrg.mockResolvedValue(org)
   mockedOrgMembers.mockResolvedValue({ members: [] })
   mockedRequests.mockResolvedValue({ requests: [], total: 0, limit: 50, offset: 0 })
+  mockedCities.mockResolvedValue({
+    cities: [
+      { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
+    ],
+  })
   mockedOrgItems.mockResolvedValue({
     items: [
       item('i1', { name: 'Agua' }),
