@@ -1,9 +1,11 @@
 # Proyecto Ayudas
 
-App web para centralizar ayuda tras el terremoto. Las personas reportan necesidades
-(personas/mascotas desaparecidas, suministros, voluntarios, refugios) y quién está
-ayudando puede marcar los reportes como "siendo atendido" para que los demás dirijan
-sus esfuerzos a otras zonas.
+App web para coordinar ayuda tras el terremoto. Las personas reportan necesidades
+(personas/mascotas desaparecidas, suministros, voluntarios, refugios, salud,
+transporte) y quienes pueden ayudar se comprometen a atenderlas; también hay
+ofrecimientos de ayuda, avisos por zona y organizaciones que publican qué necesitan
+y qué tienen disponible. Un reporte queda cerrado cuando se resuelve (o lo marca
+moderación), para que los demás dirijan sus esfuerzos a otras zonas.
 
 ## Stack
 
@@ -20,7 +22,7 @@ web/      Frontend React (Vite)
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 25 (ver `.nvmrc`; `engines` lo fija en `>=25 <26`)
 - Docker (para PostgreSQL local)
 
 ## Puesta en marcha
@@ -45,16 +47,9 @@ automáticamente por el setup de Vitest).
 
 ## Producción
 
-El servidor compila la API y sirve el frontend desde `web/dist` cuando
-`NODE_ENV=production`. Despliegue: construir el web, aplicar migraciones y arrancar
-el servidor.
-
-```bash
-npm install
-npm run build                   # compila server/ y web/
-npm run db:deploy -w server     # aplica migraciones (no requerido si PostgreSQL es nuevo)
-npm start -w server             # sirve API y frontend en :4000
-```
+El despliegue usa la imagen Docker multietapa (`Dockerfile`) y el blueprint de
+Render (`render.yaml`). El servidor compila la API y sirve el frontend desde
+`web/dist` cuando `NODE_ENV=production`.
 
 ### Variables de entorno
 
@@ -64,29 +59,36 @@ Además de las de `server/.env.example`, en producción **son obligatorias**:
 | --- | --- |
 | `NODE_ENV` | `production` |
 | `DATABASE_URL` | PostgreSQL de producción (no la local de Docker) |
-| `JWT_SECRET` | Genera con `openssl rand -hex 32`; el secreto es obligatorio en producción |
+| `JWT_SECRET` | Secreto para firmar las sesiones; obligatorio en producción |
 | `ADMIN_TOKEN` | Token para las rutas de moderación; obligatorio en producción |
 | `SMTP_URL` | SMTP para verificar correo y restablecer contraseña (p. ej. Brevo) |
-| `MAIL_FROM` | Remitente de los correos |
-| `FRONTEND_URL` | URL pública del frontend (usada en los enlaces de verificación) |
-| `TRUST_PROXY` | `true` cuando hay un proxy reverso (nginx/caddy o el de Render/Railway) |
+| `MAIL_FROM` | Remitente de los correos (debe ser una dirección verificada) |
 
-Opcionales: `SUPABASE_URL`/`SUPABASE_SECRET_KEY` para fotos en Supabase
-(sin ellas, las fotos se guardan como base64 en la base de datos) y `CORS_ORIGIN`
-(origins permitidos, separados por coma; vacío = sin CORS, sirviendo todo en
-mismo origen).
+Opcionales: `SUPABASE_URL`, `SUPABASE_SECRET_KEY` y `SUPABASE_BUCKET` para
+guardar en Supabase Storage las fotos de personas y mascotas desaparecidas
+(sin ellas la foto se guarda como base64 en la base de datos),
+`FRONTEND_URL` (URL pública del frontend, usada en los enlaces de los correos;
+si no está, se usa `RENDER_EXTERNAL_URL`) y `CORS_ORIGIN` (origins permitidos,
+separados por coma; vacío = sin CORS, sirviendo todo en mismo origen).
 
 El servidor **revienta al arrancar** si `JWT_SECRET` o `ADMIN_TOKEN` faltan o
 usan el valor de ejemplo (para evitar sesiones fraguables en producción).
 
-### Despliegue rápido (Render/Railway)
+### Despliegue rápido (Render + Supabase)
 
-1. Servidor de Postgres (Render Postgres, Railway Postgres, etc.) y usa su `DATABASE_URL`.
-2. Define todas las variables obligatorias de la tabla anterior.
-3. Build: `npm run build`.
-4. Arranque: `npm run db:deploy -w server && npm start -w server`.
-5. Antes de abrir: registra una cuenta (debe llegar el correo de verificación con
-   el enlace correcto) y restablece una contraseña; crea una solicitud, oferta y aviso.
+1. Sube el repo; Render construye la imagen del `Dockerfile` a partir del
+   blueprint `render.yaml` (o crea el servicio manualmente apuntando al repo).
+2. Crea el Postgres de producción (p. ej. Supabase) y aplica las migraciones
+   contra su URL directa (puerto 5432): `npm run db:deploy -w server` y
+   `npm run db:seed -w server`.
+3. En la consola de Render completa antes de que termine el primer deploy los
+   secretos con `sync: false` en `render.yaml`: `DATABASE_URL` (con el pooler,
+   puerto 6543), `JWT_SECRET`, `ADMIN_TOKEN`, `SMTP_URL`, `MAIL_FROM` (dirección
+   verificada), `SUPABASE_URL` y `SUPABASE_SECRET_KEY`; el `SUPABASE_BUCKET` ya lo
+   fija el blueprint en `fotos` (el bucket debe ser público) y `FRONTEND_URL`
+   puede quedar vacío (usa `RENDER_EXTERNAL_URL`). `TRUST_PROXY` lo activa el
+   blueprint (el límite de tasa lee `X-Forwarded-For`).
+
 
 ## Flujo de trabajo
 
