@@ -130,7 +130,7 @@ export default function CreateAvisoPage() {
       </p>
       <p className="mt-2 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-300">
         Este espacio es de la comunidad. Si es una emergencia, llama a las
-        autoridades:         123 emergencias · 119 bomberos · 125 defensa civil.
+        autoridades:         123 Emergencias · 119 Bomberos · 125 Ambulancias / Emergencias Médicas.
       </p>
 
       {error && (

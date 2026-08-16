@@ -8,7 +8,15 @@ import ContactVisibilitySection from '../components/ContactVisibilitySection'
 import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
-import { OFFER_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS } from '../lib/constants'
+import TagPicker from '../components/TagPicker'
+import {
+  OFFER_TYPE_LABELS,
+  SUPPLIES_ITEM_OPTIONS,
+  TRANSPORT_LABELS,
+  TRANSPORT_OPTIONS,
+  VEHICLE_TYPE_OPTIONS,
+  VOLUNTEER_CAPABILITY_OPTIONS,
+} from '../lib/constants'
 import type {
   ContactVisibility,
   CreatedOffer,
@@ -51,13 +59,6 @@ function offerTypeChoices(includeTransport: boolean) {
   )
 }
 
-function toList(value: string): string[] {
-  return value
-    .split(/[,;]/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-}
-
 export default function CreateOfferPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -66,9 +67,9 @@ export default function CreateOfferPage() {
     transportEntry ? 'transport_offered' : '',
   )
   const [transport, setTransport] = useState<TransportOption | ''>('')
-  const [items, setItems] = useState('')
+  const [items, setItems] = useState<string[]>([])
   const [zone, setZone] = useState('')
-  const [capabilities, setCapabilities] = useState('')
+  const [capabilities, setCapabilities] = useState<string[]>([])
   const [availability, setAvailability] = useState('')
   const [vehicleType, setVehicleType] = useState('')
   const [capacity, setCapacity] = useState('')
@@ -94,6 +95,13 @@ export default function CreateOfferPage() {
 
   const canTransport = type === 'supplies_offered'
 
+  const showZone =
+    (type === 'supplies_offered' && transport === 'can_transport') ||
+    type === 'volunteers_offered' ||
+    type === 'transport_offered'
+  const zoneLabel =
+    type === 'volunteers_offered' ? 'Zona donde puedes ayudar' : 'Zona de entrega'
+
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
@@ -113,16 +121,12 @@ export default function CreateOfferPage() {
     const body: NewOffer = {
       type: type as OfferType,
       ...(canTransport && transport ? { transport } : {}),
-      ...(type === 'supplies_offered'
-        ? {
-            ...(items.trim() ? { items: toList(items) } : {}),
-            ...(zone.trim() ? { zone: zone.trim() } : {}),
-          }
-        : {}),
+      ...(items.length ? { items } : {}),
+      ...(zone.trim() && showZone ? { zone: zone.trim() } : {}),
       ...(type === 'volunteers_offered'
         ? {
             volunteer: {
-              ...(capabilities.trim() ? { capabilities: toList(capabilities) } : {}),
+              ...(capabilities.length ? { capabilities } : {}),
               ...(availability.trim() ? { availability: availability.trim() } : {}),
             },
           }
@@ -130,7 +134,7 @@ export default function CreateOfferPage() {
       ...(type === 'transport_offered'
         ? {
             vehicle: {
-              ...(vehicleType.trim() ? { vehicleType: vehicleType.trim() } : {}),
+              ...(vehicleType ? { vehicleType } : {}),
               ...(capacity.trim() ? { capacity: capacity.trim() } : {}),
             },
           }
@@ -183,9 +187,9 @@ export default function CreateOfferPage() {
           setTitle('')
           setDescription('')
           setTransport('')
-          setItems('')
+          setItems([])
           setZone('')
-          setCapabilities('')
+          setCapabilities([])
           setAvailability('')
           setVehicleType('')
           setCapacity('')
@@ -275,54 +279,33 @@ export default function CreateOfferPage() {
           )}
 
           {type === 'supplies_offered' && (
-            <>
-              <div className="mt-4">
-                <label htmlFor="items" className={labelClass}>
-                  Qué ofreces (opcional)
-                </label>
-                <input
-                  id="items"
-                  maxLength={400}
-                  placeholder="Ej: agua, galletas, mantas (separa con comas)"
-                  value={items}
-                  onChange={(e) => setItems(e.target.value)}
-                  className={`mt-1 ${inputClass}`}
-                />
-              </div>
-              <div className="mt-4">
-                <label htmlFor="zone" className={labelClass}>
-                  Zona o punto de entrega (opcional)
-                </label>
-                <input
-                  id="zone"
-                  maxLength={80}
-                  placeholder="Ej: Barrio San Nicolás"
-                  value={zone}
-                  onChange={(e) => setZone(e.target.value)}
-                  className={`mt-1 ${inputClass}`}
-                />
-              </div>
-            </>
+            <div className="mt-4">
+              <TagPicker
+                id="items"
+                label="Qué ofreces (opcional)"
+                options={SUPPLIES_ITEM_OPTIONS}
+                value={items}
+                onChange={setItems}
+                chipClassName="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+              />
+            </div>
           )}
 
           {type === 'volunteers_offered' && (
             <>
               <div className="mt-4">
-                <label htmlFor="capabilities" className={labelClass}>
-                  En qué puedes ayudar (opcional)
-                </label>
-                <input
+                <TagPicker
                   id="capabilities"
-                  maxLength={400}
-                  placeholder="Ej: primeros auxilios, cocina, atención al público"
+                  label="En qué puedes ayudar (opcional)"
+                  options={VOLUNTEER_CAPABILITY_OPTIONS}
                   value={capabilities}
-                  onChange={(e) => setCapabilities(e.target.value)}
-                  className={`mt-1 ${inputClass}`}
+                  onChange={setCapabilities}
+                  chipClassName="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300"
                 />
               </div>
               <div className="mt-4">
                 <label htmlFor="availability" className={labelClass}>
-                  Disponibilidad (opcional)
+                  Horario / disponibilidad (opcional)
                 </label>
                 <input
                   id="availability"
@@ -339,16 +322,14 @@ export default function CreateOfferPage() {
           {type === 'transport_offered' && (
             <>
               <div className="mt-4">
-                <label htmlFor="vehicleType" className={labelClass}>
-                  Tipo de vehículo (opcional)
-                </label>
-                <input
+                <TagPicker
                   id="vehicleType"
-                  maxLength={40}
-                  placeholder="Ej: camioneta, motocicleta"
-                  value={vehicleType}
-                  onChange={(e) => setVehicleType(e.target.value)}
-                  className={`mt-1 ${inputClass}`}
+                  label="Tipo de vehículo (opcional)"
+                  options={VEHICLE_TYPE_OPTIONS}
+                  value={vehicleType ? [vehicleType] : []}
+                  onChange={(next) => setVehicleType(next[0] ?? '')}
+                  single
+                  chipClassName="bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300"
                 />
               </div>
               <div className="mt-4">
@@ -365,6 +346,22 @@ export default function CreateOfferPage() {
                 />
               </div>
             </>
+          )}
+
+          {showZone && (
+            <div className="mt-4">
+              <label htmlFor="zone" className={labelClass}>
+                {zoneLabel} (opcional)
+              </label>
+              <input
+                id="zone"
+                maxLength={80}
+                placeholder="Ej: Barrio San Nicolás"
+                value={zone}
+                onChange={(e) => setZone(e.target.value)}
+                className={`mt-1 ${inputClass}`}
+              />
+            </div>
           )}
 
           <div className="mt-4">
@@ -410,7 +407,7 @@ export default function CreateOfferPage() {
           addressPlaceholder="Ej: barrio o punto de entrega"
           addressHint={
             transport === 'can_transport'
-              ? 'Si vas a transportar todo, no hace falta dar tu dirección exacta.'
+              ? 'Indica arriba la zona donde puedes entregar; no hace falta dar tu dirección exacta.'
               : undefined
           }
           onPatch={setLocation}

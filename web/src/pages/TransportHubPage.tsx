@@ -147,6 +147,23 @@ export default function TransportHubPage() {
                         <span className="truncate">{offer.address}</span>
                       ) : null}
                     </div>
+                    {offer.items.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {offer.items.slice(0, 5).map((item) => (
+                          <span
+                            key={item}
+                            className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                        {offer.zone && (
+                          <span className="text-xs text-text-muted">
+                            Zona: {offer.zone}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {offer.canClaim &&
                     loginKnown &&
@@ -211,6 +228,18 @@ export default function TransportHubPage() {
                           </span>
                         ) : null}
                       </div>
+                      {offer.items.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {offer.items.slice(0, 5).map((item) => (
+                            <span
+                              key={item}
+                              className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {offer.claim?.mine && loggedIn && (
                       <button
@@ -264,6 +293,17 @@ export default function TransportHubPage() {
                         <span className="truncate">{offer.address}</span>
                       ) : null}
                     </div>
+                    {offer.vehicle && (
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                        <span className="inline-block rounded-full bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 text-sky-700 dark:text-sky-300">
+                          {offer.vehicle.vehicleType ?? 'Vehículo'}
+                        </span>
+                        {offer.vehicle.capacity && (
+                          <span>Capacidad: {offer.vehicle.capacity}</span>
+                        )}
+                        {offer.zone && <span>Zona: {offer.zone}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
               </li>

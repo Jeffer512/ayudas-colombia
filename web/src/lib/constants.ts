@@ -28,6 +28,40 @@ export const TRANSPORT_LABELS: Record<TransportOption, string> = {
   needs_transport: 'Necesita transporte',
 }
 
+export const SUPPLIES_ITEM_OPTIONS = [
+  'Agua potable',
+  'Alimentación',
+  'Salud y primeros auxilios',
+  'Bebés y niños',
+  'Higiene personal',
+  'Ropa y calzado',
+  'Limpieza',
+  'Herramientas',
+  'Mascotas',
+  'Mantas y abrigo',
+  'Energía y linternas',
+  'Carpas y toldos',
+]
+
+export const VOLUNTEER_CAPABILITY_OPTIONS = [
+  'Primeros auxilios',
+  'Cocina',
+  'Carga y descarga',
+  'Atención al público',
+  'Limpieza',
+  'Cuidado de niños o mayores',
+  'Rescate',
+]
+
+export const VEHICLE_TYPE_OPTIONS = [
+  'Camioneta',
+  'Camión',
+  'Van o furgoneta',
+  'Motocicleta',
+  'Automóvil',
+  'Bicicleta',
+]
+
 export const URGENCY_META: Record<string, { label: string; color: string }> = {
   critical: { label: 'Crítica', color: '#dc2626' },
   high: { label: 'Alta', color: '#ea580c' },

@@ -87,6 +87,11 @@ const transportOfferRow: Offer = {
   title: 'Ofrezco viajes desde la bodega',
   description: 'Puedo llevar suministros dentro de Pereira los fines de semana.',
   canClaim: false,
+  vehicle: {
+    vehicleType: 'Camioneta',
+    capacity: '1 tonelada',
+  },
+  zone: 'Ciudadela La Milagrosa',
 }
 
 const transportResponse: OfferListResponse = {
@@ -175,6 +180,7 @@ describe('TransportHubPage', () => {
     expect(
       await screen.findByText('Ofrezco 100 kits de aseo'),
     ).toBeInTheDocument()
+    expect(await screen.findAllByText('Kits de aseo')).toHaveLength(2)
     expect(
       screen.getByRole('button', { name: 'Me comprometo a llevarla' }),
     ).toBeInTheDocument()
@@ -283,6 +289,11 @@ describe('TransportHubPage', () => {
     ).toBeInTheDocument()
     expect(
       await screen.findByText('Ofrezco viajes desde la bodega'),
+    ).toBeInTheDocument()
+    expect(await screen.findByText('Camioneta')).toBeInTheDocument()
+    expect(screen.getByText('Capacidad: 1 tonelada')).toBeInTheDocument()
+    expect(
+      screen.getByText('Zona: Ciudadela La Milagrosa'),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Me comprometo a llevarla' }),

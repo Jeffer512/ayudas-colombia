@@ -235,7 +235,31 @@ describe('CreateOfferPage', () => {
     )
   })
 
-  it('envía ítems y zona en ofertas de suministros', async () => {
+  async function pickTag(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+  option: string | { custom: string },
+) {
+  if (typeof option === 'string') {
+    await user.selectOptions(screen.getByLabelText(label), option)
+  } else {
+    await user.selectOptions(
+      screen.getByLabelText(label),
+      screen.getByRole('option', { name: 'Otro…' }),
+    )
+    await user.type(
+      screen.getByLabelText(`${label}: otra opción`),
+      option.custom,
+    )
+    await user.keyboard('{Enter}')
+  }
+}
+
+async function addAnother(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Añadir otro/a' }))
+}
+
+it('envía ítems elegidos en el selector y la zona cuando puede transportar', async () => {
     mockedCreate.mockResolvedValue({
       id: 'new-6',
       resolveCode: '6666',
@@ -244,12 +268,12 @@ describe('CreateOfferPage', () => {
     renderPage()
 
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await user.selectOptions(await screen.findByLabelText('Transporte'), 'can_transport')
+    await pickTag(user, 'Qué ofreces (opcional)', 'Agua potable')
+    await addAnother(user)
+    await pickTag(user, 'Qué ofreces (opcional)', { custom: 'Galletas' })
     await user.type(
-      screen.getByLabelText('Qué ofreces (opcional)'),
-      'Agua, galletas; mantas',
-    )
-    await user.type(
-      screen.getByLabelText('Zona o punto de entrega (opcional)'),
+      screen.getByLabelText('Zona de entrega (opcional)'),
       'Barrio San Nicolás',
     )
     await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
@@ -265,14 +289,114 @@ describe('CreateOfferPage', () => {
     await waitFor(() =>
       expect(mockedCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          items: ['Agua', 'galletas', 'mantas'],
+          items: ['Agua potable', 'Galletas'],
           zone: 'Barrio San Nicolás',
         }),
       ),
     )
   })
 
-  it('envía capacidades y disponibilidad en ofertas de voluntariado', async () => {
+  it('cambiar el selector sobrescribe el último ítem elegido', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-10',
+      resolveCode: '1010',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await pickTag(user, 'Qué ofreces (opcional)', 'Agua potable')
+    await user.selectOptions(
+      screen.getByLabelText('Qué ofreces (opcional)'),
+      'Limpieza',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Pongo a disposición agua y alimentos para las familias afectadas.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items: ['Limpieza'],
+        }),
+      ),
+    )
+  })
+
+  it('agrega el ítem apenas se elige y ofrece añadir otro sin botón extra', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    expect(
+      screen.queryByRole('button', { name: 'Añadir otro/a' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Añadir Qué ofreces (opcional)' }),
+    ).not.toBeInTheDocument()
+
+    await user.selectOptions(
+      screen.getByLabelText('Qué ofreces (opcional)'),
+      'Agua potable',
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Quitar Agua potable' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Añadir otro/a' }),
+    ).toBeInTheDocument()
+  })
+
+  it('después de agregar un ítem con "otro" el selector se vacía y la siguiente elección agrega', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-11',
+      resolveCode: '1111',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await user.selectOptions(
+      screen.getByLabelText('Qué ofreces (opcional)'),
+      'Agua potable',
+    )
+    await addAnother(user)
+    await pickTag(user, 'Qué ofreces (opcional)', { custom: 'Galletas' })
+    expect(
+      screen.getByLabelText('Qué ofreces (opcional)'),
+    ).toHaveValue('')
+
+    await user.selectOptions(
+      screen.getByLabelText('Qué ofreces (opcional)'),
+      'Limpieza',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Pongo a disposición agua y alimentos para las familias afectadas.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items: ['Agua potable', 'Galletas', 'Limpieza'],
+        }),
+      ),
+    )
+  })
+
+  it('envía capacidades, disponibilidad y zona en ofertas de voluntariado', async () => {
     mockedCreate.mockResolvedValue({
       id: 'new-7',
       resolveCode: '7777',
@@ -281,13 +405,18 @@ describe('CreateOfferPage', () => {
     renderPage()
 
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'volunteers_offered')
+    await pickTag(user, 'En qué puedes ayudar (opcional)', 'Cocina')
+    await addAnother(user)
+    await pickTag(user, 'En qué puedes ayudar (opcional)', {
+      custom: 'Primeros auxilios',
+    })
     await user.type(
-      screen.getByLabelText('En qué puedes ayudar (opcional)'),
-      'Cocina, primeros auxilios',
+      screen.getByLabelText('Horario / disponibilidad (opcional)'),
+      'Fines de semana',
     )
     await user.type(
-      screen.getByLabelText('Disponibilidad (opcional)'),
-      'Fines de semana',
+      screen.getByLabelText('Zona donde puedes ayudar (opcional)'),
+      'Dosquebradas',
     )
     await user.type(screen.getByLabelText('Título'), 'Me ofrezco como voluntario')
     await user.type(
@@ -303,15 +432,16 @@ describe('CreateOfferPage', () => {
       expect(mockedCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           volunteer: {
-            capabilities: ['Cocina', 'primeros auxilios'],
+            capabilities: ['Cocina', 'Primeros auxilios'],
             availability: 'Fines de semana',
           },
+          zone: 'Dosquebradas',
         }),
       ),
     )
   })
 
-  it('envía los datos del vehículo en ofertas de transporte', async () => {
+  it('envía los datos del vehículo elegidos en el selector', async () => {
     mockedCreate.mockResolvedValue({
       id: 'new-8',
       resolveCode: '8888',
@@ -319,10 +449,7 @@ describe('CreateOfferPage', () => {
     const user = userEvent.setup()
     renderPage('/ofrecer-ayuda?tipo=transport_offered')
 
-    await user.type(
-      screen.getByLabelText('Tipo de vehículo (opcional)'),
-      'Camioneta',
-    )
+    await pickTag(user, 'Tipo de vehículo (opcional)', 'Camioneta')
     await user.type(
       screen.getByLabelText('Capacidad (opcional)'),
       '2 toneladas',
@@ -347,6 +474,89 @@ describe('CreateOfferPage', () => {
         }),
       ),
     )
+  })
+
+  it('guarda el texto de "otro" directamente como tipo de vehículo', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-9',
+      resolveCode: '9999',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage('/ofrecer-ayuda?tipo=transport_offered')
+
+    await pickTag(user, 'Tipo de vehículo (opcional)', { custom: 'Camión cisterna' })
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Camión cisterna disponible para llevar agua durante la semana.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
+    await user.type(screen.getByLabelText('Teléfono'), '3105558888')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vehicle: { vehicleType: 'Camión cisterna' },
+        }),
+      ),
+    )
+    const body = mockedCreate.mock.calls[0][0] as Record<string, unknown>
+    expect(body.vehicle).not.toHaveProperty('capacity')
+  })
+
+  it('reemplaza el tipo de vehículo personalizado al elegir una opción', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-12',
+      resolveCode: '1212',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage('/ofrecer-ayuda?tipo=transport_offered')
+
+    await pickTag(user, 'Tipo de vehículo (opcional)', { custom: 'Camión cisterna' })
+    await user.selectOptions(
+      screen.getByLabelText('Tipo de vehículo (opcional)'),
+      'Camioneta',
+    )
+    await user.type(screen.getByLabelText('Capacidad (opcional)'), '2 toneladas')
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
+    await user.type(
+      screen.getByLabelText('Descripción'),
+      'Camioneta disponible para llevar suministros durante la semana.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
+    await user.type(screen.getByLabelText('Teléfono'), '3105558888')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vehicle: {
+            vehicleType: 'Camioneta',
+            capacity: '2 toneladas',
+          },
+        }),
+      ),
+    )
+  })
+
+  it('muestra zona solo para can_transport en suministros, nunca en refugio', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'shelter_offered')
+    expect(screen.queryByLabelText(/Zona de entrega/)).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'supplies_offered')
+    expect(screen.queryByLabelText(/Zona de entrega/)).not.toBeInTheDocument()
+
+    await user.selectOptions(await screen.findByLabelText('Transporte'), 'can_transport')
+    expect(screen.getByLabelText('Zona de entrega (opcional)')).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Transporte'), 'needs_transport')
+    expect(screen.queryByLabelText(/Zona de entrega/)).not.toBeInTheDocument()
   })
 
   it('permite restringir el contacto a usuarios registrados', async () => {

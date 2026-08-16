@@ -7,7 +7,14 @@ import ContactVisibilitySection from '../components/ContactVisibilitySection'
 import LocationSection from '../components/LocationSection'
 import ReporterSection from '../components/ReporterSection'
 import SuccessScreen from '../components/SuccessScreen'
-import { REQUEST_TYPE_LABELS, TRANSPORT_LABELS, TRANSPORT_OPTIONS, URGENCY_META } from '../lib/constants'
+import TagPicker from '../components/TagPicker'
+import {
+  REQUEST_TYPE_LABELS,
+  SUPPLIES_ITEM_OPTIONS,
+  TRANSPORT_LABELS,
+  TRANSPORT_OPTIONS,
+  URGENCY_META,
+} from '../lib/constants'
 import { compressImage } from '../lib/image'
 import type {
   ContactVisibility,
@@ -52,7 +59,7 @@ export default function CreateRequestPage() {
   const [type, setType] = useState<RequestType | ''>('')
   const [urgency, setUrgency] = useState<Urgency>('medium')
   const [transport, setTransport] = useState<TransportOption | ''>('')
-  const [items, setItems] = useState('')
+  const [items, setItems] = useState<string[]>([])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
@@ -94,14 +101,7 @@ export default function CreateRequestPage() {
       type: type as RequestType,
       urgency,
       ...(type === 'supplies_request' && transport ? { transport } : {}),
-      ...(type === 'supplies_request' && items.trim()
-        ? {
-            items: items
-              .split(/[,;]/)
-              .map((part) => part.trim())
-              .filter(Boolean),
-          }
-        : {}),
+      ...(type === 'supplies_request' && items.length ? { items } : {}),
       title: title.trim(),
       description: description.trim(),
       ...(photo ? { photo } : {}),
@@ -152,7 +152,7 @@ export default function CreateRequestPage() {
           setPhoto(null)
           setPhotoError(null)
           setTransport('')
-          setItems('')
+          setItems([])
           setLocation(initialLocation)
           setReporter(initialReporter)
         }}
@@ -252,16 +252,13 @@ export default function CreateRequestPage() {
 
           {type === 'supplies_request' && (
             <div className="mt-4">
-              <label htmlFor="items" className={labelClass}>
-                Qué necesitas (opcional)
-              </label>
-              <input
+              <TagPicker
                 id="items"
-                maxLength={400}
-                placeholder="Ej: agua, comida, mantas (separa con comas)"
+                label="Qué necesitas (opcional)"
+                options={SUPPLIES_ITEM_OPTIONS}
                 value={items}
-                onChange={(e) => setItems(e.target.value)}
-                className={`mt-1 ${inputClass}`}
+                onChange={setItems}
+                chipClassName="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"
               />
             </div>
           )}

@@ -49,6 +49,10 @@ export default function OfferCard({ offer }: { offer: Offer }) {
         </div>
       )}
 
+      {offer.zone && (
+        <p className="mt-2 text-xs text-text-muted">Zona: {offer.zone}</p>
+      )}
+
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-muted">
         {offer.transport && (
           <span className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">

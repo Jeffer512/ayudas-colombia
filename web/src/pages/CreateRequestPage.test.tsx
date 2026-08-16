@@ -149,9 +149,10 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     expect(screen.queryByLabelText('Qué necesitas (opcional)')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Tipo'), 'supplies_request')
-    await user.type(
-      await screen.findByLabelText('Qué necesitas (opcional)'),
-      'Agua, comida; mantas',
+    await screen.findByLabelText('Qué necesitas (opcional)')
+    await user.selectOptions(
+      screen.getByLabelText('Qué necesitas (opcional)'),
+      'Agua potable',
     )
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable')
     await user.type(
@@ -166,7 +167,7 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     await waitFor(() =>
       expect(mockedCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          items: ['Agua', 'comida', 'mantas'],
+          items: ['Agua potable'],
         }),
       ),
     )
