@@ -15,7 +15,7 @@ export function requireSession(req: Request, _res: Response, next: NextFunction)
     next(new ApiError(401, 'Inicia sesión para continuar'))
     return
   }
-  req.staff = session
+  req.session = session
   next()
 }
 
@@ -30,7 +30,7 @@ export function requireOrgStaff(orgIdParam: string) {
       next(new ApiError(403, 'No perteneces a esta organización'))
       return
     }
-    req.staff = session
+    req.session = session
     next()
   }
 }

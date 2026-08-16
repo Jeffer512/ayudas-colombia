@@ -22,6 +22,6 @@ reportsRouter.post(
   requireSession,
   asyncHandler(async (req, res) => {
     const input = createReportSchema.parse(req.body)
-    res.status(201).json(await createReport(input, req.staff!.sub))
+    res.status(201).json(await createReport(input, req.session!.sub))
   }),
 )

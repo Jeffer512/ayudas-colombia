@@ -80,7 +80,7 @@ offersRouter.post(
   '/:id/claim',
   requireSession,
   asyncHandler(async (req, res) => {
-    const offer = await claimOffer(String(req.params.id), viewerFromSession(req.staff))
+    const offer = await claimOffer(String(req.params.id), viewerFromSession(req.session))
     res.json(offer)
   }),
 )
@@ -89,7 +89,7 @@ offersRouter.delete(
   '/:id/claim',
   requireSession,
   asyncHandler(async (req, res) => {
-    const offer = await cancelClaim(String(req.params.id), viewerFromSession(req.staff))
+    const offer = await cancelClaim(String(req.params.id), viewerFromSession(req.session))
     res.json(offer)
   }),
 )

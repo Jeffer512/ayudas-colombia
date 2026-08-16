@@ -96,7 +96,7 @@ helpOrgsRouter.post(
     const member = await approveMember(
       String(req.params.id),
       String(req.params.memberId),
-      req.staff!.role,
+      req.session!.role,
     )
     res.json({ member })
   }),
@@ -110,7 +110,7 @@ helpOrgsRouter.post(
       await rejectMember(
         String(req.params.id),
         String(req.params.memberId),
-        req.staff!.role,
+        req.session!.role,
       ),
     )
   }),
@@ -140,7 +140,7 @@ helpOrgsRouter.post(
     const item = await createOrgItem(
       String(req.params.id),
       input,
-      req.staff!.membershipId!,
+      req.session!.membershipId!,
     )
     res.status(201).json({ item })
   }),
@@ -155,7 +155,7 @@ helpOrgsRouter.put(
       String(req.params.id),
       String(req.params.itemId),
       input,
-      req.staff!.membershipId!,
+      req.session!.membershipId!,
     )
     res.json({ item })
   }),
