@@ -31,9 +31,9 @@ web/      Frontend React (Vite)
 npm install
 docker compose up -d          # levanta PostgreSQL
 cp server/.env.example server/.env
-npm run db:migrate -w server  # aplica migraciones
-npm run db:seed -w server     # siembra la ciudad de Pereira
-npm run dev                   # API en :4000, web en :5173
+npm run db:migrate -w server     # aplica migraciones
+npm run db:seed:dev -w server    # 9 ciudades + datos de ejemplo (solo desarrollo)
+npm run dev                      # API en :4000, web en :5173
 ```
 
 ## Tests
@@ -79,8 +79,10 @@ usan el valor de ejemplo (para evitar sesiones fraguables en producción).
 1. Sube el repo; Render construye la imagen del `Dockerfile` a partir del
    blueprint `render.yaml` (o crea el servicio manualmente apuntando al repo).
 2. Crea el Postgres de producción (p. ej. Supabase) y aplica las migraciones
-   contra su URL directa (puerto 5432): `npm run db:deploy -w server` y
-   `npm run db:seed -w server`.
+   contra su URL directa (puerto 5432): `npm run db:deploy -w server` y luego
+   `npm run db:seed:prod -w server`, que siembra únicamente las 9 ciudades.
+   **Nunca** uses `npm run db:seed:dev` contra producción: borra todos los datos
+   y crea datos de ejemplo (es un script exclusivo de desarrollo).
 3. En la consola de Render completa antes de que termine el primer deploy los
    secretos con `sync: false` en `render.yaml`: `DATABASE_URL` (con el pooler,
    puerto 6543), `JWT_SECRET`, `ADMIN_TOKEN`, `SMTP_URL`, `MAIL_FROM` (dirección

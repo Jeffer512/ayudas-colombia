@@ -1,72 +1,8 @@
+import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
+import { cities } from './cities.js'
 
 const prisma = new PrismaClient()
-
-const cities = [
-  {
-    code: 'pereira',
-    name: 'Pereira',
-    department: 'Risaralda',
-    centerLat: 4.8133,
-    centerLng: -75.6961,
-  },
-  {
-    code: 'dosquebradas',
-    name: 'Dosquebradas',
-    department: 'Risaralda',
-    centerLat: 4.839,
-    centerLng: -75.6762,
-  },
-  {
-    code: 'manizales',
-    name: 'Manizales',
-    department: 'Caldas',
-    centerLat: 5.0703,
-    centerLng: -75.5138,
-  },
-  {
-    code: 'armenia',
-    name: 'Armenia',
-    department: 'Quindío',
-    centerLat: 4.5339,
-    centerLng: -75.6811,
-  },
-  {
-    code: 'cartago',
-    name: 'Cartago',
-    department: 'Valle del Cauca',
-    centerLat: 4.7464,
-    centerLng: -75.9117,
-  },
-  {
-    code: 'cali',
-    name: 'Cali',
-    department: 'Valle del Cauca',
-    centerLat: 3.4516,
-    centerLng: -76.532,
-  },
-  {
-    code: 'buenaventura',
-    name: 'Buenaventura',
-    department: 'Valle del Cauca',
-    centerLat: 3.8801,
-    centerLng: -77.0312,
-  },
-  {
-    code: 'san-jose-del-palmar',
-    name: 'San José del Palmar',
-    department: 'Chocó',
-    centerLat: 4.4236,
-    centerLng: -76.2331,
-  },
-  {
-    code: 'quibdo',
-    name: 'Quibdó',
-    department: 'Chocó',
-    centerLat: 5.6947,
-    centerLng: -76.6611,
-  },
-]
 
 type SampleEntry = {
   title: string
@@ -412,6 +348,19 @@ function eventsFor(type: 'request', status: string, actorName: string) {
 }
 
 async function main() {
+  const isProd = process.env.NODE_ENV === 'production'
+  const databaseUrl = process.env.DATABASE_URL ?? ''
+  const host = databaseUrl ? new URL(databaseUrl).hostname : ''
+  const localHosts = new Set(['localhost', '127.0.0.1', '::1'])
+  if (isProd || !localHosts.has(host)) {
+    console.error(
+      'seed-dev solo se ejecuta en desarrollo contra la base local de Docker ' +
+        '(borra todos los datos). Usa "npm run db:seed:prod -w server" para sembrar ' +
+        'solo las ciudades en otros entornos.',
+    )
+    process.exit(1)
+  }
+
   const seeded = []
   for (const entry of cities) {
     const saved = await prisma.city.upsert({
