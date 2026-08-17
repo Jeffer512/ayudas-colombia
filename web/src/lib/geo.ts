@@ -4,6 +4,21 @@ export function defaultCity(cities: City[]): City | undefined {
   return cities.find((c) => c.code === 'pereira') ?? cities[0]
 }
 
+export function cityCenter(
+  cityCode: string | undefined,
+  cities: City[],
+): { lat: number; lng: number } {
+  const city = cities.find((c) => c.code === cityCode)
+  if (city && city.centerLat !== null && city.centerLng !== null) {
+    return { lat: city.centerLat, lng: city.centerLng }
+  }
+  const fallback = defaultCity(cities)
+  return {
+    lat: fallback?.centerLat ?? 4.8133,
+    lng: fallback?.centerLng ?? -75.6961,
+  }
+}
+
 function toRadians(deg: number): number {
   return (deg * Math.PI) / 180
 }

@@ -17,12 +17,17 @@ vi.mock('../api/client', () => ({
 vi.mock('../components/Map', () => ({
   __esModule: true,
   default: ({
+    center,
+    marker,
     onPick,
   }: {
+    center: { lat: number; lng: number }
+    marker?: { lat: number; lng: number } | null
     onPick?: (lat: number, lng: number) => void
   }) => (
-    <div data-testid="map">
+    <div data-testid="map" data-center={`${center.lat},${center.lng}`}>
       <button onClick={() => onPick?.(4.8133, -75.6961)}>PICK</button>
+      <span data-testid="marcado">{marker ? 'MARCADO' : 'SIN MARCA'}</span>
     </div>
   ),
 }))
@@ -58,6 +63,7 @@ beforeEach(() => {
   mockedCities.mockResolvedValue({
     cities: [
       { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
+      { id: 2, code: 'manizales', name: 'Manizales', department: 'Caldas', centerLat: 5.0689, centerLng: -75.5174 },
     ],
   })
   mockedMe.mockResolvedValue({
@@ -179,6 +185,24 @@ describe('NewOrgPage', () => {
         expect.objectContaining({ name: 'Centro La Florida', claim: true }),
       ),
     )
+  })
+
+  it('recentra el mapa y borra el punto al cambiar de ciudad', async () => {
+    renderPage()
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'No, solo la publico' }),
+    )
+
+    expect(screen.getByTestId('map')).toHaveAttribute('data-center', '4.8133,-75.6961')
+
+    await userEvent.click(screen.getByRole('button', { name: 'PICK' }))
+    expect(screen.getByTestId('marcado')).toHaveTextContent('MARCADO')
+
+    await userEvent.selectOptions(screen.getByLabelText('Ciudad'), 'manizales')
+
+    expect(screen.getByTestId('map')).toHaveAttribute('data-center', '5.0689,-75.5174')
+    expect(screen.getByTestId('marcado')).toHaveTextContent('SIN MARCA')
   })
 
   it('muestra el error del servidor al publicar', async () => {

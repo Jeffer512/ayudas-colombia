@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { defaultCity } from '../lib/geo'
+import { cityCenter } from '../lib/geo'
 import type { City } from '../lib/types'
 import Map from './Map'
 
@@ -55,7 +55,13 @@ export default function LocationSection({
               id="cityCode"
               required
               value={cityCode}
-              onChange={(e) => onPatch((prev) => ({ ...prev, cityCode: e.target.value }))}
+              onChange={(e) =>
+                onPatch((prev) =>
+                  prev.cityCode === e.target.value
+                    ? prev
+                    : { ...prev, cityCode: e.target.value, lat: null, lng: null },
+                )
+              }
               className={`mt-1 ${inputClass}`}
             >
               {cities.map((c) => (
@@ -90,10 +96,7 @@ export default function LocationSection({
       </p>
       <div className="mt-2">
         <Map
-          center={{
-            lat: defaultCity(cities)?.centerLat ?? 4.8133,
-            lng: defaultCity(cities)?.centerLng ?? -75.6961,
-          }}
+          center={cityCenter(cityCode, cities)}
           marker={lat !== null && lng !== null ? { lat, lng } : null}
           onPick={(pickedLat, pickedLng) =>
             onPatch((prev) => ({ ...prev, lat: pickedLat, lng: pickedLng }))

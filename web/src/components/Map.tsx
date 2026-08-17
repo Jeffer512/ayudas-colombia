@@ -1,4 +1,11 @@
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
+import { useEffect, useRef } from 'react'
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet'
 import './leaflet'
 
 interface MapProps {
@@ -16,6 +23,19 @@ function ClickHandler({ onPick }: { onPick?: MapProps['onPick'] }) {
   return null
 }
 
+function MapFollower({ center }: { center: { lat: number; lng: number } }) {
+  const map = useMap()
+  const firstRender = useRef(true)
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    map.flyTo([center.lat, center.lng], map.getZoom())
+  }, [map, center.lat, center.lng])
+  return null
+}
+
 export default function Map({ center, marker, onPick }: MapProps) {
   return (
     <MapContainer
@@ -27,6 +47,7 @@ export default function Map({ center, marker, onPick }: MapProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <MapFollower center={center} />
       <ClickHandler onPick={onPick} />
       {marker ? <Marker position={[marker.lat, marker.lng]} /> : null}
     </MapContainer>
