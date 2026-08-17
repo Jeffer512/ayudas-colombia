@@ -97,7 +97,7 @@ export interface Request {
   urgency: Urgency
   status: RequestStatus
   title: string
-  description: string
+  description: string | null
   photo?: string | null
   address: string | null
   lat: number | null
@@ -145,7 +145,7 @@ export interface Offer {
   vehicle: OfferVehicle | null
   status: OfferStatus
   title: string
-  description: string
+  description: string | null
   address: string | null
   lat: number | null
   lng: number | null
@@ -167,7 +167,7 @@ export interface Aviso {
   urgency: Urgency
   status: AvisoStatus
   title: string
-  description: string
+  description: string | null
   address: string | null
   lat: number | null
   lng: number | null
@@ -243,7 +243,7 @@ export type NewRequest = {
   transport?: TransportOption
   items?: string[]
   title: string
-  description: string
+  description?: string
   photo?: string
   address?: string
   lat?: number
@@ -261,7 +261,7 @@ export type NewOffer = {
   volunteer?: OfferVolunteerInput
   vehicle?: OfferVehicleInput
   title: string
-  description: string
+  description?: string
   address?: string
   lat?: number
   lng?: number
@@ -274,7 +274,7 @@ export type NewOffer = {
 export type NewAviso = {
   urgency: Urgency
   title: string
-  description: string
+  description?: string
   address?: string
   lat?: number
   lng?: number

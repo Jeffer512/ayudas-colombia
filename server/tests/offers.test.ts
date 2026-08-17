@@ -91,6 +91,24 @@ describe('POST /api/offers', () => {
     expect(detail.body.resolveCode).toBeUndefined()
   })
 
+  it('crea una oferta sin descripción guardando null', async () => {
+    const res = await request(app)
+      .post('/api/offers')
+      .send({
+        type: 'supplies_offered',
+        title: 'Ofrezco 100 kits de aseo',
+        address: 'Carrera 20 #40-25',
+        cityCode: 'pereira',
+        reporter: { name: 'Carmen Vila', phone: '3105552222' },
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body.description).toBeNull()
+
+    const stored = await prisma.offer.findUnique({ where: { id: res.body.id } })
+    expect(stored?.description).toBeNull()
+  })
+
   it('permite transporte solo para ofertas de suministros', async () => {
     const ok = await request(app)
       .post('/api/offers')

@@ -118,9 +118,11 @@ export default function RequestDetailPage() {
         />
       )}
 
-      <p className="mt-3 whitespace-pre-line text-text-muted">
-        {request.description}
-      </p>
+      {request.description && (
+        <p className="mt-3 whitespace-pre-line text-text-muted">
+          {request.description}
+        </p>
+      )}
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {request.transport && (

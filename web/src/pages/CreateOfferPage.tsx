@@ -141,7 +141,7 @@ export default function CreateOfferPage() {
           }
         : {}),
       title: title.trim(),
-      description: description.trim(),
+      ...(description.trim() ? { description: description.trim() } : {}),
       cityCode: location.cityCode,
       ...(location.address.trim() ? { address: location.address.trim() } : {}),
       ...(location.lat !== null && location.lng !== null
@@ -383,12 +383,10 @@ export default function CreateOfferPage() {
 
           <div className="mt-4">
             <label htmlFor="description" className={labelClass}>
-              Descripción
+              Descripción (opcional)
             </label>
             <textarea
               id="description"
-              required
-              minLength={10}
               maxLength={4000}
               rows={4}
               placeholder="Detalla qué ofreces: cantidades, condiciones, disponibilidad…"

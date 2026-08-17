@@ -69,6 +69,23 @@ describe('POST /api/avisos', () => {
     })
   })
 
+  it('crea un aviso sin descripción guardando null', async () => {
+    const res = await request(app)
+      .post('/api/avisos')
+      .send({
+        title: 'Punto de distribución de agua funcionando',
+        urgency: 'medium',
+        cityCode: 'pereira',
+        reporter: { name: 'Rosalba Duque', phone: '3105553333' },
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body.description).toBeNull()
+
+    const stored = await prisma.aviso.findUnique({ where: { id: res.body.id } })
+    expect(stored?.description).toBeNull()
+  })
+
   it('rechaza datos inválidos', async () => {
     const noCity = await request(app)
       .post('/api/avisos')

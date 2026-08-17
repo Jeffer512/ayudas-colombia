@@ -90,7 +90,7 @@ describe('CreateOfferPage', () => {
 
     await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Camioneta disponible para llevar suministros durante la semana.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
@@ -125,7 +125,7 @@ describe('CreateOfferPage', () => {
     )
     await user.type(screen.getByLabelText('Título'), 'Me ofrezco como voluntario')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Puedo ayudar a repartir comida y a evacuar durante el fin de semana.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
@@ -170,7 +170,7 @@ describe('CreateOfferPage', () => {
 
     await user.type(screen.getByLabelText('Título'), 'Ofrezco kits de aseo')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Entrego kits de aseo en cualquier punto de la ciudad.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
@@ -216,7 +216,7 @@ describe('CreateOfferPage', () => {
 
     await user.type(screen.getByLabelText('Título'), 'Me ofrezco como voluntario')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Puedo ayudar en traslados y cuidado de niños durante el fin de semana.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
@@ -278,7 +278,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     )
     await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Pongo a disposición agua y alimentos para las familias afectadas.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
@@ -312,7 +312,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     )
     await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Pongo a disposición agua y alimentos para las familias afectadas.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
@@ -379,7 +379,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     )
     await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Pongo a disposición agua y alimentos para las familias afectadas.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
@@ -420,7 +420,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     )
     await user.type(screen.getByLabelText('Título'), 'Me ofrezco como voluntario')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Ayudo a preparar alimentos en la sede de la cruz roja.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
@@ -456,7 +456,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     )
     await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Camioneta disponible para llevar suministros durante la semana.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
@@ -487,7 +487,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     await pickTag(user, 'Tipo de vehículo (opcional)', { custom: 'Camión cisterna' })
     await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Camión cisterna disponible para llevar agua durante la semana.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
@@ -522,7 +522,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     await user.type(screen.getByLabelText('Capacidad (opcional)'), '2 toneladas')
     await user.type(screen.getByLabelText('Título'), 'Ofrezco transporte en Pereira')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Camioneta disponible para llevar suministros durante la semana.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Carlos Delgado')
@@ -571,7 +571,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     await user.selectOptions(screen.getByLabelText('Contacto'), 'users')
     await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Pongo a disposición kits de aseo para las familias afectadas.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')

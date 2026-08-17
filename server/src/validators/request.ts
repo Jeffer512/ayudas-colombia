@@ -17,7 +17,12 @@ export const photoDataUrlSchema = z
 
 const base = z.object({
   title: z.string().trim().min(5, 'Título muy corto').max(140),
-  description: z.string().trim().min(10, 'Descripción muy corta').max(4000),
+  description: z
+    .string()
+    .trim()
+    .max(4000, 'Descripción muy larga')
+    .optional()
+    .transform((value) => value || null),
   photo: photoDataUrlSchema.optional(),
   address: z.string().trim().max(300).optional(),
   ...coordinatesSchema.shape,

@@ -104,7 +104,7 @@ export default function CreateRequestPage() {
       ...(type === 'supplies_request' && transport ? { transport } : {}),
       ...(type === 'supplies_request' && items.length ? { items } : {}),
       title: title.trim(),
-      description: description.trim(),
+      ...(description.trim() ? { description: description.trim() } : {}),
       ...(photo ? { photo } : {}),
       cityCode: location.cityCode,
       ...(location.address.trim() ? { address: location.address.trim() } : {}),
@@ -282,12 +282,10 @@ export default function CreateRequestPage() {
 
           <div className="mt-4">
             <label htmlFor="description" className={labelClass}>
-              Descripción
+              Descripción (opcional)
             </label>
             <textarea
               id="description"
-              required
-              minLength={10}
               maxLength={4000}
               rows={4}
               placeholder="Detalla qué necesitas: qué hace falta, cuántas personas, cómo llegar…"

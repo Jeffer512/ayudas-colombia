@@ -27,9 +27,11 @@ export default function OfferCard({ offer }: { offer: Offer }) {
       </div>
 
       <h2 className="mt-2 font-semibold text-text-main">{offer.title}</h2>
-      <p className="mt-1 line-clamp-2 text-sm text-text-muted">
-        {offer.description}
-      </p>
+      {offer.description && (
+        <p className="mt-1 line-clamp-2 text-sm text-text-muted">
+          {offer.description}
+        </p>
+      )}
 
       {offer.items.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">

@@ -73,7 +73,7 @@ describe('CreateAvisoPage', () => {
 
     await user.type(screen.getByLabelText('Título'), 'Punto de agua en el parque')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'El parque principal reparte agua desde las 7am, llevar recipientes.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Nataly Trujillo')
@@ -112,7 +112,7 @@ describe('CreateAvisoPage', () => {
 
     await user.type(screen.getByLabelText('Título'), 'Ruta alterna por el centro')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'La vía queda bloqueada entre las 10am y 3pm por trabajos.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Andrés Mora')

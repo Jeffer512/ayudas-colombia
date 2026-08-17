@@ -71,7 +71,7 @@ model Request {
   transport   String?
   status      String   @default("open")
   title       String
-  description String
+  description String?
   items       String[] @default([])
   photoUrl    String?  @map("photo_url")
   address     String?
@@ -133,7 +133,7 @@ model Offer {
   transport   String?
   status      String   @default("open")
   title       String
-  description String
+  description String?
   items       String[] @default([])
   zone        String?
   address     String?
@@ -202,7 +202,7 @@ model Aviso {
   urgency     String   @default("medium")
   status      String   @default("open")
   title       String
-  description String
+  description String?
   address     String?
   lat         Float?
   lng         Float?

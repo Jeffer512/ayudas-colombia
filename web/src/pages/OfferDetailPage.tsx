@@ -90,9 +90,11 @@ export default function OfferDetailPage() {
         {offer.title}
       </h1>
 
-      <p className="mt-3 whitespace-pre-line text-text-muted">
-        {offer.description}
-      </p>
+      {offer.description && (
+        <p className="mt-3 whitespace-pre-line text-text-muted">
+          {offer.description}
+        </p>
+      )}
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {offer.transport && (

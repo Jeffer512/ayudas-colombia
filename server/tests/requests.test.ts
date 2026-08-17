@@ -141,6 +141,25 @@ describe('POST /api/requests', () => {
     expect(res.body.events[0]).toMatchObject({ status: 'open' })
   })
 
+  it('crea una solicitud sin descripción guardando null', async () => {
+    const res = await request(app)
+      .post('/api/requests')
+      .send({
+        type: 'supplies_request',
+        urgency: 'high',
+        title: 'Agua para el albergue del barrio',
+        address: 'Calle 12 #4-50',
+        cityCode: 'pereira',
+        reporter: { name: 'María Gómez', phone: '3158765432' },
+      })
+
+    expect(res.status).toBe(201)
+    expect(res.body.description).toBeNull()
+
+    const stored = await prisma.request.findUnique({ where: { id: res.body.id } })
+    expect(stored?.description).toBeNull()
+  })
+
   it('genera un código de cierre de 4 dígitos y lo devuelve una sola vez', async () => {
     const res = await request(app).post('/api/requests').send(validRequest)
 

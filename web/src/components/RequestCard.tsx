@@ -54,9 +54,11 @@ export default function RequestCard({ request }: { request: Request }) {
           className="mt-2 h-20 w-20 rounded-md border border-line object-cover"
         />
       )}
-      <p className="mt-1 line-clamp-2 text-sm text-text-muted">
-        {request.description}
-      </p>
+      {request.description && (
+        <p className="mt-1 line-clamp-2 text-sm text-text-muted">
+          {request.description}
+        </p>
+      )}
 
       {request.items.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">

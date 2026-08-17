@@ -72,7 +72,7 @@ describe('CreateRequestPage', () => {
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
@@ -120,7 +120,7 @@ describe('CreateRequestPage', () => {
     await user.selectOptions(await screen.findByLabelText('Transporte'), 'needs_transport')
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua y transporte')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Necesitamos agua y que tenga forma de llegar hasta el barrio alto.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
@@ -156,7 +156,7 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     )
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
@@ -181,7 +181,7 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
@@ -206,7 +206,7 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
@@ -233,7 +233,7 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'Ana Torres')
@@ -277,7 +277,7 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
     await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
     await user.type(
-      screen.getByLabelText('Descripción'),
+      screen.getByLabelText('Descripción (opcional)'),
       'Las familias del sector requieren agua para cocinar y beber.',
     )
     await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')

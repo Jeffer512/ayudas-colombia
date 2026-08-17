@@ -34,9 +34,11 @@ export default function AvisoCard({ aviso }: { aviso: Aviso }) {
       </div>
 
       <h2 className="mt-2 font-semibold text-text-main">{aviso.title}</h2>
-      <p className="mt-1 line-clamp-2 text-sm text-text-muted">
-        {aviso.description}
-      </p>
+      {aviso.description && (
+        <p className="mt-1 line-clamp-2 text-sm text-text-muted">
+          {aviso.description}
+        </p>
+      )}
 
       <div className="mt-2 text-xs text-text-muted">
         {aviso.marks > 0 && (
