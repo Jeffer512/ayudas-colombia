@@ -29,7 +29,6 @@ vi.mock('react-leaflet', () => ({
 vi.mock('../api/client', () => ({
   api: {
     cities: vi.fn(),
-    geo: vi.fn(),
     requests: vi.fn(),
     request: vi.fn(),
     createRequest: vi.fn(),
@@ -52,7 +51,12 @@ const mockedOffers = vi.mocked(api.offers)
 const mockedAvisos = vi.mocked(api.avisos)
 const mockedCities = vi.mocked(api.cities)
 const mockedHelpOrgs = vi.mocked(api.helpOrgs)
-const mockedGeo = vi.mocked(api.geo)
+const { mockedGetPosition } = vi.hoisted(() => ({ mockedGetPosition: vi.fn() }))
+
+vi.mock('../lib/geo', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getPosition: mockedGetPosition,
+}))
 
 class MemoryStorage {
   private data = new Map<string, string>()
@@ -207,7 +211,7 @@ describe('HomePage', () => {
     mockedOffers.mockReset()
     mockedAvisos.mockReset()
     mockedHelpOrgs.mockReset()
-    mockedGeo.mockReset()
+    mockedGetPosition.mockReset()
 
     mockedCities.mockResolvedValue({
       cities: [
@@ -222,7 +226,7 @@ describe('HomePage', () => {
       ],
     })
     mockedHelpOrgs.mockResolvedValue({ helpOrgs: [], total: 0, limit: 50, offset: 0 })
-    mockedGeo.mockRejectedValue(new Error('red sin conexión'))
+    mockedGetPosition.mockRejectedValue(new Error('sin permiso de ubicación'))
   })
 
   it('muestra las tres secciones con sus conteos y listados', async () => {
@@ -359,14 +363,14 @@ describe('HomePage', () => {
     expect(window.localStorage.getItem('ayudas_map_city')).toBe('manizales')
   })
 
-  it('usa la ciudad detectada por IP cuando no hay una elección previa', async () => {
-    mockedGeo.mockResolvedValue({
-      lat: 4.8133,
-      lng: -75.6961,
-      city: 'Pereira',
-      region: 'Risaralda',
-      country: 'Colombia',
+  it('centra el mapa en la ciudad detectada por el navegador cuando no hay una elección previa', async () => {
+    mockedCities.mockResolvedValue({
+      cities: [
+        { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
+        { id: 2, code: 'manizales', name: 'Manizales', department: 'Caldas', centerLat: 5.0689, centerLng: -75.5174 },
+      ],
     })
+    mockedGetPosition.mockResolvedValue({ lat: 5.0689, lng: -75.5174 })
     mockedRequests.mockResolvedValue(requestsResponse)
     mockedOffers.mockResolvedValue(offersResponse)
     mockedAvisos.mockResolvedValue(avisosResponse)
@@ -374,18 +378,13 @@ describe('HomePage', () => {
     renderHomePage()
 
     const citySelect = await screen.findByLabelText('Centrar el mapa en')
-    await waitFor(() => expect(citySelect).toHaveValue('pereira'))
+    await waitFor(() => expect(citySelect).toHaveValue('manizales'))
+    expect(mockedGetPosition).toHaveBeenCalled()
   })
 
-  it('ignora la detección por IP cuando ya hay una ciudad guardada', async () => {
+  it('ignora la detección por el navegador cuando ya hay una ciudad guardada', async () => {
     window.localStorage.setItem('ayudas_map_city', 'pereira')
-    mockedGeo.mockResolvedValue({
-      lat: 3.4516,
-      lng: -76.532,
-      city: 'Cali',
-      region: 'Valle del Cauca',
-      country: 'Colombia',
-    })
+    mockedGetPosition.mockResolvedValue({ lat: 3.4516, lng: -76.532 })
     mockedCities.mockResolvedValue({
       cities: [
         { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
@@ -401,6 +400,19 @@ describe('HomePage', () => {
     const citySelect = screen.getByLabelText('Centrar el mapa en')
     await within(citySelect).findByRole('option', { name: 'Pereira' })
     expect(citySelect).toHaveValue('pereira')
-    expect(mockedGeo).not.toHaveBeenCalled()
+    expect(mockedGetPosition).not.toHaveBeenCalled()
+  })
+
+  it('usa la ciudad por defecto cuando se niega la ubicación', async () => {
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    await waitFor(() => expect(mockedGetPosition).toHaveBeenCalled())
+    expect(
+      screen.getByRole('heading', { name: 'Ayuda en Pereira' }),
+    ).toBeInTheDocument()
   })
 })

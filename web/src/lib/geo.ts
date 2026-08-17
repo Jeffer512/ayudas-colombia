@@ -1,7 +1,28 @@
-import type { City, GeoPoint } from './types'
+import type { City } from './types'
 
 export function defaultCity(cities: City[]): City | undefined {
   return cities.find((c) => c.code === 'pereira') ?? cities[0]
+}
+
+export function getPosition(timeoutMs = 7000): Promise<{ lat: number; lng: number }> {
+  return new Promise((resolve, reject) => {
+    if (
+      typeof navigator === 'undefined' ||
+      typeof navigator.geolocation === 'undefined'
+    ) {
+      reject(new Error('geolocation no disponible'))
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }),
+      reject,
+      { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 10_000 },
+    )
+  })
 }
 
 export function cityCenter(
@@ -40,7 +61,7 @@ export function distanceKm(
 }
 
 export function nearestCity(
-  point: GeoPoint,
+  point: { lat: number; lng: number },
   cities: City[],
   maxDistanceKm: number,
 ): City | undefined {

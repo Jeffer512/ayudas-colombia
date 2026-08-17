@@ -10,7 +10,7 @@ import OfferCard from '../components/OfferCard'
 import OfferFiltersUi from '../components/OfferFilters'
 import RequestCard from '../components/RequestCard'
 import RequestFiltersUi from '../components/RequestFilters'
-import { defaultCity, nearestCity } from '../lib/geo'
+import { defaultCity, getPosition, nearestCity } from '../lib/geo'
 import type {
   HelpOrg,
   Aviso,
@@ -291,10 +291,9 @@ export default function HomePage() {
   useEffect(() => {
     if (mapCityCode || mapCityLocked.current || cities.length === 0) return
     mapCityLocked.current = true
-    api
-      .geo()
-      .then((point) => {
-        const near = nearestCity(point, cities, MAX_DETECTED_DISTANCE_KM)
+    getPosition()
+      .then(({ lat, lng }) => {
+        const near = nearestCity({ lat, lng }, cities, MAX_DETECTED_DISTANCE_KM)
         if (near) setMapCity(near.code)
       })
       .catch(() => {})

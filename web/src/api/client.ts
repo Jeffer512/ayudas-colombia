@@ -12,7 +12,6 @@ import type {
   CreatedAviso,
   CreatedOffer,
   CreatedRequest,
-  GeoPoint,
   NewHelpOrg,
   NewAviso,
   NewOffer,
@@ -93,10 +92,6 @@ function markerId(): string | undefined {
 export const api = {
   cities(): Promise<{ cities: City[] }> {
     return http('/cities')
-  },
-
-  geo(): Promise<GeoPoint> {
-    return http('/geo')
   },
 
   requests(filters: RequestFilters): Promise<RequestListResponse> {

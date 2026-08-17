@@ -10,7 +10,6 @@ import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
 import { avisosRouter } from './routes/avisos.js'
 import { citiesRouter } from './routes/cities.js'
-import { geoRouter } from './routes/geo.js'
 import { healthRouter } from './routes/health.js'
 import { helpOrgsRouter } from './routes/helpOrgs.js'
 import { offersRouter } from './routes/offers.js'
@@ -67,7 +66,6 @@ export function createApp() {
   app.use('/api/health', healthRouter)
   app.use('/api/auth', authRouter)
   app.use('/api/cities', citiesRouter)
-  app.use('/api/geo', geoRouter)
   app.use('/api/requests', requestsRouter)
   app.use('/api/offers', offersRouter)
   app.use('/api/reports', reportsRouter)
