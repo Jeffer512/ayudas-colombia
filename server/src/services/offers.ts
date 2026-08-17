@@ -482,6 +482,29 @@ export async function updateOffer(
   return serializeOffer(updated, viewer)
 }
 
+export async function verifyOfferCode(
+  id: string,
+  input: { resolveCode: string },
+  viewer?: Viewer,
+) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
+
+  const offer = await prisma.offer.findUnique({
+    where: { id },
+    include: { reporter: true },
+  })
+  if (!offer) throw new ApiError(404, 'Oferta no encontrada')
+
+  const code = (input.resolveCode ?? '').trim()
+  if (!isOwner(viewer, offer.reporter.userId)) {
+    if (!offer.resolveCode || code !== offer.resolveCode) {
+      throw new ApiError(403, 'Código de cierre incorrecto')
+    }
+  }
+
+  return { ok: true }
+}
+
 export async function updateOfferStatus(
   id: string,
   input: UpdateOfferStatusInput,

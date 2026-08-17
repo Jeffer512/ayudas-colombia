@@ -105,6 +105,12 @@ export const updateOfferSchema = z.object({
 
 export type UpdateOfferInput = z.infer<typeof updateOfferSchema>
 
+export const verifyResolveCodeSchema = z.object({
+  resolveCode: z.string().trim().min(4, 'Código de cierre incorrecto').max(6),
+})
+
+export type VerifyResolveCodeInput = z.infer<typeof verifyResolveCodeSchema>
+
 export const offerFiltersSchema = z.object({
   type: z.enum(OFFER_TYPES).optional(),
   status: z.enum(['open', 'in_transit', 'fulfilled', 'unavailable', 'active']).optional(),

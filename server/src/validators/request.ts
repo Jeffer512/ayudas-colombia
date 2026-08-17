@@ -62,6 +62,12 @@ export const updateRequestSchema = z.object({
 
 export type UpdateRequestInput = z.infer<typeof updateRequestSchema>
 
+export const verifyResolveCodeSchema = z.object({
+  resolveCode: z.string().trim().min(4, 'Código de cierre incorrecto').max(6),
+})
+
+export type VerifyResolveCodeInput = z.infer<typeof verifyResolveCodeSchema>
+
 export const requestFiltersSchema = z.object({
   type: z.enum(REQUEST_TYPES).optional(),
   status: z

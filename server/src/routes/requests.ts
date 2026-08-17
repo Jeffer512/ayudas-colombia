@@ -10,6 +10,7 @@ import {
   listRequests,
   updateRequest,
   updateRequestStatus,
+  verifyRequestCode,
 } from '../services/requests.js'
 import {
   createRequestSchema,
@@ -17,6 +18,7 @@ import {
   requestFiltersSchema,
   updateRequestSchema,
   updateRequestStatusSchema,
+  verifyResolveCodeSchema,
 } from '../validators/request.js'
 
 const createLimiter = rateLimit({
@@ -77,6 +79,21 @@ requestsRouter.put(
     const input = updateRequestSchema.parse(req.body)
     res.json(
       await updateRequest(
+        String(req.params.id),
+        input,
+        viewerFromSession(currentSession(req)),
+      ),
+    )
+  }),
+)
+
+requestsRouter.post(
+  '/:id/verify-code',
+  editLimiter,
+  asyncHandler(async (req, res) => {
+    const input = verifyResolveCodeSchema.parse(req.body)
+    res.json(
+      await verifyRequestCode(
         String(req.params.id),
         input,
         viewerFromSession(currentSession(req)),

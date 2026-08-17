@@ -11,12 +11,14 @@ import {
   listOffers,
   updateOffer,
   updateOfferStatus,
+  verifyOfferCode,
 } from '../services/offers.js'
 import {
   createOfferSchema,
   offerFiltersSchema,
   updateOfferSchema,
   updateOfferStatusSchema,
+  verifyResolveCodeSchema,
 } from '../validators/offer.js'
 
 const createLimiter = rateLimit({
@@ -77,6 +79,21 @@ offersRouter.put(
     const input = updateOfferSchema.parse(req.body)
     res.json(
       await updateOffer(
+        String(req.params.id),
+        input,
+        viewerFromSession(currentSession(req)),
+      ),
+    )
+  }),
+)
+
+offersRouter.post(
+  '/:id/verify-code',
+  editLimiter,
+  asyncHandler(async (req, res) => {
+    const input = verifyResolveCodeSchema.parse(req.body)
+    res.json(
+      await verifyOfferCode(
         String(req.params.id),
         input,
         viewerFromSession(currentSession(req)),

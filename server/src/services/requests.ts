@@ -337,7 +337,7 @@ export async function updateRequest(
     photoUrl = await uploadPhoto(input.photo)
   }
 
-  await prisma.$transaction([
+const updated = await prisma.$transaction([
     prisma.request.update({
       where: { id },
       data: {
@@ -380,6 +380,29 @@ export async function updateRequest(
   ])
 
   return getRequest(id, viewer)
+}
+
+export async function verifyRequestCode(
+  id: string,
+  input: { resolveCode: string },
+  viewer?: Viewer,
+) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
+
+  const request = await prisma.request.findUnique({
+    where: { id },
+    include: { reporter: true },
+  })
+  if (!request) throw new ApiError(404, 'Solicitud no encontrada')
+
+  const code = (input.resolveCode ?? '').trim()
+  if (!isOwner(viewer, request.reporter.userId)) {
+    if (!request.resolveCode || code !== request.resolveCode) {
+      throw new ApiError(403, 'Código de cierre incorrecto')
+    }
+  }
+
+  return { ok: true }
 }
 
 export async function updateRequestStatus(

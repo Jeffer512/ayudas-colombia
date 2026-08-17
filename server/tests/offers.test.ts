@@ -634,6 +634,37 @@ describe('PUT /api/offers/:id', () => {
     expect(res.body.error).toBe('Código de cierre incorrecto')
   })
 
+  describe('POST /api/offers/:id/verify-code', () => {
+    it('confirma el código de cierre correcto', async () => {
+      const created = await createOffer()
+      const res = await request(app)
+        .post(`/api/offers/${created.id}/verify-code`)
+        .send({ resolveCode: '1234' })
+
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual({ ok: true })
+    })
+
+    it('rechaza un código de cierre incorrecto', async () => {
+      const created = await createOffer()
+      const res = await request(app)
+        .post(`/api/offers/${created.id}/verify-code`)
+        .send({ resolveCode: '9999' })
+
+      expect(res.status).toBe(403)
+      expect(res.body.error).toBe('Código de cierre incorrecto')
+    })
+
+    it('devuelve 404 para una oferta inexistente', async () => {
+      const res = await request(app)
+        .post('/api/offers/00000000-0000-0000-0000-000000000000/verify-code')
+        .send({ resolveCode: '1234' })
+
+      expect(res.status).toBe(404)
+      expect(res.body.error).toBe('Oferta no encontrada')
+    })
+  })
+
   it('no permite cambiar el tipo ni la ciudad', async () => {
     const created = await createOffer({ type: 'shelter_offered' })
     const res = await request(app)
