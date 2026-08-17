@@ -8,6 +8,7 @@ import type {
   CreateHelpOrgInput,
   CreateOrgRequestInput,
   HelpOrgFilters,
+  UpdateHelpOrgInput,
   UpdateHelpOrgStatusInput,
   UpsertHelpOrgItemInput,
 } from '../validators/helpOrg.js'
@@ -234,6 +235,38 @@ export async function updateHelpOrgStatus(
   const updated = await prisma.helpOrg.update({
     where: { id },
     data: { status: input.status },
+    include: { city: true },
+  })
+  return serializeHelpOrg(updated, (await managedOrgIds([updated.id])).has(updated.id))
+}
+
+export async function updateHelpOrg(id: string, input: UpdateHelpOrgInput) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Organización no encontrada')
+
+  const org = await prisma.helpOrg.findUnique({
+    where: { id },
+    include: { city: true },
+  })
+  if (!org) throw new ApiError(404, 'Organización no encontrada')
+
+  const updated = await prisma.helpOrg.update({
+    where: { id },
+    data: {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined
+        ? { description: input.description }
+        : {}),
+      ...(input.address !== undefined ? { address: input.address } : {}),
+      ...(input.lat !== undefined ? { lat: input.lat } : {}),
+      ...(input.lng !== undefined ? { lng: input.lng } : {}),
+      ...(input.category !== undefined ? { category: input.category } : {}),
+      ...(input.contactName !== undefined ? { contactName: input.contactName } : {}),
+      ...(input.contactPhone !== undefined
+        ? { contactPhone: input.contactPhone }
+        : {}),
+      ...(input.hours !== undefined ? { hours: input.hours } : {}),
+      ...(input.accepts !== undefined ? { accepts: input.accepts } : {}),
+    },
     include: { city: true },
   })
   return serializeHelpOrg(updated, (await managedOrgIds([updated.id])).has(updated.id))

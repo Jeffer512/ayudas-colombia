@@ -19,7 +19,10 @@ export function requireSession(req: Request, _res: Response, next: NextFunction)
   next()
 }
 
-export function requireOrgStaff(orgIdParam: string) {
+export function requireOrgStaff(
+  orgIdParam: string,
+  opts: { managerOnly?: boolean } = {},
+) {
   return (req: Request, _res: Response, next: NextFunction) => {
     const session = currentSession(req)
     if (!session) {
@@ -28,6 +31,10 @@ export function requireOrgStaff(orgIdParam: string) {
     }
     if (session.orgId !== String(req.params[orgIdParam] ?? '')) {
       next(new ApiError(403, 'No perteneces a esta organización'))
+      return
+    }
+    if (opts.managerOnly && session.role !== 'manager') {
+      next(new ApiError(403, 'Solo el manager puede editar la organización'))
       return
     }
     req.session = session

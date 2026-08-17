@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
+import type { NextFunction, Request, Response } from 'express'
 import { isAdminToken } from '../lib/admin.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import {
@@ -20,6 +21,7 @@ import {
   listMembers,
   listOrgItems,
   rejectMember,
+  updateHelpOrg,
   updateOrgItem,
   updateHelpOrgStatus,
 } from '../services/helpOrgs.js'
@@ -27,6 +29,7 @@ import {
   createHelpOrgSchema,
   createOrgRequestSchema,
   helpOrgFiltersSchema,
+  updateHelpOrgSchema,
   updateHelpOrgStatusSchema,
   upsertHelpOrgItemSchema,
 } from '../validators/helpOrg.js'
@@ -41,6 +44,16 @@ const createLimiter = rateLimit({
 
 export const helpOrgsRouter = Router()
 
+function requireOrgManagerOrAdmin(orgIdParam: string) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (isAdminToken(req.header('x-admin-token'), process.env.ADMIN_TOKEN ?? '')) {
+      next()
+      return
+    }
+    requireOrgStaff(orgIdParam, { managerOnly: true })(req, _res, next)
+  }
+}
+
 helpOrgsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -53,6 +66,15 @@ helpOrgsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
     res.json(await getHelpOrg(String(req.params.id)))
+  }),
+)
+
+helpOrgsRouter.put(
+  '/:id',
+  requireOrgManagerOrAdmin('id'),
+  asyncHandler(async (req, res) => {
+    const input = updateHelpOrgSchema.parse(req.body)
+    res.json(await updateHelpOrg(String(req.params.id), input))
   }),
 )
 

@@ -649,6 +649,139 @@ describe('inventario de la organización (/api/help-orgs/:id/items)', () => {
   })
 })
 
+describe('PUT /api/help-orgs/:id', () => {
+  beforeEach(async () => {
+    await ensureCity()
+    await prisma.helpOrg.deleteMany()
+  })
+
+  it('el manager edita el perfil de su organización', async () => {
+    const org = await createHelpOrg({ name: 'Centro inicial' })
+    const agent = await joinStaff(org.id, 'edita-manager@correo.org', 'Manager Edita')
+
+    const res = await agent
+      .put(`/api/help-orgs/${org.id}`)
+      .send({
+        name: 'Centro de acopio renovado',
+        category: 'albergue',
+        description: 'Nuevo perfil del centro.',
+        contactName: 'Nuevo contacto',
+        contactPhone: '3205559999',
+        hours: '7am - 7pm',
+        accepts: 'Ropa y alimentos',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({
+      name: 'Centro de acopio renovado',
+      category: 'albergue',
+      description: 'Nuevo perfil del centro.',
+      contactName: 'Nuevo contacto',
+      contactPhone: '3205559999',
+      hours: '7am - 7pm',
+      accepts: 'Ropa y alimentos',
+      status: 'open',
+    })
+  })
+
+  it('no permite cambiar el tipo, el estado ni la ciudad', async () => {
+    const org = await createHelpOrg({ name: 'Centro estable' })
+    const agent = await joinStaff(org.id, 'manager-estable@correo.org', 'Manager Estable')
+
+    const res = await agent
+      .put(`/api/help-orgs/${org.id}`)
+      .send({
+        name: 'Centro estable',
+        type: 'oficial',
+        status: 'closed',
+        cityCode: 'bogota',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.type).toBe('ciudadano')
+    expect(res.body.status).toBe('open')
+    expect(res.body.city.code).toBe('pereira')
+  })
+
+  it('rechaza una categoría inválida', async () => {
+    const org = await createHelpOrg()
+    const agent = await joinStaff(org.id, 'manager-categoria@correo.org', 'Manager Cat')
+
+    const res = await agent
+      .put(`/api/help-orgs/${org.id}`)
+      .send({ name: 'Centro válido', category: 'urgente' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('exige sesión para editar el perfil', async () => {
+    const org = await createHelpOrg()
+    const res = await request(app)
+      .put(`/api/help-orgs/${org.id}`)
+      .send({ name: 'Sin sesión' })
+    expect(res.status).toBe(401)
+  })
+
+  it('no permite que personal de otra organización edite el perfil', async () => {
+    const orgA = await createHelpOrg({ name: 'Org A' })
+    const orgB = await createHelpOrg({ name: 'Org B' })
+    const agent = await joinStaff(orgA.id, 'managers-a@correo.org', 'Manager A')
+
+    const res = await agent
+      .put(`/api/help-orgs/${orgB.id}`)
+      .send({ name: 'Intento ajeno' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('No perteneces a esta organización')
+  })
+
+  it('un miembro activo sin rol de manager no puede editar el perfil', async () => {
+    const org = await createHelpOrg()
+    const manager = await joinStaff(org.id, 'manager-roles@correo.org', 'Manager')
+    await registerPending(org.id, 'miembro-activo@correo.org', 'Miembro')
+
+    const members = await manager.get(`/api/help-orgs/${org.id}/members`)
+    const pending = members.body.members.find((m: { status: string }) => m.status === 'pending')
+    await manager.post(`/api/help-orgs/${org.id}/members/${pending.id}/approve`)
+
+    const memberAgent = request.agent(app)
+    const login = await memberAgent.post('/api/auth/login').send({
+      email: 'miembro-activo@correo.org',
+      password: 'contrasena-segura',
+    })
+    expect(login.body.staff.role).toBe('member')
+
+    const res = await memberAgent
+      .put(`/api/help-orgs/${org.id}`)
+      .send({ name: 'Intento de miembro' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Solo el manager puede editar la organización')
+  })
+
+  it('el administrador edita el perfil con el token sin necesidad de sesión', async () => {
+    const org = await createHelpOrg({ name: 'Centro público' })
+    process.env.ADMIN_TOKEN = 'test-admin-token'
+
+    const res = await request(app)
+      .put(`/api/help-orgs/${org.id}`)
+      .set('x-admin-token', 'test-admin-token')
+      .send({ name: 'Centro actualizado por el administrador' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.name).toBe('Centro actualizado por el administrador')
+  })
+
+  it('devuelve 404 para una organización inexistente', async () => {
+    process.env.ADMIN_TOKEN = 'test-admin-token'
+    const res = await request(app)
+      .put('/api/help-orgs/no-existe-id')
+      .set('x-admin-token', 'test-admin-token')
+      .send({ name: 'Nombre' })
+    expect(res.status).toBe(404)
+  })
+})
+
 function requestPOST() {
   return request(app).post('/api/help-orgs')
 }

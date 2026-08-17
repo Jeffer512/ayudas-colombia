@@ -19,6 +19,21 @@ export const createHelpOrgSchema = z.object({
 
 export type CreateHelpOrgInput = z.infer<typeof createHelpOrgSchema>
 
+export const updateHelpOrgSchema = z.object({
+  name: z.string().trim().min(2, 'Nombre requerido').max(140),
+  description: z.string().trim().max(2000).nullable().optional(),
+  address: z.string().trim().max(300).nullable().optional(),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+  category: z.enum(HELP_ORG_CATEGORIES).optional(),
+  contactName: z.string().trim().max(120).nullable().optional(),
+  contactPhone: z.string().trim().max(30).nullable().optional(),
+  hours: z.string().trim().max(200).nullable().optional(),
+  accepts: z.string().trim().max(2000).nullable().optional(),
+})
+
+export type UpdateHelpOrgInput = z.infer<typeof updateHelpOrgSchema>
+
 export const helpOrgFiltersSchema = z.object({
   city: z.string().trim().optional(),
   category: z.enum(HELP_ORG_CATEGORIES).optional(),
