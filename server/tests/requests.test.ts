@@ -507,6 +507,182 @@ describe('cierre automático por inactividad', () => {
   })
 })
 
+describe('PUT /api/requests/:id', () => {
+  beforeEach(async () => {
+    await ensureCity()
+    await prisma.request.deleteMany()
+  })
+
+  it('edita una solicitud abierta sin ayudantes con el código de cierre', async () => {
+    const created = await createRequest()
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({
+        title: 'Necesitamos agua y comida en el Centro',
+        description: 'Actualizado: también requieren mantas.',
+        urgency: 'critical',
+        items: ['Agua', 'Comida', 'Mantas'],
+        address: 'Calle 12 #4-52',
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({
+      title: 'Necesitamos agua y comida en el Centro',
+      description: 'Actualizado: también requieren mantas.',
+      urgency: 'critical',
+      items: ['Agua', 'Comida', 'Mantas'],
+      address: 'Calle 12 #4-52',
+    })
+    expect(
+      res.body.events.some((e: { note: string | null }) => e.note === 'Solicitud actualizada'),
+    ).toBe(true)
+  })
+
+  it('rechaza editar un pedido con personas ayudando', async () => {
+    const created = await createRequest()
+    await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ markerId: 'm1', name: 'Camila' })
+
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({ title: 'Otro título válido aquí', resolveCode: '1234' })
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe(
+      'Ya hay personas ayudando, el pedido no se puede editar',
+    )
+  })
+
+  it('rechaza editar un pedido cerrado', async () => {
+    const created = await createRequest({ status: 'resolved', resolvedAt: new Date() })
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({ title: 'Otro título válido aquí', resolveCode: '1234' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Solo se puede editar un pedido abierto')
+  })
+
+  it('rechaza editar con un código incorrecto', async () => {
+    const created = await createRequest()
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({ title: 'Otro título válido aquí', resolveCode: '9999' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Código de cierre incorrecto')
+  })
+
+  it('no permite cambiar el tipo ni la ciudad', async () => {
+    const created = await createRequest({ type: 'shelter_request' })
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({
+        title: 'Otro título válido aquí',
+        type: 'missing_person',
+        cityCode: 'manizales',
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.type).toBe('shelter_request')
+    expect(res.body.city.code).toBe('pereira')
+  })
+
+  it('rechaza el transporte en pedidos que no son de suministros', async () => {
+    const created = await createRequest({ type: 'shelter_request' })
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({
+        title: 'Otro título válido aquí',
+        transport: 'needs_transport',
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('rechaza una foto en pedidos que no son de personas desaparecidas', async () => {
+    const created = await createRequest({ type: 'supplies_request' })
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({ title: 'Otro título válido aquí', photo: tinyPng, resolveCode: '1234' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('permite quitar la foto de una persona desaparecida', async () => {
+    const created = await createRequest({ type: 'missing_person', photoUrl: tinyPng })
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({
+        title: 'Se busca a Carlos Ramírez, 62 años',
+        photo: null,
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.photo).toBeNull()
+  })
+
+  it('actualiza los datos de contacto del reporter', async () => {
+    const created = await createRequest()
+    const res = await request(app)
+      .put(`/api/requests/${created.id}`)
+      .send({
+        title: 'Necesitamos voluntarios en el Centro',
+        reporter: { name: 'Juan Pérez', whatsapp: '3115557777' },
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.reporter).toMatchObject({
+      name: 'Juan Pérez',
+      phone: null,
+      whatsapp: '3115557777',
+    })
+  })
+
+  it('el dueño edita su pedido sin código de cierre', async () => {
+    function tokenFrom(body: { verificationUrl?: string | null }): string | undefined {
+      if (!body.verificationUrl) return undefined
+      return new URL(body.verificationUrl, 'http://localhost').searchParams.get('token') ?? undefined
+    }
+    const registered = await request(app).post('/api/auth/register').send({
+      email: 'edita-dueno@correo.org',
+      password: 'contrasena-segura',
+      name: 'Solicitante',
+    })
+    await request(app).post('/api/auth/verify-email').send({ token: tokenFrom(registered.body) })
+    const agent = request.agent(app)
+    await agent
+      .post('/api/auth/login')
+      .send({ email: 'edita-dueno@correo.org', password: 'contrasena-segura' })
+
+    const created = await agent
+      .post('/api/requests')
+      .send({ ...validRequest, reporter: { name: 'Dueño', phone: '3101112222' } })
+    expect(created.status).toBe(201)
+    expect(created.body.isOwner).toBe(true)
+
+    const res = await agent
+      .put(`/api/requests/${created.body.id}`)
+      .send({ title: 'Pedido actualizado por su dueño', urgency: 'high' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.title).toBe('Pedido actualizado por su dueño')
+  })
+
+  it('devuelve 404 para una solicitud inexistente', async () => {
+    const res = await request(app)
+      .put('/api/requests/no-existe')
+      .send({ title: 'Otro título válido aquí' })
+    expect(res.status).toBe(404)
+  })
+})
+
 describe('POST /api/requests/:id/help', () => {
   beforeEach(async () => {
     await ensureCity()

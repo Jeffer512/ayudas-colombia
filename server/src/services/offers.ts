@@ -5,6 +5,7 @@ import { ApiError } from '../lib/errors.js'
 import type {
   CreateOfferInput,
   OfferFilters,
+  UpdateOfferInput,
   UpdateOfferStatusInput,
 } from '../validators/offer.js'
 import type { Viewer } from '../lib/viewer.js'
@@ -355,6 +356,130 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
   })
 
   return { ...serializeOffer(created, viewer), resolveCode: created.resolveCode }
+}
+
+export async function updateOffer(
+  id: string,
+  input: UpdateOfferInput,
+  viewer?: Viewer,
+) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
+
+  const offer = await prisma.offer.findUnique({
+    where: { id },
+    include: { reporter: true, claims: { select: { status: true } } },
+  })
+  if (!offer) throw new ApiError(404, 'Oferta no encontrada')
+
+  if (offer.claims.some((claim) => claim.status === 'committed')) {
+    throw new ApiError(
+      409,
+      'Ya hay un compromiso de entrega, la oferta no se puede editar',
+    )
+  }
+
+  if (offer.status !== 'open') {
+    throw new ApiError(400, 'Solo se puede editar una oferta abierta')
+  }
+
+  if (!isOwner(viewer, offer.reporter.userId)) {
+    const code = (input.resolveCode ?? '').trim()
+    if (!offer.resolveCode || code !== offer.resolveCode) {
+      throw new ApiError(403, 'Código de cierre incorrecto')
+    }
+  }
+
+  if (input.transport && offer.type !== 'supplies_offered') {
+    throw new ApiError(
+      400,
+      'El campo de transporte solo aplica a ofertas de suministros',
+    )
+  }
+  if (input.items?.length && offer.type !== 'supplies_offered') {
+    throw new ApiError(
+      400,
+      'El listado de ítems solo aplica a ofertas de suministros',
+    )
+  }
+  if (input.volunteer && offer.type !== 'volunteers_offered') {
+    throw new ApiError(
+      400,
+      'Los datos de voluntario solo aplican a ofertas de voluntariado',
+    )
+  }
+  if (input.vehicle && offer.type !== 'transport_offered') {
+    throw new ApiError(
+      400,
+      'Los datos de vehículo solo aplican a ofertas de transporte',
+    )
+  }
+
+  const data: Prisma.OfferUpdateInput = {}
+  if (input.title !== undefined) data.title = input.title
+  if (input.description !== undefined) data.description = input.description
+  if (input.items !== undefined) data.items = input.items
+  if (input.zone !== undefined) data.zone = input.zone
+  if (input.address !== undefined) data.address = input.address
+  if (input.lat !== undefined) data.lat = input.lat
+  if (input.lng !== undefined) data.lng = input.lng
+  if (input.contactVisibility !== undefined) {
+    data.contactVisibility = input.contactVisibility
+  }
+  if (input.audience !== undefined) data.audience = input.audience
+  if (input.transport !== undefined) data.transport = input.transport
+  if (input.volunteer !== undefined) {
+    if (input.volunteer === null) {
+      data.volunteerDetails = { delete: true }
+    } else {
+      data.volunteerDetails = {
+        upsert: {
+          create: {
+            capabilities: input.volunteer.capabilities ?? [],
+            availability: input.volunteer.availability ?? null,
+          },
+          update: {
+            capabilities: input.volunteer.capabilities ?? [],
+            availability: input.volunteer.availability ?? null,
+          },
+        },
+      }
+    }
+  }
+  if (input.vehicle !== undefined) {
+    if (input.vehicle === null) {
+      data.transportDetails = { delete: true }
+    } else {
+      data.transportDetails = {
+        upsert: {
+          create: {
+            vehicleType: input.vehicle.vehicleType ?? null,
+            capacity: input.vehicle.capacity ?? null,
+          },
+          update: {
+            vehicleType: input.vehicle.vehicleType ?? null,
+            capacity: input.vehicle.capacity ?? null,
+          },
+        },
+      }
+    }
+  }
+  if (input.reporter) {
+    data.reporter = {
+      update: {
+        name: input.reporter.name,
+        phone: input.reporter.phone ?? null,
+        whatsapp: input.reporter.whatsapp ?? null,
+        email: input.reporter.email || null,
+      },
+    }
+  }
+
+  const updated = await prisma.offer.update({
+    where: { id },
+    data,
+    include: OFFER_INCLUDE,
+  })
+  return serializeOffer(updated, viewer)
 }
 
 export async function updateOfferStatus(

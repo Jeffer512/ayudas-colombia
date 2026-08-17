@@ -8,12 +8,14 @@ import {
   getRequest,
   helpRequest,
   listRequests,
+  updateRequest,
   updateRequestStatus,
 } from '../services/requests.js'
 import {
   createRequestSchema,
   helpRequestSchema,
   requestFiltersSchema,
+  updateRequestSchema,
   updateRequestStatusSchema,
 } from '../validators/request.js'
 
@@ -31,6 +33,14 @@ const statusLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados cambios de estado, intenta más tarde' },
+})
+
+const editLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas ediciones, intenta más tarde' },
 })
 
 export const requestsRouter = Router()
@@ -57,6 +67,21 @@ requestsRouter.post(
     const input = createRequestSchema.parse(req.body)
     const created = await createRequest(input, viewerFromSession(currentSession(req)))
     res.status(201).json(created)
+  }),
+)
+
+requestsRouter.put(
+  '/:id',
+  editLimiter,
+  asyncHandler(async (req, res) => {
+    const input = updateRequestSchema.parse(req.body)
+    res.json(
+      await updateRequest(
+        String(req.params.id),
+        input,
+        viewerFromSession(currentSession(req)),
+      ),
+    )
   }),
 )
 

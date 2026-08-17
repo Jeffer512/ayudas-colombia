@@ -9,11 +9,13 @@ import {
   createOffer,
   getOffer,
   listOffers,
+  updateOffer,
   updateOfferStatus,
 } from '../services/offers.js'
 import {
   createOfferSchema,
   offerFiltersSchema,
+  updateOfferSchema,
   updateOfferStatusSchema,
 } from '../validators/offer.js'
 
@@ -31,6 +33,14 @@ const statusLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados cambios de estado, intenta más tarde' },
+})
+
+const editLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas ediciones, intenta más tarde' },
 })
 
 export const offersRouter = Router()
@@ -57,6 +67,21 @@ offersRouter.post(
     const input = createOfferSchema.parse(req.body)
     const created = await createOffer(input, viewerFromSession(currentSession(req)))
     res.status(201).json(created)
+  }),
+)
+
+offersRouter.put(
+  '/:id',
+  editLimiter,
+  asyncHandler(async (req, res) => {
+    const input = updateOfferSchema.parse(req.body)
+    res.json(
+      await updateOffer(
+        String(req.params.id),
+        input,
+        viewerFromSession(currentSession(req)),
+      ),
+    )
   }),
 )
 

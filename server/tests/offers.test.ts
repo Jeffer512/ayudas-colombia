@@ -572,6 +572,164 @@ describe('DELETE /api/offers/:id/claim', () => {
   })
 })
 
+describe('PUT /api/offers/:id', () => {
+  beforeEach(async () => {
+    await ensureCity()
+    await prisma.offer.deleteMany()
+  })
+
+  it('edita una oferta abierta sin compromiso con el código de cierre', async () => {
+    const created = await createOffer()
+    const res = await request(app)
+      .put(`/api/offers/${created.id}`)
+      .send({
+        title: 'Ofrezco 50 kits de aseo',
+        description: 'Actualizado: kits de aseo y alimentos no perecederos.',
+        items: ['Kits de aseo', 'Alimentos'],
+        zone: 'Barrio El Poblado',
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({
+      title: 'Ofrezco 50 kits de aseo',
+      description: 'Actualizado: kits de aseo y alimentos no perecederos.',
+      items: ['Kits de aseo', 'Alimentos'],
+      zone: 'Barrio El Poblado',
+    })
+  })
+
+  it('rechaza editar una oferta con compromiso de entrega', async () => {
+    const agent = await loginCitizen()
+    const created = await createOffer({ transport: 'needs_transport' })
+    await agent.post(`/api/offers/${created.id}/claim`)
+
+    const res = await request(app)
+      .put(`/api/offers/${created.id}`)
+      .send({ title: 'Otro título válido aquí', resolveCode: '1234' })
+
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe(
+      'Ya hay un compromiso de entrega, la oferta no se puede editar',
+    )
+  })
+
+  it('rechaza editar una oferta ya entregada', async () => {
+    const created = await createOffer({ status: 'fulfilled', resolvedAt: new Date() })
+    const res = await request(app)
+      .put(`/api/offers/${created.id}`)
+      .send({ title: 'Otro título válido aquí', resolveCode: '1234' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Solo se puede editar una oferta abierta')
+  })
+
+  it('rechaza editar con un código incorrecto', async () => {
+    const created = await createOffer()
+    const res = await request(app)
+      .put(`/api/offers/${created.id}`)
+      .send({ title: 'Otro título válido aquí', resolveCode: '9999' })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Código de cierre incorrecto')
+  })
+
+  it('no permite cambiar el tipo ni la ciudad', async () => {
+    const created = await createOffer({ type: 'shelter_offered' })
+    const res = await request(app)
+      .put(`/api/offers/${created.id}`)
+      .send({
+        title: 'Otro título válido aquí',
+        type: 'transport_offered',
+        cityCode: 'manizales',
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.type).toBe('shelter_offered')
+    expect(res.body.city.code).toBe('pereira')
+  })
+
+  it('rechaza datos de rol que no corresponden al tipo de oferta', async () => {
+    const supplies = await createOffer()
+    const badVolunteer = await request(app)
+      .put(`/api/offers/${supplies.id}`)
+      .send({
+        title: 'Otro título válido aquí',
+        resolveCode: '1234',
+        volunteer: { capabilities: ['Cocina'] },
+      })
+    expect(badVolunteer.status).toBe(400)
+
+    const volunteer = await createOffer({ type: 'volunteers_offered' })
+    const badItems = await request(app)
+      .put(`/api/offers/${volunteer.id}`)
+      .send({ title: 'Otro título válido aquí', resolveCode: '1234', items: ['Harina'] })
+    expect(badItems.status).toBe(400)
+  })
+
+  it('actualiza los detalles de voluntario de una oferta de voluntariado', async () => {
+    const created = await createOffer({ type: 'volunteers_offered' })
+    const res = await request(app)
+      .put(`/api/offers/${created.id}`)
+      .send({
+        title: 'Voluntaria para atender albergue',
+        volunteer: {
+          capabilities: ['Atención al público', 'Cocina'],
+          availability: 'Disponible toda la semana',
+        },
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.volunteer).toEqual({
+      capabilities: ['Atención al público', 'Cocina'],
+      availability: 'Disponible toda la semana',
+    })
+  })
+
+  it('actualiza los datos de contacto del reporter', async () => {
+    const created = await createOffer()
+    const res = await request(app)
+      .put(`/api/offers/${created.id}`)
+      .send({
+        title: 'Ofrezco suministros para repartir',
+        reporter: { name: 'Carmen Vila', whatsapp: '3115554444' },
+        resolveCode: '1234',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.reporter).toMatchObject({
+      name: 'Carmen Vila',
+      phone: null,
+      whatsapp: '3115554444',
+    })
+  })
+
+  it('el dueño edita su oferta sin código de cierre', async () => {
+    const agent = await loginCitizen('edita-donante@correo.org')
+    const created = await agent
+      .post('/api/offers')
+      .send({ ...validOffer, reporter: { name: 'Donante', phone: '3101113333' } })
+    expect(created.status).toBe(201)
+    expect(created.body.isOwner).toBe(true)
+
+    const res = await agent
+      .put(`/api/offers/${created.body.id}`)
+      .send({ title: 'Oferta actualizada por su dueño' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.title).toBe('Oferta actualizada por su dueño')
+  })
+
+  it('devuelve 404 para una oferta inexistente', async () => {
+    const res = await request(app)
+      .put('/api/offers/no-existe')
+      .send({ title: 'Otro título válido aquí' })
+    expect(res.status).toBe(404)
+  })
+})
+
 describe('POST /api/offers/:id/status · voluntario comprometido', () => {
   it('el voluntario comprometido confirma la entrega sin pedir el código', async () => {
     const agent = await loginCitizen('repartidor@correo.org')

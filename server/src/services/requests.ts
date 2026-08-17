@@ -6,6 +6,7 @@ import type {
   CreateRequestInput,
   HelpRequestInput,
   RequestFilters,
+  UpdateRequestInput,
   UpdateRequestStatusInput,
 } from '../validators/request.js'
 import type { Viewer } from '../lib/viewer.js'
@@ -275,6 +276,110 @@ export async function helpRequest(
     },
   })
   return getRequest(id)
+}
+
+export async function updateRequest(
+  id: string,
+  input: UpdateRequestInput,
+  viewer?: Viewer,
+) {
+  if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
+
+  const request = await prisma.request.findUnique({
+    where: { id },
+    include: {
+      reporter: true,
+      _count: { select: { helpers: true } },
+    },
+  })
+  if (!request) throw new ApiError(404, 'Solicitud no encontrada')
+
+  if (request.status !== 'open') {
+    throw new ApiError(400, 'Solo se puede editar un pedido abierto')
+  }
+
+  if (request._count.helpers > 0) {
+    throw new ApiError(
+      409,
+      'Ya hay personas ayudando, el pedido no se puede editar',
+    )
+  }
+
+  if (!isOwner(viewer, request.reporter.userId)) {
+    const code = (input.resolveCode ?? '').trim()
+    if (!request.resolveCode || code !== request.resolveCode) {
+      throw new ApiError(403, 'Código de cierre incorrecto')
+    }
+  }
+
+  if (input.transport && request.type !== 'supplies_request') {
+    throw new ApiError(
+      400,
+      'El campo de transporte solo aplica a solicitudes de suministros',
+    )
+  }
+
+  if (
+    input.photo !== undefined &&
+    request.type !== 'missing_person' &&
+    request.type !== 'missing_pet'
+  ) {
+    throw new ApiError(
+      400,
+      'La foto solo aplica a personas y mascotas desaparecidas',
+    )
+  }
+
+  let photoUrl: string | null | undefined
+  if (input.photo === null) {
+    photoUrl = null
+  } else if (input.photo) {
+    photoUrl = await uploadPhoto(input.photo)
+  }
+
+  await prisma.$transaction([
+    prisma.request.update({
+      where: { id },
+      data: {
+        ...(input.title !== undefined ? { title: input.title } : {}),
+        ...(input.description !== undefined
+          ? { description: input.description }
+          : {}),
+        ...(photoUrl !== undefined ? { photoUrl } : {}),
+        ...(input.address !== undefined ? { address: input.address } : {}),
+        ...(input.lat !== undefined ? { lat: input.lat } : {}),
+        ...(input.lng !== undefined ? { lng: input.lng } : {}),
+        ...(input.urgency !== undefined ? { urgency: input.urgency } : {}),
+        ...(input.transport !== undefined ? { transport: input.transport } : {}),
+        ...(input.items !== undefined ? { items: input.items } : {}),
+        ...(input.contactVisibility !== undefined
+          ? { contactVisibility: input.contactVisibility }
+          : {}),
+        ...(input.reporter
+          ? {
+              reporter: {
+                update: {
+                  name: input.reporter.name,
+                  phone: input.reporter.phone ?? null,
+                  whatsapp: input.reporter.whatsapp ?? null,
+                  email: input.reporter.email || null,
+                },
+              },
+            }
+          : {}),
+      },
+    }),
+    prisma.requestEvent.create({
+      data: {
+        requestId: id,
+        status: 'open',
+        note: 'Solicitud actualizada',
+        actorName: input.reporter?.name ?? request.reporter.name,
+      },
+    }),
+  ])
+
+  return getRequest(id, viewer)
 }
 
 export async function updateRequestStatus(

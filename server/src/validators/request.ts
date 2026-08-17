@@ -40,6 +40,28 @@ export const createRequestSchema = base.extend({
 
 export type CreateRequestInput = z.infer<typeof createRequestSchema>
 
+export const updateRequestSchema = z.object({
+  title: z.string().trim().min(5, 'Título muy corto').max(140),
+  description: z
+    .string()
+    .trim()
+    .max(4000, 'Descripción muy larga')
+    .optional()
+    .transform((value) => value || null),
+  photo: z.union([photoDataUrlSchema, z.null()]).optional(),
+  address: z.string().trim().max(300).nullable().optional(),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+  reporter: reporterSchema.optional(),
+  contactVisibility: contactVisibilitySchema.optional(),
+  urgency: z.enum(URGENCIES).optional(),
+  transport: z.enum(TRANSPORT_OPTIONS).nullable().optional(),
+  items: tagListSchema.optional(),
+  resolveCode: z.string().trim().min(4).max(6).optional(),
+})
+
+export type UpdateRequestInput = z.infer<typeof updateRequestSchema>
+
 export const requestFiltersSchema = z.object({
   type: z.enum(REQUEST_TYPES).optional(),
   status: z
