@@ -13,6 +13,7 @@ vi.mock('../api/client', () => ({
     updateRequestStatus: vi.fn(),
     verifyRequestCode: vi.fn(),
     helpRequest: vi.fn(),
+    me: vi.fn(),
     markerId: vi.fn(() => 'device-abc'),
   },
 }))
@@ -26,6 +27,7 @@ const mockedRequest = vi.mocked(api.request)
 const mockedUpdateStatus = vi.mocked(api.updateRequestStatus)
 const mockedVerifyCode = vi.mocked(api.verifyRequestCode)
 const mockedHelpRequest = vi.mocked(api.helpRequest)
+const mockedMe = vi.mocked(api.me)
 
 const baseRequest: Request = {
   id: 'r1',
@@ -84,7 +86,15 @@ describe('RequestDetailPage', () => {
     mockedUpdateStatus.mockReset()
     mockedVerifyCode.mockReset()
     mockedHelpRequest.mockReset()
+    mockedMe.mockReset()
     mockedVerifyCode.mockResolvedValue({ ok: true })
+    mockedMe.mockResolvedValue({
+      authenticated: false,
+      name: null,
+      email: null,
+      staff: null,
+      pendingOrgId: null,
+    })
   })
 
   it('muestra la información completa del pedido', async () => {

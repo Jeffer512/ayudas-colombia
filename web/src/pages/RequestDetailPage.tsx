@@ -290,7 +290,7 @@ export default function RequestDetailPage() {
           </form>
         )}
 
-        {mode === 'resolve' && (
+        {(mode === 'resolve' || mode === 'reopen') && (
           <form
             onSubmit={(e) => {
               e.preventDefault()
