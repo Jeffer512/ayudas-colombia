@@ -16,7 +16,9 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import AvisoDetailPage from './pages/AvisoDetailPage'
 import OfferDetailPage from './pages/OfferDetailPage'
+import OfferEditPage from './pages/OfferEditPage'
 import RequestDetailPage from './pages/RequestDetailPage'
+import RequestEditPage from './pages/RequestEditPage'
 import TransportHubPage from './pages/TransportHubPage'
 
 const queryClient = new QueryClient({
@@ -40,7 +42,9 @@ export default function App() {
             <Route path="/transporte" element={<TransportHubPage />} />
             <Route path="/informar" element={<CreateAvisoPage />} />
             <Route path="/pedido/:id" element={<RequestDetailPage />} />
+            <Route path="/pedido/:id/editar" element={<RequestEditPage />} />
             <Route path="/oferta/:id" element={<OfferDetailPage />} />
+            <Route path="/oferta/:id/editar" element={<OfferEditPage />} />
             <Route path="/aviso/:id" element={<AvisoDetailPage />} />
             <Route path="/nuevo-centro" element={<NewOrgPage />} />
             <Route path="/red-de-ayudas" element={<RedDeAyudasPage />} />

@@ -62,6 +62,7 @@ function renderPage(offer: Offer = baseOffer) {
       <MemoryRouter initialEntries={['/oferta/o1']}>
         <Routes>
           <Route path="/oferta/:id" element={<OfferDetailPage />} />
+          <Route path="/oferta/:id/editar" element={<div>EDITAR_OFERTA</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -407,5 +408,49 @@ describe('OfferDetailPage', () => {
         note: undefined,
       }),
     )
+  })
+
+  it('muestra el botón para editar una oferta abierta sin compromiso', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar oferta' }),
+    )
+
+    expect(await screen.findByText('EDITAR_OFERTA')).toBeInTheDocument()
+  })
+
+  it('oculta el botón para editar cuando hay un compromiso de entrega', async () => {
+    renderPage({
+      ...baseOffer,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        mine: false,
+        note: null,
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    expect(
+      await screen.findByRole('button', { name: 'Confirmar entrega' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Editar oferta' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('oculta el botón para editar en una oferta cerrada', async () => {
+    renderPage({ ...baseOffer, status: 'fulfilled', resolvedAt: '2026-08-14T10:00:00Z' })
+
+    expect(
+      await screen.findByText(/Esta oferta ya se entregó/),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Editar oferta' }),
+    ).not.toBeInTheDocument()
   })
 })

@@ -307,6 +307,57 @@ export type StatusUpdate = {
   actorName?: string
 }
 
+export type UpdateRequest = {
+  title: string
+  description?: string | null
+  photo?: string | null
+  address?: string | null
+  lat?: number | null
+  lng?: number | null
+  reporter?: ReporterInput
+  contactVisibility?: ContactVisibility
+  urgency?: Urgency
+  transport?: TransportOption | null
+  items?: string[]
+  resolveCode?: string
+}
+
+export type UpdateOffer = {
+  title: string
+  description?: string | null
+  items?: string[]
+  zone?: string | null
+  address?: string | null
+  lat?: number | null
+  lng?: number | null
+  volunteer?: {
+    capabilities?: string[]
+    availability?: string | null
+  } | null
+  vehicle?: {
+    vehicleType?: string | null
+    capacity?: string | null
+  } | null
+  reporter?: ReporterInput
+  contactVisibility?: ContactVisibility
+  audience?: OfferAudience
+  transport?: TransportOption | null
+  resolveCode?: string
+}
+
+export type UpdateOrgProfile = {
+  name: string
+  category: HelpOrgCategory
+  description?: string | null
+  address?: string | null
+  lat?: number | null
+  lng?: number | null
+  contactName?: string | null
+  contactPhone?: string | null
+  hours?: string | null
+  accepts?: string | null
+}
+
 export interface HelpOrg {
   id: string
   type: HelpOrgType

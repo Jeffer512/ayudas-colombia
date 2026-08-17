@@ -11,6 +11,7 @@ const labelClass = 'text-sm font-medium text-text-muted'
 interface LocationSectionProps {
   cities: City[]
   cityCode: string
+  cityLocked?: boolean
   address: string
   lat: number | null
   lng: number | null
@@ -27,6 +28,7 @@ interface LocationSectionProps {
 export default function LocationSection({
   cities,
   cityCode,
+  cityLocked = false,
   address,
   lat,
   lng,
@@ -34,6 +36,7 @@ export default function LocationSection({
   addressHint,
   onPatch,
 }: LocationSectionProps) {
+  const cityLabel = cities.find((c) => c.code === cityCode)?.name ?? cityCode
   return (
     <fieldset className="rounded-lg border border-line bg-surface p-4">
       <legend className="px-1 text-sm font-semibold text-text-muted">
@@ -45,19 +48,23 @@ export default function LocationSection({
           <label htmlFor="cityCode" className={labelClass}>
             Ciudad
           </label>
-          <select
-            id="cityCode"
-            required
-            value={cityCode}
-            onChange={(e) => onPatch((prev) => ({ ...prev, cityCode: e.target.value }))}
-            className={`mt-1 ${inputClass}`}
-          >
-            {cities.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          {cityLocked ? (
+            <p className={`mt-1 ${inputClass}`}>{cityLabel}</p>
+          ) : (
+            <select
+              id="cityCode"
+              required
+              value={cityCode}
+              onChange={(e) => onPatch((prev) => ({ ...prev, cityCode: e.target.value }))}
+              className={`mt-1 ${inputClass}`}
+            >
+              {cities.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div>

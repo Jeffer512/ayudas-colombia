@@ -69,6 +69,7 @@ function renderPage(request: Request = baseRequest) {
       <MemoryRouter initialEntries={['/pedido/r1']}>
         <Routes>
           <Route path="/pedido/:id" element={<RequestDetailPage />} />
+          <Route path="/pedido/:id/editar" element={<div>EDITAR_PEDIDO</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -316,5 +317,38 @@ describe('RequestDetailPage', () => {
         resolveCode: '1234',
       }),
     )
+  })
+
+  it('muestra el botón para editar en pedidos abiertos sin ayudantes', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar pedido' }),
+    )
+
+    expect(await screen.findByText('EDITAR_PEDIDO')).toBeInTheDocument()
+  })
+
+  it('oculta el botón para editar cuando ya hay personas ayudando', async () => {
+    renderPage({ ...baseRequest, helpers: 2 })
+
+    expect(
+      await screen.findByText('2 personas están ayudando'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Editar pedido' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('oculta el botón para editar en un pedido cerrado', async () => {
+    renderPage({ ...baseRequest, status: 'resolved', resolvedAt: '2026-08-14T10:00:00Z' })
+
+    expect(
+      await screen.findByRole('button', { name: 'Reabrir pedido' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Editar pedido' }),
+    ).not.toBeInTheDocument()
   })
 })

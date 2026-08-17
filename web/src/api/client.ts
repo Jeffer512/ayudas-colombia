@@ -28,6 +28,9 @@ import type {
   RequestListResponse,
   Staff,
   StatusUpdate,
+  UpdateOffer,
+  UpdateOrgProfile,
+  UpdateRequest,
 } from '../lib/types'
 
 const API_BASE = '/api'
@@ -108,6 +111,10 @@ export const api = {
     return http('/requests', { method: 'POST', body: JSON.stringify(body) })
   },
 
+  updateRequest(id: string, body: UpdateRequest): Promise<Request> {
+    return http(`/requests/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+  },
+
   updateRequestStatus(id: string, body: StatusUpdate): Promise<Request> {
     return http(`/requests/${id}/status`, {
       method: 'POST',
@@ -139,6 +146,10 @@ export const api = {
 
   createOffer(body: NewOffer): Promise<CreatedOffer> {
     return http('/offers', { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  updateOffer(id: string, body: UpdateOffer): Promise<Offer> {
+    return http(`/offers/${id}`, { method: 'PUT', body: JSON.stringify(body) })
   },
 
   updateOfferStatus(id: string, body: StatusUpdate): Promise<Offer> {
@@ -184,6 +195,10 @@ export const api = {
 
   createHelpOrg(body: NewHelpOrg): Promise<HelpOrg> {
     return http('/help-orgs', { method: 'POST', body: JSON.stringify(body) })
+  },
+
+  updateHelpOrg(id: string, body: UpdateOrgProfile): Promise<HelpOrg> {
+    return http(`/help-orgs/${id}`, { method: 'PUT', body: JSON.stringify(body) })
   },
 
   joinOrg(orgId: string): Promise<{ membership: JoinedOrgMembership }> {
