@@ -11,6 +11,7 @@ vi.mock('../api/client', () => ({
   api: {
     cities: vi.fn(),
     createOffer: vi.fn(),
+    me: vi.fn(),
   },
 }))
 
@@ -21,6 +22,7 @@ vi.mock('../components/Map', () => ({
 
 const mockedCities = vi.mocked(api.cities)
 const mockedCreate = vi.mocked(api.createOffer)
+const mockedMe = vi.mocked(api.me)
 
 function renderPage(route?: string) {
   const queryClient = new QueryClient({
@@ -39,6 +41,14 @@ describe('CreateOfferPage', () => {
   beforeEach(() => {
     mockedCities.mockReset()
     mockedCreate.mockReset()
+    mockedMe.mockReset()
+    mockedMe.mockResolvedValue({
+      authenticated: false,
+      name: null,
+      email: null,
+      staff: null,
+      pendingOrgId: null,
+    })
     mockedCities.mockResolvedValue({
       cities: [
         {
@@ -148,6 +158,39 @@ describe('CreateOfferPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('9371')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver oferta' })).toBeInTheDocument()
+  })
+
+  it('con sesión, recuerda que la oferta también se cierra desde la cuenta', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: 'Laura',
+      email: 'laura@correo.com',
+      staff: null,
+      pendingOrgId: null,
+    })
+    mockedCreate.mockResolvedValue({
+      id: 'new-auth',
+      resolveCode: '7777',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(
+      await screen.findByLabelText('Tipo'),
+      'supplies_offered',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco kits de aseo')
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Oferta publicada' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/ciérrala desde tu cuenta/)).toBeInTheDocument()
+    expect(screen.queryByText(/única manera de cerrar/)).not.toBeInTheDocument()
+    expect(screen.getByText('7777')).toBeInTheDocument()
   })
 
   it('muestra transporte solo en ofertas de suministros', async () => {

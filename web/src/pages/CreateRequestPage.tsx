@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import RequestForm from '../components/RequestForm'
@@ -8,14 +9,24 @@ import type { CreatedRequest, NewRequest } from '../lib/types'
 export default function CreateRequestPage() {
   const navigate = useNavigate()
   const [created, setCreated] = useState<CreatedRequest | null>(null)
+  const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
+  const isAuthenticated = meQuery.data?.authenticated === true
 
   if (created) {
     return (
       <SuccessScreen
         title="Pedido publicado"
-        intro="Tu pedido ya aparece en el mapa y en la lista. Guarda tu código para cerrarlo cuando la situación termine:"
+        intro={
+          isAuthenticated
+            ? 'Tu pedido ya aparece en el mapa y en la lista. Cuando la situación termine podrás cerrarlo desde tu cuenta; o guarda este código para cerrarlo sin iniciar sesión o dárselo a alguien de confianza:'
+            : 'Tu pedido ya aparece en el mapa y en la lista. Guarda tu código para cerrarlo cuando la situación termine:'
+        }
         code={created.resolveCode}
-        codeFootnote="Con él se marca tu pedido como resuelto."
+        codeFootnote={
+          isAuthenticated
+            ? 'Con tu cuenta no necesitas el código; con él lo puede cerrar cualquier persona a quien se lo des.'
+            : 'Con él se marca tu pedido como resuelto.'
+        }
         detailHref={`/pedido/${created.id}`}
         detailLabel="Ver pedido"
         onReset={() => setCreated(null)}

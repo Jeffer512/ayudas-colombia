@@ -11,6 +11,7 @@ vi.mock('../api/client', () => ({
   api: {
     cities: vi.fn(),
     createRequest: vi.fn(),
+    me: vi.fn(),
   },
 }))
 
@@ -29,6 +30,7 @@ vi.mock('../components/Map', () => ({
 
 const mockedCities = vi.mocked(api.cities)
 const mockedCreate = vi.mocked(api.createRequest)
+const mockedMe = vi.mocked(api.me)
 
 function renderPage() {
   const queryClient = new QueryClient({
@@ -47,6 +49,14 @@ describe('CreateRequestPage', () => {
   beforeEach(() => {
     mockedCities.mockReset()
     mockedCreate.mockReset()
+    mockedMe.mockReset()
+    mockedMe.mockResolvedValue({
+      authenticated: false,
+      name: null,
+      email: null,
+      staff: null,
+      pendingOrgId: null,
+    })
     mockedCities.mockResolvedValue({
       cities: [
         {
@@ -101,6 +111,36 @@ describe('CreateRequestPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('4821')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver pedido' })).toBeInTheDocument()
+  })
+
+  it('con sesión, recuerda que el pedido también se cierra desde la cuenta', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: 'María',
+      email: 'maria@correo.com',
+      staff: null,
+      pendingOrgId: null,
+    })
+    mockedCreate.mockResolvedValue({
+      id: 'new-auth',
+      resolveCode: '7777',
+    } as unknown as CreatedRequest)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
+    await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
+    await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
+    await user.type(screen.getByLabelText('Teléfono'), '3158765432')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Pedido publicado' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/podrás cerrarlo desde tu cuenta/)).toBeInTheDocument()
+    expect(screen.getByText(/no necesitas el código/)).toBeInTheDocument()
+    expect(screen.getByText('7777')).toBeInTheDocument()
   })
 
   it('muestra y envía transporte solo en solicitudes de suministros', async () => {

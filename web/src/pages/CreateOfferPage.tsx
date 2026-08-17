@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import OfferForm from '../components/OfferForm'
@@ -8,14 +9,24 @@ import type { CreatedOffer, NewOffer } from '../lib/types'
 export default function CreateOfferPage() {
   const navigate = useNavigate()
   const [created, setCreated] = useState<CreatedOffer | null>(null)
+  const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
+  const isAuthenticated = meQuery.data?.authenticated === true
 
   if (created) {
     return (
       <SuccessScreen
         title="Oferta publicada"
-        intro="Tu oferta ya aparece en el mapa y en la lista. Cuando ya no esté disponible, ciérrala con tu código:"
+        intro={
+          isAuthenticated
+            ? 'Tu oferta ya aparece en el mapa y en la lista. Cuando ya no esté disponible, ciérrala desde tu cuenta; o guarda este código para cerrarla sin iniciar sesión o dárselo a alguien de confianza:'
+            : 'Tu oferta ya aparece en el mapa y en la lista. Cuando ya no esté disponible, ciérrala con tu código:'
+        }
         code={created.resolveCode}
-        codeFootnote="Es la única manera de cerrar la oferta, para que otros no te busquen en vano."
+        codeFootnote={
+          isAuthenticated
+            ? 'Con tu cuenta podrás cerrarla sin necesidad del código.'
+            : 'Es la única manera de cerrar la oferta, para que otros no te busquen en vano.'
+        }
         detailHref={`/oferta/${created.id}`}
         detailLabel="Ver oferta"
         onReset={() => setCreated(null)}
