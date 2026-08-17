@@ -53,47 +53,17 @@ export async function registerUser(input: RegisterInput) {
     throw new ApiError(409, 'Ya existe una cuenta con este correo')
   }
 
-  let org: { id: string } | null = null
-  if (input.orgId) {
-    org = await prisma.helpOrg.findUnique({
-      where: { id: input.orgId },
-      select: { id: true },
-    })
-    if (!org) {
-      throw new ApiError(404, 'Organización no encontrada')
-    }
-  }
-
   const passwordHash = await bcrypt.hash(input.password, ROUNDS)
   const verifyToken = generateVerifyToken()
 
-  await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        email: input.email,
-        name: input.name,
-        passwordHash,
-        verifyTokenHash: hashVerifyToken(verifyToken),
-        verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
-      },
-      select: { id: true },
-    })
-
-    if (org) {
-      const activeCount = await tx.helpOrgStaff.count({
-        where: { orgId: org.id, status: 'active' },
-      })
-      const isFirst = activeCount === 0
-      await tx.helpOrgStaff.create({
-        data: {
-          userId: user.id,
-          orgId: org.id,
-          role: isFirst ? 'manager' : 'member',
-          status: isFirst ? 'active' : 'pending',
-          approvedAt: isFirst ? new Date() : null,
-        },
-      })
-    }
+  await prisma.user.create({
+    data: {
+      email: input.email,
+      name: input.name,
+      passwordHash,
+      verifyTokenHash: hashVerifyToken(verifyToken),
+      verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
+    },
   })
 
   await sendVerificationEmail({
@@ -203,14 +173,14 @@ export async function getSessionUser(userId: string) {
     },
   })
   if (!user) return null
-  const membership =
-    user.memberships.find((m) => m.status === 'active') ??
-    user.memberships[0] ??
-    null
+  const activeMembership =
+    user.memberships.find((m) => m.status === 'active') ?? null
   return {
     email: user.email,
     name: user.name,
-    staff: membership ? serializeStaff(membership) : null,
+    staff: activeMembership ? serializeStaff(activeMembership) : null,
+    pendingOrgId:
+      user.memberships.find((m) => m.status === 'pending')?.orgId ?? null,
   }
 }
 

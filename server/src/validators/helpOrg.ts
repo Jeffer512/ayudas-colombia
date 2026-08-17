@@ -14,6 +14,7 @@ export const createHelpOrgSchema = z.object({
   contactPhone: z.string().trim().max(30).optional(),
   hours: z.string().trim().max(200).optional(),
   accepts: z.string().trim().max(2000).optional(),
+  claim: z.boolean().optional(),
 })
 
 export type CreateHelpOrgInput = z.infer<typeof createHelpOrgSchema>

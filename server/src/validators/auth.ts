@@ -4,7 +4,6 @@ export const registerSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(8).max(100),
   name: z.string().trim().min(2).max(120),
-  orgId: z.string().trim().min(1).optional(),
 })
 
 export type RegisterInput = z.infer<typeof registerSchema>

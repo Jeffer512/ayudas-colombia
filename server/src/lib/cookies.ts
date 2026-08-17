@@ -1,3 +1,7 @@
+import type { Response } from 'express'
+import { env } from '../config.js'
+import { SESSION_COOKIE, signSession } from './jwt.js'
+
 export function parseCookies(header: string | undefined): Record<string, string> {
   const cookies: Record<string, string> = {}
   if (!header) return cookies
@@ -9,4 +13,20 @@ export function parseCookies(header: string | undefined): Record<string, string>
     if (key) cookies[key] = decodeURIComponent(value)
   }
   return cookies
+}
+
+const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000
+
+export function setSessionCookie(
+  res: Response,
+  session: { sub: string; orgId: string; role: string; membershipId?: string },
+) {
+  const token = signSession(session)
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: env.production,
+    path: '/',
+    maxAge: COOKIE_MAX_AGE,
+  })
 }

@@ -1,10 +1,10 @@
 import { Router } from 'express'
-import type { Response } from 'express'
 import rateLimit from 'express-rate-limit'
 import { env } from '../config.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { currentSession } from '../middleware/requireSession.js'
-import { SESSION_COOKIE, signSession } from '../lib/jwt.js'
+import { setSessionCookie } from '../lib/cookies.js'
+import { SESSION_COOKIE } from '../lib/jwt.js'
 import {
   getSessionUser,
   loginUser,
@@ -24,8 +24,6 @@ import {
 } from '../validators/auth.js'
 
 export const authRouter = Router()
-
-const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000
 
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -58,20 +56,6 @@ const resetPasswordLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
-
-function setSessionCookie(
-  res: Response,
-  session: { sub: string; orgId: string; role: string; membershipId?: string },
-) {
-  const token = signSession(session)
-  res.cookie(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: env.production,
-    path: '/',
-    maxAge: COOKIE_MAX_AGE,
-  })
-}
 
 authRouter.post(
   '/register',
@@ -157,6 +141,7 @@ authRouter.get(
       name: sessionUser.name,
       email: sessionUser.email,
       staff: sessionUser.staff,
+      pendingOrgId: sessionUser.pendingOrgId,
     })
   }),
 )

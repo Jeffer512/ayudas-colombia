@@ -23,7 +23,7 @@ function generateResolveCode(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
 
-export function serializeHelpOrg(org: HelpOrgWithCity) {
+export function serializeHelpOrg(org: HelpOrgWithCity, managed = false) {
   return {
     id: org.id,
     type: org.type,
@@ -42,9 +42,19 @@ export function serializeHelpOrg(org: HelpOrgWithCity) {
     hours: org.hours ?? null,
     accepts: org.accepts ?? null,
     status: org.status,
+    managed,
     createdAt: org.createdAt,
     updatedAt: org.updatedAt,
   }
+}
+
+async function managedOrgIds(orgIds: string[]): Promise<Set<string>> {
+  if (orgIds.length === 0) return new Set()
+  const rows = await prisma.helpOrgStaff.groupBy({
+    by: ['orgId'],
+    where: { orgId: { in: orgIds }, status: 'active' },
+  })
+  return new Set(rows.map((row) => row.orgId))
 }
 
 export async function listHelpOrgs(filters: HelpOrgFilters) {
@@ -74,9 +84,11 @@ export async function listHelpOrgs(filters: HelpOrgFilters) {
     prisma.helpOrg.count({ where }),
   ])
 
+  const managed = await managedOrgIds(orgs.map((org) => org.id))
+
   return {
     helpOrgs: orgs.map((org) => ({
-      ...serializeHelpOrg(org),
+      ...serializeHelpOrg(org, managed.has(org.id)),
       items: org.items.map(serializeHelpOrgItem),
     })),
     total,
@@ -99,20 +111,24 @@ export async function getHelpOrg(id: string) {
     },
   })
   if (!org) throw new ApiError(404, 'Organización no encontrada')
-  return { ...serializeHelpOrg(org), items: org.items.map(serializeHelpOrgItem) }
+  const managed = (await managedOrgIds([org.id])).has(org.id)
+  return {
+    ...serializeHelpOrg(org, managed),
+    items: org.items.map(serializeHelpOrgItem),
+  }
 }
 
 export async function createHelpOrg(
   input: CreateHelpOrgInput,
   type: 'ciudadano' | 'oficial',
-  userId?: string,
+  opts: { userId?: string; claim?: boolean } = {},
 ) {
   const city = await prisma.city.findUnique({ where: { code: input.cityCode } })
   if (!city) throw new ApiError(400, `Ciudad no encontrada: ${input.cityCode}`)
 
   const org = await prisma.helpOrg.create({
     data: {
-      type: userId ? 'oficial' : type,
+      type,
       category: input.category ?? 'acopio',
       name: input.name,
       description: input.description ?? null,
@@ -129,26 +145,68 @@ export async function createHelpOrg(
     include: { city: true },
   })
 
-  if (userId) {
-    await prisma.helpOrgStaff.upsert({
+  let membership: { id: string; orgId: string; role: string } | null = null
+  const { userId } = opts
+  if (userId && opts.claim !== false) {
+    const existing = await prisma.helpOrgStaff.findUnique({
       where: { userId },
-      update: {
-        orgId: org.id,
-        role: 'manager',
-        status: 'active',
-        approvedAt: new Date(),
-      },
-      create: {
+      select: { id: true },
+    })
+    if (existing) {
+      throw new ApiError(409, 'Ya estás vinculado a una organización')
+    }
+    membership = await prisma.helpOrgStaff.create({
+      data: {
         userId,
         orgId: org.id,
         role: 'manager',
         status: 'active',
         approvedAt: new Date(),
       },
+      select: { id: true, orgId: true, role: true },
     })
   }
 
-  return { ...serializeHelpOrg(org), resolveCode: org.resolveCode }
+  return {
+    ...serializeHelpOrg(org, membership !== null),
+    resolveCode: org.resolveCode,
+    membership,
+  }
+}
+
+export async function joinHelpOrg(orgId: string, userId: string) {
+  const org = await prisma.helpOrg.findUnique({
+    where: { id: orgId },
+    include: { city: true },
+  })
+  if (!org) throw new ApiError(404, 'Organización no encontrada')
+
+  const existing = await prisma.helpOrgStaff.findUnique({
+    where: { userId },
+    select: { id: true, orgId: true, status: true },
+  })
+  if (existing) {
+    if (existing.orgId === orgId && existing.status === 'pending') {
+      throw new ApiError(409, 'Ya tienes una solicitud pendiente para esta organización')
+    }
+    throw new ApiError(409, 'Ya estás vinculado a una organización')
+  }
+
+  const activeCount = await prisma.helpOrgStaff.count({
+    where: { orgId, status: 'active' },
+  })
+  const isFirst = activeCount === 0
+  const membership = await prisma.helpOrgStaff.create({
+    data: {
+      userId,
+      orgId,
+      role: isFirst ? 'manager' : 'member',
+      status: isFirst ? 'active' : 'pending',
+      approvedAt: isFirst ? new Date() : null,
+    },
+    select: { id: true, orgId: true, role: true, status: true },
+  })
+  return { membership }
 }
 
 export async function updateHelpOrgStatus(
@@ -165,7 +223,7 @@ export async function updateHelpOrgStatus(
   if (!org) throw new ApiError(404, 'Organización no encontrada')
 
   if (org.status === input.status) {
-    return serializeHelpOrg(org)
+    return serializeHelpOrg(org, (await managedOrgIds([org.id])).has(org.id))
   }
 
   const code = (input.resolveCode ?? '').trim()
@@ -178,7 +236,7 @@ export async function updateHelpOrgStatus(
     data: { status: input.status },
     include: { city: true },
   })
-  return serializeHelpOrg(updated)
+  return serializeHelpOrg(updated, (await managedOrgIds([updated.id])).has(updated.id))
 }
 
 export async function listMembers(orgId: string) {

@@ -15,18 +15,16 @@ function tokenFrom(body: { verificationUrl?: string | null }): string | undefine
 }
 
 async function register(overrides: Record<string, unknown> = {}): Promise<
-  { res: RegisterResult; token?: string; org: { id: string } } & RegisterResult
+  { res: RegisterResult; token?: string } & RegisterResult
 > {
-  const org = await createHelpOrg()
   const body = {
     email: 'gerente@fundacion.org',
     password: 'contrasena-segura',
     name: 'Gerente Prueba',
-    orgId: org.id,
     ...overrides,
   }
   const res = await request(app).post('/api/auth/register').send(body)
-  return { res, token: tokenFrom(res.body), org }
+  return { res, token: tokenFrom(res.body) }
 }
 
 async function verifyAndLogin(email: string, password: string, token: string) {
@@ -38,6 +36,11 @@ async function verifyAndLogin(email: string, password: string, token: string) {
   const login = await agent.post('/api/auth/login').send({ email, password })
   expect(login.status).toBe(200)
   return agent
+}
+
+async function citizenAgent(email: string, name: string) {
+  const { res, token } = await register({ email, name })
+  return verifyAndLogin(email, 'contrasena-segura', token!)
 }
 
 describe('POST /api/auth/register', () => {
@@ -57,36 +60,11 @@ describe('POST /api/auth/register', () => {
     expect(user).not.toBeNull()
     expect(user!.emailVerifiedAt).toBeNull()
     expect(user!.verifyTokenHash).not.toBeNull()
-    expect(user!.memberships).toHaveLength(1)
-    expect(user!.memberships[0]).toMatchObject({ role: 'manager', status: 'active' })
+    expect(user!.memberships).toHaveLength(0)
   })
 
-  it('el primer miembro de una organización es manager activo; el siguiente queda pendiente', async () => {
-    const { org } = await register()
-
-    const second = await request(app).post('/api/auth/register').send({
-      email: 'colaborador@fundacion.org',
-      password: 'contrasena-segura',
-      name: 'Colaborador',
-      orgId: org.id,
-    })
-    expect(second.status).toBe(201)
-
-    const memberships = await prisma.helpOrgStaff.findMany({
-      where: { orgId: org.id },
-      orderBy: { createdAt: 'asc' },
-    })
-    expect(memberships).toHaveLength(2)
-    expect(memberships[0]).toMatchObject({ role: 'manager', status: 'active' })
-    expect(memberships[1]).toMatchObject({ role: 'member', status: 'pending' })
-  })
-
-  it('permite registrarse sin organización (cuenta ciudadana)', async () => {
-    const res = await request(app).post('/api/auth/register').send({
-      email: 'ciudadana@correo.org',
-      password: 'contrasena-segura',
-      name: 'Ciudadana',
-    })
+  it('siempre crea una cuenta personal: la vinculación a una organización llega después', async () => {
+    const { res } = await register({ email: 'ciudadana@correo.org', name: 'Ciudadana' })
 
     expect(res.status).toBe(201)
     const user = await prisma.user.findUnique({
@@ -102,30 +80,16 @@ describe('POST /api/auth/register', () => {
       email: 'gerente@fundacion.org',
       password: 'contrasena-segura',
       name: 'Otro',
-      orgId: 'org-no-usado',
     })
 
     expect(res.status).toBe(409)
   })
 
-  it('rechaza una organización inexistente', async () => {
-    const res = await request(app).post('/api/auth/register').send({
-      email: 'x@fundacion.org',
-      password: 'contrasena-segura',
-      name: 'Prueba',
-      orgId: 'no-existe',
-    })
-
-    expect(res.status).toBe(404)
-  })
-
   it('rechaza una contraseña corta', async () => {
-    const org = await createHelpOrg()
     const res = await request(app).post('/api/auth/register').send({
       email: 'corta@fundacion.org',
       password: 'corta',
       name: 'Prueba',
-      orgId: org.id,
     })
 
     expect(res.status).toBe(400)
@@ -134,7 +98,7 @@ describe('POST /api/auth/register', () => {
 
 describe('POST /api/auth/login', () => {
   it('rechaza el ingreso antes de verificar el correo', async () => {
-    const { org } = await register()
+    await register()
     const res = await request(app).post('/api/auth/login').send({
       email: 'gerente@fundacion.org',
       password: 'contrasena-segura',
@@ -142,11 +106,10 @@ describe('POST /api/auth/login', () => {
 
     expect(res.status).toBe(403)
     expect(res.body.code).toBe('email_unverified')
-    expect(org).toBeDefined()
   })
 
-  it('permite ingresar después de verificar el correo', async () => {
-    const { org, token } = await register()
+  it('permite ingresar después de verificar el correo y /me no reporta staff', async () => {
+    const { token } = await register()
     const agent = await verifyAndLogin(
       'gerente@fundacion.org',
       'contrasena-segura',
@@ -155,53 +118,29 @@ describe('POST /api/auth/login', () => {
 
     const me = await agent.get('/api/auth/me')
     expect(me.status).toBe(200)
-    expect(me.body.staff).toMatchObject({
-      email: 'gerente@fundacion.org',
-      orgId: org.id,
-      role: 'manager',
-      status: 'active',
+    expect(me.body).toMatchObject({
+      authenticated: true,
+      staff: null,
+      pendingOrgId: null,
     })
   })
 
   it('rechaza el ingreso mientras la membresía está pendiente de aprobación', async () => {
-    const { org } = await register()
-    const second = await request(app).post('/api/auth/register').send({
-      email: 'colaborador@fundacion.org',
-      password: 'contrasena-segura',
-      name: 'Colaborador',
-      orgId: org.id,
-    })
-    const token = tokenFrom(second.body)
-    await request(app).post('/api/auth/verify-email').send({ token })
+    const org = await createHelpOrg()
+    await citizenAgent('primera@fundacion.org', 'Primera').then((agent) =>
+      agent.post(`/api/help-orgs/${org.id}/join`),
+    )
+    await citizenAgent('pendiente@fundacion.org', 'Pendiente').then((agent) =>
+      agent.post(`/api/help-orgs/${org.id}/join`),
+    )
 
     const res = await request(app).post('/api/auth/login').send({
-      email: 'colaborador@fundacion.org',
+      email: 'pendiente@fundacion.org',
       password: 'contrasena-segura',
     })
 
     expect(res.status).toBe(403)
     expect(res.body.code).toBe('membership_pending')
-  })
-
-  it('permite ingresar a un ciudadano verificado y /me devuelve staff null', async () => {
-    const res = await request(app).post('/api/auth/register').send({
-      email: 'ciudadana@correo.org',
-      password: 'contrasena-segura',
-      name: 'Ciudadana',
-    })
-    await request(app).post('/api/auth/verify-email').send({ token: tokenFrom(res.body) })
-
-    const agent = request.agent(app)
-    const login = await agent.post('/api/auth/login').send({
-      email: 'ciudadana@correo.org',
-      password: 'contrasena-segura',
-    })
-    expect(login.status).toBe(200)
-
-    const me = await agent.get('/api/auth/me')
-    expect(me.status).toBe(200)
-    expect(me.body.staff).toBeNull()
-    expect(me.body.authenticated).toBe(true)
   })
 
   it('rechaza una contraseña incorrecta', async () => {
@@ -225,7 +164,7 @@ describe('POST /api/auth/verify-email', () => {
     expect(res.status).toBe(400)
   })
 
-  it('marca el correo como verificado y limpiar el token', async () => {
+  it('marca el correo como verificado y limpia el token', async () => {
     const { token } = await register()
     const res = await request(app)
       .post('/api/auth/verify-email')
@@ -294,6 +233,8 @@ describe('GET /api/auth/me', () => {
       authenticated: true,
       name: 'Gerente Prueba',
       email: 'gerente@fundacion.org',
+      staff: null,
+      pendingOrgId: null,
     })
   })
 })

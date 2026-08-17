@@ -17,16 +17,11 @@ const validOrg = {
   hours: '8am - 6pm',
 }
 
-async function registerStaff(
-  orgId: string,
-  email = 'manager@org.org',
-  name = 'Manager',
-) {
+async function registerVerified(email: string, name: string) {
   const created = await request(app).post('/api/auth/register').send({
     email,
     password: 'contrasena-segura',
     name,
-    orgId,
   })
   expect(created.status).toBe(201)
   const url = new URL(created.body.verificationUrl, 'http://localhost')
@@ -35,7 +30,9 @@ async function registerStaff(
     .post('/api/auth/verify-email')
     .send({ token })
   expect(verified.status).toBe(200)
+}
 
+async function loginAgent(email: string) {
   const agent = request.agent(app)
   const login = await agent.post('/api/auth/login').send({
     email,
@@ -45,20 +42,28 @@ async function registerStaff(
   return agent
 }
 
+async function citizenAgent(email: string, name: string) {
+  await registerVerified(email, name)
+  return loginAgent(email)
+}
+
+async function joinStaff(
+  orgId: string,
+  email = 'manager@org.org',
+  name = 'Manager',
+) {
+  const agent = await citizenAgent(email, name)
+  const join = await agent.post(`/api/help-orgs/${orgId}/join`)
+  expect(join.status).toBe(201)
+  expect(join.body.membership.status).toBe('active')
+  return agent
+}
+
 async function registerPending(orgId: string, email: string, name: string) {
-  const created = await request(app).post('/api/auth/register').send({
-    email,
-    password: 'contrasena-segura',
-    name,
-    orgId,
-  })
-  expect(created.status).toBe(201)
-  const url = new URL(created.body.verificationUrl, 'http://localhost')
-  const token = url.searchParams.get('token')!
-  const verified = await request(app)
-    .post('/api/auth/verify-email')
-    .send({ token })
-  expect(verified.status).toBe(200)
+  const agent = await citizenAgent(email, name)
+  const join = await agent.post(`/api/help-orgs/${orgId}/join`)
+  expect(join.status).toBe(201)
+  expect(join.body.membership.status).toBe('pending')
 }
 
 describe('/api/help-orgs', () => {
@@ -100,6 +105,91 @@ describe('/api/help-orgs', () => {
 
     expect(res.status).toBe(201)
     expect(res.body.type).toBe('ciudadano')
+  })
+
+  it('no vincula al creador anónimo y la organización no es gestionada', async () => {
+    const res = await requestPOST().send(validOrg)
+
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ type: 'ciudadano', managed: false })
+    expect(res.body.membership).toBeUndefined()
+
+    const detail = await request(app).get(`/api/help-orgs/${res.body.id}`)
+    expect(detail.body.managed).toBe(false)
+  })
+
+  it('reclama la organización como manager cuando un usuario envía claim:true y refresca la sesión', async () => {
+    const agent = await citizenAgent('dona-creadora@correo.org', 'Dona Creadora')
+
+    const res = await agent
+      .post('/api/help-orgs')
+      .send({ ...validOrg, claim: true })
+
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ type: 'ciudadano', managed: true })
+    expect(res.body.membership).toBeUndefined()
+
+    const me = await agent.get('/api/auth/me')
+    expect(me.body.staff).toMatchObject({
+      email: 'dona-creadora@correo.org',
+      role: 'manager',
+      status: 'active',
+    })
+
+    const pedido = await agent
+      .post(`/api/help-orgs/${res.body.id}/requests`)
+      .send({
+        type: 'supplies_request',
+        title: 'El centro necesita agua embotellada',
+        description:
+          'Las familias del sector necesitan agua embotellada para beber durante la emergencia.',
+        cityCode: 'pereira',
+      })
+    expect(pedido.status).toBe(201)
+  })
+
+  it('crea la organización sin vínculo cuando usa claim:false', async () => {
+    const agent = await citizenAgent('voluntaria-sin-reclamo@correo.org', 'Lucía')
+
+    const res = await agent
+      .post('/api/help-orgs')
+      .send({ ...validOrg, claim: false })
+
+    expect(res.status).toBe(201)
+    expect(res.body).toMatchObject({ type: 'ciudadano', managed: false })
+
+    const me = await agent.get('/api/auth/me')
+    expect(me.body.staff).toBeNull()
+
+    const members = await agent.get(`/api/help-orgs/${res.body.id}/members`)
+    expect(members.status).toBe(403)
+  })
+
+  it('rechaza con 409 cuando quien reclama una nueva organización ya pertenece a otra', async () => {
+    const org = await createHelpOrg({ name: 'Mi organización actual' })
+    const agent = await joinStaff(org.id, 'ocupado@correo.org', 'Ocupado')
+
+    const res = await agent
+      .post('/api/help-orgs')
+      .send({ ...validOrg, claim: true })
+
+    expect(res.status).toBe(409)
+  })
+
+  it('expone el flag managed en el listado solo para organizaciones con personal activo', async () => {
+    const orgManaged = await createHelpOrg({ name: 'Centro gestionado' })
+    await joinStaff(orgManaged.id, 'gerente-managed@correo.org', 'Gerente')
+    const orgLibre = await createHelpOrg({ name: 'Centro libre' })
+
+    const res = await request(app).get('/api/help-orgs?city=pereira')
+    const byName = Object.fromEntries(
+      res.body.helpOrgs.map((o: { name: string; managed: boolean }) => [
+        o.name,
+        o.managed,
+      ]),
+    )
+    expect(byName['Centro gestionado']).toBe(true)
+    expect(byName['Centro libre']).toBe(false)
   })
 
   it('valida nombre, ciudad y coordenadas', async () => {
@@ -209,9 +299,65 @@ describe('personal de la organización', () => {
     expect(res.status).toBe(401)
   })
 
+  it('la primera persona que se vincula a una organización se convierte en manager activo', async () => {
+    const org = await createHelpOrg()
+    const agent = await joinStaff(org.id, 'primer-manager@correo.org', 'Primera')
+
+    const me = await agent.get('/api/auth/me')
+    expect(me.body.staff).toMatchObject({
+      orgId: org.id,
+      role: 'manager',
+      status: 'active',
+    })
+
+    const members = await agent.get(`/api/help-orgs/${org.id}/members`)
+    expect(members.body.members).toHaveLength(1)
+    expect(members.body.members[0]).toMatchObject({ role: 'manager', status: 'active' })
+  })
+
+  it('devuelve 404 al vincularse a una organización inexistente', async () => {
+    const agent = await citizenAgent('perdida@correo.org', 'Perdida')
+    const res = await agent.post('/api/help-orgs/no-existe-id/join')
+    expect(res.status).toBe(404)
+  })
+
+  it('exige sesión para vincularse a una organización', async () => {
+    const org = await createHelpOrg()
+    const res = await request(app).post(`/api/help-orgs/${org.id}/join`)
+    expect(res.status).toBe(401)
+  })
+
+  it('rechaza con 409 vincularse a una segunda organización', async () => {
+    const orgA = await createHelpOrg({ name: 'Org A' })
+    const orgB = await createHelpOrg({ name: 'Org B' })
+    const agent = await joinStaff(orgA.id, 'doble@correo.org', 'Doble')
+
+    const res = await agent.post(`/api/help-orgs/${orgB.id}/join`)
+    expect(res.status).toBe(409)
+  })
+
+  it('una vinculación pendiente aparece como pendingOrgId en /me sin otorgar acceso', async () => {
+    const org = await createHelpOrg()
+    const manager = await joinStaff(org.id)
+    const agent = await citizenAgent('pendiente@correo.org', 'Pendiente')
+
+    const join = await agent.post(`/api/help-orgs/${org.id}/join`)
+    expect(join.status).toBe(201)
+    expect(join.body.membership).toMatchObject({ role: 'member', status: 'pending' })
+
+    const me = await agent.get('/api/auth/me')
+    expect(me.body.staff).toBeNull()
+    expect(me.body.pendingOrgId).toBe(org.id)
+
+    const items = await agent.post(`/api/help-orgs/${org.id}/items`).send({
+      name: 'Cobijas',
+    })
+    expect(items.status).toBe(403)
+  })
+
   it('lista los miembros activos y pendientes de la organización', async () => {
     const org = await createHelpOrg()
-    const manager = await registerStaff(org.id)
+    const manager = await joinStaff(org.id)
     await registerPending(org.id, 'colaborador@org.org', 'Colaborador')
 
     const res = await manager.get(`/api/help-orgs/${org.id}/members`)
@@ -229,9 +375,9 @@ describe('personal de la organización', () => {
     })
   })
 
-  it('el segundo registro queda pendiente hasta que el manager lo apruebe', async () => {
+  it('la segunda solicitud de vinculación queda pendiente hasta que el manager la apruebe', async () => {
     const org = await createHelpOrg()
-    const manager = await registerStaff(org.id)
+    const manager = await joinStaff(org.id)
     await registerPending(org.id, 'colaborador@org.org', 'Colaborador')
 
     const blocked = await request(app).post('/api/auth/login').send({
@@ -244,7 +390,7 @@ describe('personal de la organización', () => {
 
   it('el manager aprueba una solicitud pendiente y esa persona puede ingresar', async () => {
     const org = await createHelpOrg()
-    const manager = await registerStaff(org.id)
+    const manager = await joinStaff(org.id)
     await registerPending(org.id, 'colaborador@org.org', 'Colaborador')
 
     const members = await manager.get(`/api/help-orgs/${org.id}/members`)
@@ -274,7 +420,7 @@ describe('personal de la organización', () => {
 
   it('el manager rechaza una solicitud pendiente y se retira la membresía', async () => {
     const org = await createHelpOrg()
-    const manager = await registerStaff(org.id)
+    const manager = await joinStaff(org.id)
     await registerPending(org.id, 'rechazado@org.org', 'Rechazado')
 
     const members = await manager.get(`/api/help-orgs/${org.id}/members`)
@@ -295,7 +441,7 @@ describe('personal de la organización', () => {
 
   it('un miembro sin rol de manager no puede aprobar solicitudes', async () => {
     const org = await createHelpOrg()
-    const manager = await registerStaff(org.id)
+    const manager = await joinStaff(org.id)
     await registerPending(org.id, 'colaborador@org.org', 'Colaborador')
     await registerPending(org.id, 'tercero@org.org', 'Tercero')
 
@@ -330,7 +476,8 @@ describe('personal de la organización', () => {
   it('no permite aprobar la membresía de otra organización', async () => {
     const orgA = await createHelpOrg({ name: 'Org A' })
     const orgB = await createHelpOrg({ name: 'Org B' })
-    const managerA = await registerStaff(orgA.id)
+    const managerA = await joinStaff(orgA.id)
+    await joinStaff(orgB.id, 'manager-b@org.org', 'Manager B')
     await registerPending(orgB.id, 'colaborador@org.org', 'Colaborador')
 
     const probe = await managerA.post(
@@ -341,7 +488,7 @@ describe('personal de la organización', () => {
 
   it('el personal publica un pedido a nombre de la organización', async () => {
     const org = await createHelpOrg()
-    const agent = await registerStaff(org.id)
+    const agent = await joinStaff(org.id)
 
     const res = await agent.post(`/api/help-orgs/${org.id}/requests`).send({
       type: 'supplies_request',
@@ -408,7 +555,7 @@ describe('inventario de la organización (/api/help-orgs/:id/items)', () => {
 
   it('el personal crea un elemento del inventario', async () => {
     const org = await createHelpOrg()
-    const agent = await registerStaff(org.id)
+    const agent = await joinStaff(org.id)
 
     const res = await agent.post(`/api/help-orgs/${org.id}/items`).send({
       kind: 'needed',
@@ -444,7 +591,7 @@ describe('inventario de la organización (/api/help-orgs/:id/items)', () => {
   it('no permite que personal de otra organización modifique el inventario', async () => {
     const orgA = await createHelpOrg({ name: 'Org A' })
     const orgB = await createHelpOrg({ name: 'Org B' })
-    const agent = await registerStaff(orgA.id)
+    const agent = await joinStaff(orgA.id)
 
     const res = await agent.post(`/api/help-orgs/${orgB.id}/items`).send({
       name: 'Cobijas',
@@ -455,7 +602,7 @@ describe('inventario de la organización (/api/help-orgs/:id/items)', () => {
 
   it('actualiza un elemento y registra quién lo modificó', async () => {
     const org = await createHelpOrg()
-    const agent = await registerStaff(org.id)
+    const agent = await joinStaff(org.id)
     const created = await agent
       .post(`/api/help-orgs/${org.id}/items`)
       .send({ kind: 'available', name: 'Agua', quantity: 100, unit: 'botellas' })
@@ -476,7 +623,7 @@ describe('inventario de la organización (/api/help-orgs/:id/items)', () => {
 
   it('elimina un elemento del inventario', async () => {
     const org = await createHelpOrg()
-    const agent = await registerStaff(org.id)
+    const agent = await joinStaff(org.id)
     const created = await agent
       .post(`/api/help-orgs/${org.id}/items`)
       .send({ name: 'Temporal' })
@@ -491,7 +638,7 @@ describe('inventario de la organización (/api/help-orgs/:id/items)', () => {
 
   it('rechaza un tipo de elemento inválido', async () => {
     const org = await createHelpOrg()
-    const agent = await registerStaff(org.id)
+    const agent = await joinStaff(org.id)
 
     const res = await agent.post(`/api/help-orgs/${org.id}/items`).send({
       kind: 'urgente',

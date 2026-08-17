@@ -5,7 +5,9 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 import {
   currentSession,
   requireOrgStaff,
+  requireSession,
 } from '../middleware/requireSession.js'
+import { setSessionCookie } from '../lib/cookies.js'
 import {
   approveMember,
   createHelpOrg,
@@ -13,6 +15,7 @@ import {
   createOrgRequest,
   deleteOrgItem,
   getHelpOrg,
+  joinHelpOrg,
   listHelpOrgs,
   listMembers,
   listOrgItems,
@@ -64,8 +67,40 @@ helpOrgsRouter.post(
       process.env.ADMIN_TOKEN ?? '',
     )
     const type = isAdmin ? 'oficial' : 'ciudadano'
-    const created = await createHelpOrg(input, type, session?.sub)
-    res.status(201).json(created)
+    const created = await createHelpOrg(input, type, {
+      userId: session?.sub,
+      claim: input.claim,
+    })
+    if (created.membership && session) {
+      setSessionCookie(res, {
+        sub: session.sub,
+        orgId: created.membership.orgId,
+        role: created.membership.role,
+        membershipId: created.membership.id,
+      })
+    }
+    const { membership: _membership, ...body } = created
+    res.status(201).json(body)
+  }),
+)
+
+helpOrgsRouter.post(
+  '/:id/join',
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const result = await joinHelpOrg(
+      String(req.params.id),
+      req.session!.sub,
+    )
+    if (result.membership.status === 'active') {
+      setSessionCookie(res, {
+        sub: req.session!.sub,
+        orgId: result.membership.orgId,
+        role: result.membership.role,
+        membershipId: result.membership.id,
+      })
+    }
+    res.status(201).json({ membership: result.membership })
   }),
 )
 

@@ -11,7 +11,6 @@ async function registerAndLogin(email: string, name = 'Ciudadana', orgId?: strin
     email,
     password: 'contrasena-segura',
     name,
-    ...(orgId ? { orgId } : {}),
   })
   const url = new URL(created.body.verificationUrl, 'http://localhost')
   const token = url.searchParams.get('token')!
@@ -19,6 +18,10 @@ async function registerAndLogin(email: string, name = 'Ciudadana', orgId?: strin
 
   const agent = request.agent(app)
   await agent.post('/api/auth/login').send({ email, password: 'contrasena-segura' })
+  if (orgId) {
+    const join = await agent.post(`/api/help-orgs/${orgId}/join`)
+    expect(join.status).toBe(201)
+  }
   return agent
 }
 
