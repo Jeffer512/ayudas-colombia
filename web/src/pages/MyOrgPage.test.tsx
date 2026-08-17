@@ -23,6 +23,7 @@ vi.mock('../api/client', () => ({
     rejectOrgMember: vi.fn(),
     helpOrgs: vi.fn(),
     joinOrg: vi.fn(),
+    updateHelpOrg: vi.fn(),
     logout: vi.fn(),
   },
 }))
@@ -40,6 +41,7 @@ const mockedApproveOrgMember = vi.mocked(api.approveOrgMember)
 const mockedRejectOrgMember = vi.mocked(api.rejectOrgMember)
 const mockedHelpOrgs = vi.mocked(api.helpOrgs)
 const mockedJoinOrg = vi.mocked(api.joinOrg)
+const mockedUpdateHelpOrg = vi.mocked(api.updateHelpOrg)
 
 const staff: Staff = {
   id: 's1',
@@ -114,6 +116,8 @@ beforeEach(() => {
   mockedHelpOrgs.mockReset()
   mockedJoinOrg.mockReset()
 
+  mockedUpdateHelpOrg.mockReset()
+
   mockedMe.mockResolvedValue({
     authenticated: true,
     name: staff.name,
@@ -144,6 +148,69 @@ beforeEach(() => {
   mockedCreateOrgItem.mockResolvedValue({ item: item('i3') })
   mockedUpdateOrgItem.mockResolvedValue({ item: item('i1') })
   mockedDeleteOrgItem.mockResolvedValue({ ok: true })
+})
+
+describe('MyOrgPage — datos de la organización', () => {
+  it('el manager edita los datos de la organización', async () => {
+    mockedUpdateHelpOrg.mockResolvedValue(org)
+    renderPage()
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Editar perfil' }),
+    )
+
+    const nameInput = await screen.findByLabelText('Nombre')
+    await userEvent.clear(nameInput)
+    await userEvent.type(nameInput, 'Centro La Florida Renovado')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    await waitFor(() =>
+      expect(mockedUpdateHelpOrg).toHaveBeenCalledWith('o1', {
+        name: 'Centro La Florida Renovado',
+        category: 'acopio',
+        description: null,
+        address: null,
+        contactName: null,
+        contactPhone: null,
+        hours: null,
+        accepts: null,
+      }),
+    )
+  })
+
+  it('el manager ve la sección de datos de la organización', async () => {
+    renderPage()
+
+    expect(
+      await screen.findByText('Datos de la organización'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Editar perfil' }),
+    ).toBeInTheDocument()
+  })
+
+  it('un miembro no ve la sección de datos de la organización', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: staff.name,
+      email: staff.email,
+      staff: { ...staff, role: 'member' },
+      pendingOrgId: null,
+    })
+
+    renderPage()
+    await screen.findByText('Mi organización')
+
+    expect(
+      screen.queryByText('Datos de la organización'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Editar perfil' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Publicar un pedido de la organización'),
+    ).toBeInTheDocument()
+  })
 })
 
 describe('MyOrgPage — inventario', () => {

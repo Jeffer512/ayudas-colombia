@@ -11,12 +11,44 @@ import {
   REQUEST_TYPE_LABELS,
   URGENCY_META,
 } from '../lib/constants'
-import type { HelpOrgItem, HelpOrgItemKind, RequestType, Urgency } from '../lib/types'
+import type {
+  HelpOrg,
+  HelpOrgCategory,
+  HelpOrgItem,
+  HelpOrgItemKind,
+  RequestType,
+  UpdateOrgProfile,
+  Urgency,
+} from '../lib/types'
 
 const inputClass =
   'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
 const labelClass = 'text-sm font-medium text-text-muted'
+
+interface ProfileDraft {
+  name: string
+  category: HelpOrgCategory
+  description: string
+  address: string
+  contactName: string
+  contactPhone: string
+  hours: string
+  accepts: string
+}
+
+function profileDraftFrom(org: HelpOrg): ProfileDraft {
+  return {
+    name: org.name,
+    category: org.category,
+    description: org.description ?? '',
+    address: org.address ?? '',
+    contactName: org.contactName ?? '',
+    contactPhone: org.contactPhone ?? '',
+    hours: org.hours ?? '',
+    accepts: org.accepts ?? '',
+  }
+}
 
 export default function MyOrgPage() {
   const queryClient = useQueryClient()
@@ -76,6 +108,30 @@ export default function MyOrgPage() {
       queryClient.invalidateQueries({ queryKey: ['members', staff?.orgId] })
     },
     onError: (err: Error) => setMemberError(err.message),
+  })
+
+  const [profile, setProfile] = useState<ProfileDraft | null>(null)
+  const [profileError, setProfileError] = useState<string | null>(null)
+
+  const updateProfileMutation = useMutation({
+    mutationFn: () =>
+      api.updateHelpOrg(staff!.orgId, {
+        name: profile!.name,
+        category: profile!.category,
+        description: profile!.description.trim() || null,
+        address: profile!.address.trim() || null,
+        contactName: profile!.contactName.trim() || null,
+        contactPhone: profile!.contactPhone.trim() || null,
+        hours: profile!.hours.trim() || null,
+        accepts: profile!.accepts.trim() || null,
+      } satisfies UpdateOrgProfile),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['help-org', staff?.orgId] })
+      queryClient.invalidateQueries({ queryKey: ['help-orgs'] })
+      setProfile(null)
+      setProfileError(null)
+    },
+    onError: (err: Error) => setProfileError(err.message),
   })
 
   const [reqType, setReqType] = useState<RequestType>('supplies_request')
@@ -309,6 +365,192 @@ export default function MyOrgPage() {
             {staff.role === 'manager' ? 'manager' : 'miembro'}.
           </p>
         </div>
+      )}
+
+      {org && staff.role === 'manager' && (
+        <section className="mt-4 rounded-lg border border-line bg-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-text-muted">
+              Datos de la organización
+            </h2>
+            {!profile && (
+              <button
+                type="button"
+                onClick={() => {
+                  setProfile(profileDraftFrom(org))
+                  setProfileError(null)
+                }}
+                className="rounded-md border border-line bg-surface px-3 py-1 text-xs font-medium text-text-muted hover:bg-page dark:hover:bg-white/10"
+              >
+                Editar perfil
+              </button>
+            )}
+          </div>
+
+          {profileError && (
+            <div
+              role="alert"
+              className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+            >
+              {profileError}
+            </div>
+          )}
+
+          {profile && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                updateProfileMutation.mutate()
+              }}
+              className="mt-3 space-y-3"
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="profileName" className={labelClass}>
+                    Nombre
+                  </label>
+                  <input
+                    id="profileName"
+                    required
+                    minLength={2}
+                    maxLength={140}
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    className={`mt-1 ${inputClass}`}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="profileCategory" className={labelClass}>
+                    Categoría
+                  </label>
+                  <select
+                    id="profileCategory"
+                    value={profile.category}
+                    onChange={(e) =>
+                      setProfile({
+                        ...profile,
+                        category: e.target.value as HelpOrgCategory,
+                      })
+                    }
+                    className={`mt-1 ${inputClass}`}
+                  >
+                    {Object.entries(HELP_ORG_CATEGORY_LABELS).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="profileDescription" className={labelClass}>
+                  Descripción
+                </label>
+                <textarea
+                  id="profileDescription"
+                  maxLength={2000}
+                  rows={3}
+                  value={profile.description}
+                  onChange={(e) =>
+                    setProfile({ ...profile, description: e.target.value })
+                  }
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+              <div>
+                <label htmlFor="profileAddress" className={labelClass}>
+                  Dirección o referencia
+                </label>
+                <input
+                  id="profileAddress"
+                  maxLength={300}
+                  value={profile.address}
+                  onChange={(e) =>
+                    setProfile({ ...profile, address: e.target.value })
+                  }
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="profileContactName" className={labelClass}>
+                    Persona de contacto
+                  </label>
+                  <input
+                    id="profileContactName"
+                    maxLength={120}
+                    value={profile.contactName}
+                    onChange={(e) =>
+                      setProfile({ ...profile, contactName: e.target.value })
+                    }
+                    className={`mt-1 ${inputClass}`}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="profileContactPhone" className={labelClass}>
+                    Teléfono de contacto
+                  </label>
+                  <input
+                    id="profileContactPhone"
+                    maxLength={30}
+                    value={profile.contactPhone}
+                    onChange={(e) =>
+                      setProfile({ ...profile, contactPhone: e.target.value })
+                    }
+                    className={`mt-1 ${inputClass}`}
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="profileHours" className={labelClass}>
+                  Horarios
+                </label>
+                <input
+                  id="profileHours"
+                  maxLength={200}
+                  value={profile.hours}
+                  onChange={(e) => setProfile({ ...profile, hours: e.target.value })}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+              <div>
+                <label htmlFor="profileAccepts" className={labelClass}>
+                  Qué reciben (opcional)
+                </label>
+                <textarea
+                  id="profileAccepts"
+                  maxLength={2000}
+                  rows={3}
+                  value={profile.accepts}
+                  onChange={(e) =>
+                    setProfile({ ...profile, accepts: e.target.value })
+                  }
+                  className={`mt-1 ${inputClass}`}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={updateProfileMutation.isPending}
+                  className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+                >
+                  {updateProfileMutation.isPending
+                    ? 'Guardando…'
+                    : 'Guardar cambios'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProfile(null)}
+                  className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
       )}
 
       <section className="mt-6 rounded-lg border border-line bg-surface p-4">
