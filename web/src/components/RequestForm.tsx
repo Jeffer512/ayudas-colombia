@@ -49,7 +49,6 @@ interface ReporterState {
 interface RequestFormProps {
   mode: 'create' | 'edit'
   initial?: Request
-  requireCode?: boolean
   submitLabel: string
   submittingLabel?: string
   onSubmit: (body: NewRequest | UpdateRequest) => Promise<void>
@@ -67,7 +66,6 @@ const initialReporter: ReporterState = {
 export default function RequestForm({
   mode,
   initial,
-  requireCode = false,
   submitLabel,
   submittingLabel = 'Guardando…',
   onSubmit,
@@ -113,7 +111,6 @@ export default function RequestForm({
   )
   const [contactVisibility, setContactVisibility] =
     useState<ContactVisibility>(editing ? (initial!.contactVisibility ?? 'public') : 'public')
-  const [resolveCode, setResolveCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -166,15 +163,6 @@ export default function RequestForm({
       const initialPhoto = initial!.photo ?? null
       if (photo !== initialPhoto) {
         base.photo = photo ?? null
-      }
-      if (requireCode) {
-        const code = resolveCode.trim()
-        if (!code) {
-          setError('Ingresa el código de cierre para editar el pedido.')
-          setSubmitting(false)
-          return
-        }
-        base.resolveCode = code
       }
       body = base
     } else {
@@ -425,28 +413,6 @@ export default function RequestForm({
           value={contactVisibility}
           onChange={setContactVisibility}
         />
-
-        {mode === 'edit' && requireCode && (
-          <div>
-            <label htmlFor="resolveCode" className={labelClass}>
-              Código de cierre (4 dígitos)
-            </label>
-            <input
-              id="resolveCode"
-              required
-              minLength={4}
-              maxLength={4}
-              placeholder="1234"
-              value={resolveCode}
-              onChange={(e) => setResolveCode(e.target.value)}
-              className={`mt-1 ${inputClass}`}
-            />
-            <p className="mt-1 text-xs text-text-muted">
-              Se necesita para editar porque esta publicación no está asociada a
-              tu cuenta. Se entregó al publicar el pedido.
-            </p>
-          </div>
-        )}
 
         <div className="flex justify-end gap-3">
           <button

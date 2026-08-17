@@ -11,6 +11,7 @@ vi.mock('../api/client', () => ({
   api: {
     offer: vi.fn(),
     updateOffer: vi.fn(),
+    verifyOfferCode: vi.fn(),
     cities: vi.fn(),
   },
 }))
@@ -22,14 +23,14 @@ vi.mock('../components/Map', () => ({
 
 const mockedOffer = vi.mocked(api.offer)
 const mockedUpdate = vi.mocked(api.updateOffer)
+const mockedVerify = vi.mocked(api.verifyOfferCode)
 const mockedCities = vi.mocked(api.cities)
 
 const baseOffer: Offer = {
   id: 'o1',
-  isOwner: true,
   type: 'supplies_offered',
   transport: 'can_transport',
-  items: ['Kits de aseo'],
+  items: ['Alimentación'],
   zone: 'Centro',
   volunteer: null,
   vehicle: null,
@@ -54,14 +55,17 @@ const baseOffer: Offer = {
   updatedAt: '2026-08-13T12:00:00Z',
 }
 
-function renderPage(offer: Offer = baseOffer) {
+function renderPage(offer: Offer = baseOffer, state?: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   mockedOffer.mockResolvedValue(offer)
+  const entry = state
+    ? { pathname: '/oferta/o1/editar', state: { resolveCode: state } }
+    : '/oferta/o1/editar'
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/oferta/o1/editar']}>
+      <MemoryRouter initialEntries={[entry]}>
         <Routes>
           <Route path="/oferta/:id/editar" element={<OfferEditPage />} />
           <Route path="/oferta/o1" element={<div>DETALLE_OFERTA</div>} />
@@ -75,23 +79,59 @@ describe('OfferEditPage', () => {
   beforeEach(() => {
     mockedOffer.mockReset()
     mockedUpdate.mockReset()
+    mockedVerify.mockReset()
     mockedCities.mockReset()
     mockedCities.mockResolvedValue({
       cities: [
-        { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
+        { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.7205 },
       ],
     })
     mockedUpdate.mockResolvedValue(baseOffer)
+    mockedVerify.mockResolvedValue({ ok: true })
   })
 
-  it('edita una oferta abierta sin compromiso y navega al detalle', async () => {
+  it('el autor edita sin pedir código y guarda sin resolveCode', async () => {
     const user = userEvent.setup()
-    renderPage()
+    renderPage({ ...baseOffer, isOwner: true })
 
     const titleInput = await screen.findByLabelText('Título')
     await user.clear(titleInput)
     await user.type(titleInput, 'Ofrezco 120 kits de aseo')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
+    await waitFor(() =>
+      expect(mockedUpdate).toHaveBeenCalledWith(
+        'o1',
+        expect.objectContaining({ title: 'Ofrezco 120 kits de aseo' }),
+      ),
+    )
+    expect(mockedUpdate.mock.calls[0][1]).not.toHaveProperty('resolveCode')
+    expect(mockedVerify).not.toHaveBeenCalled()
+
+    expect(await screen.findByText('DETALLE_OFERTA')).toBeInTheDocument()
+  })
+
+  it('pide el código antes de mostrar el formulario a un visitante sin estado', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(
+      await screen.findByRole('button', { name: 'Verificar código' }),
+    ).toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText('Código de cierre (4 dígitos)'),
+      '1234',
+    )
+    await user.click(screen.getByRole('button', { name: 'Verificar código' }))
+
+    await waitFor(() =>
+      expect(mockedVerify).toHaveBeenCalledWith('o1', '1234'),
+    )
+
+    const titleInput = await screen.findByLabelText('Título')
+    await user.clear(titleInput)
+    await user.type(titleInput, 'Ofrezco 120 kits de aseo')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     await waitFor(() =>
@@ -99,31 +139,22 @@ describe('OfferEditPage', () => {
         'o1',
         expect.objectContaining({
           title: 'Ofrezco 120 kits de aseo',
-          transport: 'can_transport',
-          items: ['Kits de aseo'],
-          zone: 'Centro',
+          resolveCode: '1234',
         }),
       ),
     )
-    expect(mockedUpdate.mock.calls[0][1]).not.toHaveProperty('resolveCode')
-
-    expect(await screen.findByText('DETALLE_OFERTA')).toBeInTheDocument()
   })
 
-  it('exige el código de cierre cuando el visitante no es el autor', async () => {
+  it('usa el código del estado de navegación sin volver a pedirlo', async () => {
     const user = userEvent.setup()
-    renderPage({ ...baseOffer, isOwner: false })
+    renderPage(baseOffer, '1234')
 
     const titleInput = await screen.findByLabelText('Título')
     await user.clear(titleInput)
     await user.type(titleInput, 'Ofrezco 120 kits de aseo')
-    await user.type(
-      screen.getByLabelText('Código de cierre (4 dígitos)'),
-      '1234',
-    )
-
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
+    await waitFor(() => expect(mockedVerify).not.toHaveBeenCalled())
     await waitFor(() =>
       expect(mockedUpdate).toHaveBeenCalledWith(
         'o1',
@@ -132,14 +163,22 @@ describe('OfferEditPage', () => {
     )
   })
 
-  it('el dueño no tiene que escribir el código de cierre', async () => {
-    renderPage({ ...baseOffer, isOwner: true })
+  it('muestra el error cuando el código verificado es incorrecto', async () => {
+    mockedVerify.mockRejectedValue(new Error('Código de cierre incorrecto'))
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.type(
+      await screen.findByLabelText('Código de cierre (4 dígitos)'),
+      '9999',
+    )
+    await user.click(screen.getByRole('button', { name: 'Verificar código' }))
 
     expect(
-      await screen.findByRole('button', { name: 'Guardar cambios' }),
-    ).toBeInTheDocument()
+      await screen.findByRole('alert'),
+    ).toHaveTextContent('Código de cierre incorrecto')
     expect(
-      screen.queryByLabelText('Código de cierre (4 dígitos)'),
+      screen.queryByRole('button', { name: 'Guardar cambios' }),
     ).not.toBeInTheDocument()
   })
 

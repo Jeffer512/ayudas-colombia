@@ -115,6 +115,13 @@ export const api = {
     return http(`/requests/${id}`, { method: 'PUT', body: JSON.stringify(body) })
   },
 
+  verifyRequestCode(id: string, resolveCode: string): Promise<{ ok: boolean }> {
+    return http(`/requests/${id}/verify-code`, {
+      method: 'POST',
+      body: JSON.stringify({ resolveCode }),
+    })
+  },
+
   updateRequestStatus(id: string, body: StatusUpdate): Promise<Request> {
     return http(`/requests/${id}/status`, {
       method: 'POST',
@@ -150,6 +157,13 @@ export const api = {
 
   updateOffer(id: string, body: UpdateOffer): Promise<Offer> {
     return http(`/offers/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+  },
+
+  verifyOfferCode(id: string, resolveCode: string): Promise<{ ok: boolean }> {
+    return http(`/offers/${id}/verify-code`, {
+      method: 'POST',
+      body: JSON.stringify({ resolveCode }),
+    })
   },
 
   updateOfferStatus(id: string, body: StatusUpdate): Promise<Offer> {

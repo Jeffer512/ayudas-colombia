@@ -18,7 +18,7 @@ import type { StatusUpdate } from '../lib/types'
 const inputClass =
   'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
 
-type ActionMode = 'resolve' | 'reopen' | null
+type ActionMode = 'resolve' | 'reopen' | 'edit' | null
 
 export default function RequestDetailPage() {
   const { id = '' } = useParams()
@@ -58,6 +58,15 @@ export default function RequestDetailPage() {
       setHelperName('')
       setHelperNote('')
       setIHelped(true)
+    },
+  })
+
+  const verifyMutation = useMutation({
+    mutationFn: (code: string) => api.verifyRequestCode(id, code),
+    onSuccess: (_data, code) => {
+      setMode(null)
+      setResolveCode('')
+      navigate(`/pedido/${id}/editar`, { state: { resolveCode: code } })
     },
   })
 
@@ -211,7 +220,14 @@ export default function RequestDetailPage() {
             </button>
             {request.helpers === 0 && (
               <button
-                onClick={() => navigate(`/pedido/${request.id}/editar`)}
+                onClick={() => {
+                  if (request.isOwner) {
+                    navigate(`/pedido/${request.id}/editar`)
+                  } else {
+                    setResolveCode('')
+                    setMode('edit')
+                  }
+                }}
                 className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
               >
                 Editar pedido
@@ -220,7 +236,61 @@ export default function RequestDetailPage() {
           </div>
         )}
 
-        {mode !== null && (
+        {mode === 'edit' && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (resolveCode.trim()) verifyMutation.mutate(resolveCode.trim())
+            }}
+            className="mt-3 space-y-3"
+          >
+            {verifyMutation.isError && (
+              <div
+                role="alert"
+                className="rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+              >
+                {(verifyMutation.error as Error).message}
+              </div>
+            )}
+            <div>
+              <label htmlFor="resolveCode" className="text-sm font-medium text-text-muted">
+                Código de cierre (4 dígitos)
+              </label>
+              <input
+                id="resolveCode"
+                required
+                minLength={4}
+                maxLength={4}
+                placeholder="1234"
+                value={resolveCode}
+                onChange={(e) => setResolveCode(e.target.value)}
+                className={`mt-1 ${inputClass}`}
+              />
+              <p className="mt-1 text-xs text-text-muted">
+                Este pedido no está asociado a tu cuenta. Con el código de cierre
+                que se entregó al publicarlo podrás entrar a editarlo.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={verifyMutation.isPending}
+                className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+              >
+                {verifyMutation.isPending ? 'Verificando…' : 'Entrar a editar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode(null)}
+                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+
+        {mode === 'resolve' && (
           <form
             onSubmit={(e) => {
               e.preventDefault()

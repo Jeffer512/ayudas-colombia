@@ -21,7 +21,7 @@ export default function OfferDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [mode, setMode] = useState<'close' | null>(null)
+  const [mode, setMode] = useState<'close' | 'edit' | null>(null)
   const [closeAs, setCloseAs] = useState<'fulfilled' | 'unavailable' | 'open'>('fulfilled')
   const [resolveCode, setResolveCode] = useState('')
   const [note, setNote] = useState('')
@@ -50,6 +50,15 @@ export default function OfferDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offer', id] })
       queryClient.invalidateQueries({ queryKey: ['offers'] })
+    },
+  })
+
+  const verifyMutation = useMutation({
+    mutationFn: (code: string) => api.verifyOfferCode(id, code),
+    onSuccess: (_data, code) => {
+      setMode(null)
+      setResolveCode('')
+      navigate(`/oferta/${id}/editar`, { state: { resolveCode: code } })
     },
   })
 
@@ -279,13 +288,74 @@ export default function OfferDetailPage() {
             </button>
             {!offer.claim && (
               <button
-                onClick={() => navigate(`/oferta/${offer.id}/editar`)}
+                onClick={() => {
+                  if (offer.isOwner) {
+                    navigate(`/oferta/${offer.id}/editar`)
+                  } else {
+                    setResolveCode('')
+                    setMode('edit')
+                  }
+                }}
                 className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
               >
                 Editar oferta
               </button>
             )}
           </div>
+        )}
+
+        {mode === 'edit' && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (resolveCode.trim()) verifyMutation.mutate(resolveCode.trim())
+            }}
+            className="mt-3 space-y-3"
+          >
+            {verifyMutation.isError && (
+              <div
+                role="alert"
+                className="rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+              >
+                {(verifyMutation.error as Error).message}
+              </div>
+            )}
+            <div>
+              <label htmlFor="offerEditResolveCode" className="text-sm font-medium text-text-muted">
+                Código de cierre (4 dígitos)
+              </label>
+              <input
+                id="offerEditResolveCode"
+                required
+                minLength={4}
+                maxLength={4}
+                placeholder="1234"
+                value={resolveCode}
+                onChange={(e) => setResolveCode(e.target.value)}
+                className={`mt-1 ${inputClass}`}
+              />
+              <p className="mt-1 text-xs text-text-muted">
+                Esta oferta no está asociada a tu cuenta. Con el código de cierre
+                que se entregó al publicarla podrás entrar a editarla.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={verifyMutation.isPending}
+                className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+              >
+                {verifyMutation.isPending ? 'Verificando…' : 'Entrar a editar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode(null)}
+                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
         )}
 
         {!mode && inTransit && (

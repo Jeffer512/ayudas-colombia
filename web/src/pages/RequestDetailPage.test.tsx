@@ -11,6 +11,7 @@ vi.mock('../api/client', () => ({
   api: {
     request: vi.fn(),
     updateRequestStatus: vi.fn(),
+    verifyRequestCode: vi.fn(),
     helpRequest: vi.fn(),
     markerId: vi.fn(() => 'device-abc'),
   },
@@ -23,6 +24,7 @@ vi.mock('../components/Map', () => ({
 
 const mockedRequest = vi.mocked(api.request)
 const mockedUpdateStatus = vi.mocked(api.updateRequestStatus)
+const mockedVerifyCode = vi.mocked(api.verifyRequestCode)
 const mockedHelpRequest = vi.mocked(api.helpRequest)
 
 const baseRequest: Request = {
@@ -80,7 +82,9 @@ describe('RequestDetailPage', () => {
   beforeEach(() => {
     mockedRequest.mockReset()
     mockedUpdateStatus.mockReset()
+    mockedVerifyCode.mockReset()
     mockedHelpRequest.mockReset()
+    mockedVerifyCode.mockResolvedValue({ ok: true })
   })
 
   it('muestra la información completa del pedido', async () => {
@@ -319,7 +323,19 @@ describe('RequestDetailPage', () => {
     )
   })
 
-  it('muestra el botón para editar en pedidos abiertos sin ayudantes', async () => {
+  it('lleva directo a la edición cuando eres el autor del pedido', async () => {
+    const user = userEvent.setup()
+    renderPage({ ...baseRequest, isOwner: true })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar pedido' }),
+    )
+
+    expect(await screen.findByText('EDITAR_PEDIDO')).toBeInTheDocument()
+    expect(mockedVerifyCode).not.toHaveBeenCalled()
+  })
+
+  it('pide el código de cierre antes de entrar a editar un pedido ajeno', async () => {
     const user = userEvent.setup()
     renderPage()
 
@@ -327,7 +343,45 @@ describe('RequestDetailPage', () => {
       await screen.findByRole('button', { name: 'Editar pedido' }),
     )
 
+    expect(
+      await screen.findByRole('button', { name: 'Entrar a editar' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('EDITAR_PEDIDO'),
+    ).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText('Código de cierre (4 dígitos)'),
+      '1234',
+    )
+    await user.click(screen.getByRole('button', { name: 'Entrar a editar' }))
+
+    await waitFor(() =>
+      expect(mockedVerifyCode).toHaveBeenCalledWith('r1', '1234'),
+    )
     expect(await screen.findByText('EDITAR_PEDIDO')).toBeInTheDocument()
+  })
+
+  it('muestra el error cuando el código de cierre es incorrecto y no navega', async () => {
+    mockedVerifyCode.mockRejectedValue(new Error('Código de cierre incorrecto'))
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar pedido' }),
+    )
+    await user.type(
+      await screen.findByLabelText('Código de cierre (4 dígitos)'),
+      '9999',
+    )
+    await user.click(screen.getByRole('button', { name: 'Entrar a editar' }))
+
+    expect(
+      await screen.findByRole('alert'),
+    ).toHaveTextContent('Código de cierre incorrecto')
+    expect(
+      screen.queryByText('EDITAR_PEDIDO'),
+    ).not.toBeInTheDocument()
   })
 
   it('oculta el botón para editar cuando ya hay personas ayudando', async () => {

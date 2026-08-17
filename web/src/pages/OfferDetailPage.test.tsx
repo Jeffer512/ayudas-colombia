@@ -11,6 +11,7 @@ vi.mock('../api/client', () => ({
   api: {
     offer: vi.fn(),
     updateOfferStatus: vi.fn(),
+    verifyOfferCode: vi.fn(),
     cancelClaim: vi.fn(),
   },
 }))
@@ -22,6 +23,7 @@ vi.mock('../components/Map', () => ({
 
 const mockedOffer = vi.mocked(api.offer)
 const mockedUpdateStatus = vi.mocked(api.updateOfferStatus)
+const mockedVerifyCode = vi.mocked(api.verifyOfferCode)
 const mockedCancel = vi.mocked(api.cancelClaim)
 
 const baseOffer: Offer = {
@@ -73,7 +75,9 @@ describe('OfferDetailPage', () => {
   beforeEach(() => {
     mockedOffer.mockReset()
     mockedUpdateStatus.mockReset()
+    mockedVerifyCode.mockReset()
     mockedCancel.mockReset()
+    mockedVerifyCode.mockResolvedValue({ ok: true })
   })
 
   it('muestra la información de la oferta sin urgencia ni historial', async () => {
@@ -410,7 +414,19 @@ describe('OfferDetailPage', () => {
     )
   })
 
-  it('muestra el botón para editar una oferta abierta sin compromiso', async () => {
+  it('lleva directo a la edición cuando eres el autor de la oferta', async () => {
+    const user = userEvent.setup()
+    renderPage({ ...baseOffer, isOwner: true })
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar oferta' }),
+    )
+
+    expect(await screen.findByText('EDITAR_OFERTA')).toBeInTheDocument()
+    expect(mockedVerifyCode).not.toHaveBeenCalled()
+  })
+
+  it('pide el código de cierre antes de entrar a editar una oferta ajena', async () => {
     const user = userEvent.setup()
     renderPage()
 
@@ -418,7 +434,45 @@ describe('OfferDetailPage', () => {
       await screen.findByRole('button', { name: 'Editar oferta' }),
     )
 
+    expect(
+      await screen.findByRole('button', { name: 'Entrar a editar' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('EDITAR_OFERTA'),
+    ).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText('Código de cierre (4 dígitos)'),
+      '1234',
+    )
+    await user.click(screen.getByRole('button', { name: 'Entrar a editar' }))
+
+    await waitFor(() =>
+      expect(mockedVerifyCode).toHaveBeenCalledWith('o1', '1234'),
+    )
     expect(await screen.findByText('EDITAR_OFERTA')).toBeInTheDocument()
+  })
+
+  it('muestra el error cuando el código de cierre es incorrecto y no navega', async () => {
+    mockedVerifyCode.mockRejectedValue(new Error('Código de cierre incorrecto'))
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar oferta' }),
+    )
+    await user.type(
+      await screen.findByLabelText('Código de cierre (4 dígitos)'),
+      '9999',
+    )
+    await user.click(screen.getByRole('button', { name: 'Entrar a editar' }))
+
+    expect(
+      await screen.findByRole('alert'),
+    ).toHaveTextContent('Código de cierre incorrecto')
+    expect(
+      screen.queryByText('EDITAR_OFERTA'),
+    ).not.toBeInTheDocument()
   })
 
   it('oculta el botón para editar cuando hay un compromiso de entrega', async () => {

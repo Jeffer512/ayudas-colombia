@@ -49,7 +49,6 @@ interface ReporterState {
 interface OfferFormProps {
   mode: 'create' | 'edit'
   initial?: Offer
-  requireCode?: boolean
   submitLabel: string
   submittingLabel?: string
   onSubmit: (body: NewOffer | UpdateOffer) => Promise<void>
@@ -73,7 +72,6 @@ function offerTypeChoices(includeTransport: boolean) {
 export default function OfferForm({
   mode,
   initial,
-  requireCode = false,
   submitLabel,
   submittingLabel = 'Guardando…',
   onSubmit,
@@ -132,7 +130,6 @@ export default function OfferForm({
   const [audience, setAudience] = useState<OfferAudience>(
     editing ? (initial!.audience ?? 'users') : 'users',
   )
-  const [resolveCode, setResolveCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -205,15 +202,6 @@ export default function OfferForm({
           capacity: capacity.trim() || null,
         }
         base.zone = zone.trim() || null
-      }
-      if (requireCode) {
-        const code = resolveCode.trim()
-        if (!code) {
-          setError('Ingresa el código de cierre para editar la oferta.')
-          setSubmitting(false)
-          return
-        }
-        base.resolveCode = code
       }
       body = base
     } else {
@@ -490,28 +478,6 @@ export default function OfferForm({
 
         {type === 'volunteers_offered' && (
           <AudienceSection value={audience} onChange={setAudience} />
-        )}
-
-        {mode === 'edit' && requireCode && (
-          <div>
-            <label htmlFor="resolveCode" className={labelClass}>
-              Código de cierre (4 dígitos)
-            </label>
-            <input
-              id="resolveCode"
-              required
-              minLength={4}
-              maxLength={4}
-              placeholder="1234"
-              value={resolveCode}
-              onChange={(e) => setResolveCode(e.target.value)}
-              className={`mt-1 ${inputClass}`}
-            />
-            <p className="mt-1 text-xs text-text-muted">
-              Se necesita para editar porque esta oferta no está asociada a tu
-              cuenta. Se entregó al publicar la oferta.
-            </p>
-          </div>
         )}
 
         <div className="flex justify-end gap-3">
