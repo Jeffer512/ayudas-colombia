@@ -41,6 +41,7 @@ describe('Layout', () => {
       name: null,
       email: null,
       staff: null,
+      pendingOrgId: null,
     })
     renderLayout()
 
@@ -59,6 +60,7 @@ describe('Layout', () => {
       name: 'Camila',
       email: 'camila@correo.co',
       staff: null,
+      pendingOrgId: null,
     })
     renderLayout()
 
@@ -75,6 +77,7 @@ describe('Layout', () => {
       name: 'Camila',
       email: 'camila@correo.co',
       staff: null,
+      pendingOrgId: null,
     })
     mockedLogout.mockResolvedValue({ ok: true })
     const user = userEvent.setup()

@@ -4,6 +4,7 @@ import type {
   HelpOrgItem,
   HelpOrgItemInput,
   HelpOrgListResponse,
+  JoinedOrgMembership,
   Aviso,
   AvisoFilters,
   AvisoListResponse,
@@ -185,6 +186,10 @@ export const api = {
     return http('/help-orgs', { method: 'POST', body: JSON.stringify(body) })
   },
 
+  joinOrg(orgId: string): Promise<{ membership: JoinedOrgMembership }> {
+    return http(`/help-orgs/${orgId}/join`, { method: 'POST' })
+  },
+
   orgMembers(id: string): Promise<{ members: Staff[] }> {
     return http(`/help-orgs/${id}/members`)
   },
@@ -287,6 +292,7 @@ export const api = {
     name: string | null
     email: string | null
     staff: Staff | null
+    pendingOrgId: string | null
   }> {
     return http('/auth/me')
   },

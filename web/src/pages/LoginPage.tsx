@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
 
 const inputClass =
@@ -11,6 +11,8 @@ const labelClass = 'text-sm font-medium text-text-muted'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
   const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,8 +21,13 @@ export default function LoginPage() {
     mutationFn: () => api.login({ email, password }),
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ['me'] })
-      if (data.staff) navigate('/mi-organizacion')
-      else navigate('/')
+      if (returnTo) {
+        navigate(returnTo)
+      } else if (data.staff) {
+        navigate('/mi-organizacion')
+      } else {
+        navigate('/')
+      }
     },
   })
 
@@ -142,7 +149,10 @@ export default function LoginPage() {
 
       <p className="mt-4 text-sm text-text-muted">
         ¿No tienes cuenta?{' '}
-        <Link to="/registro" className="font-medium text-sky-700 hover:underline">
+        <Link
+          to={returnTo ? `/registro?returnTo=${returnTo}` : '/registro'}
+          className="font-medium text-sky-700 hover:underline"
+        >
           Regístrate
         </Link>
       </p>

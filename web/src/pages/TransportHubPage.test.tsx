@@ -125,6 +125,7 @@ const loggedInMe: Awaited<ReturnType<typeof api.me>> = {
   authenticated: true,
   name: 'Voluntaria',
   email: 'v@correo.org',
+  pendingOrgId: null,
   staff: {
     id: 'm1',
     userId: 'u1',
@@ -251,7 +252,7 @@ describe('TransportHubPage', () => {
   })
 
   it('pide iniciar sesión cuando no hay usuario', async () => {
-    mockedMe.mockResolvedValue({ authenticated: false, name: null, email: null, staff: null })
+    mockedMe.mockResolvedValue({ authenticated: false, name: null, email: null, staff: null, pendingOrgId: null })
     renderHub()
 
     expect(
@@ -263,7 +264,7 @@ describe('TransportHubPage', () => {
   })
 
   it('muestra estado vacío cuando no hay cargas', async () => {
-    mockedMe.mockResolvedValue({ authenticated: false, name: null, email: null, staff: null })
+    mockedMe.mockResolvedValue({ authenticated: false, name: null, email: null, staff: null, pendingOrgId: null })
     mockedOffers.mockResolvedValue({ offers: [], total: 0, limit: 50, offset: 0 })
     renderHub()
 

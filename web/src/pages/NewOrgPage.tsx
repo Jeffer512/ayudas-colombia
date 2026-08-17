@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
 import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
@@ -54,9 +54,12 @@ export default function NewOrgPage() {
   const [form, setForm] = useState<OrgForm>(initialForm)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [worksIn, setWorksIn] = useState<boolean | null>(null)
 
   const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
   const cities = citiesQuery.data?.cities ?? []
+  const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
+  const isAuthenticated = meQuery.data?.authenticated === true
 
   useEffect(() => {
     if (!form.cityCode && cities.length > 0) {
@@ -89,8 +92,11 @@ export default function NewOrgPage() {
         ...(form.contactPhone.trim() ? { contactPhone: form.contactPhone.trim() } : {}),
         ...(form.hours.trim() ? { hours: form.hours.trim() } : {}),
         ...(form.accepts.trim() ? { accepts: form.accepts.trim() } : {}),
+        claim: worksIn === true,
       })
-      .then((org) => navigate(`/organizacion/${org.id}`))
+      .then((org) =>
+        worksIn ? navigate('/mi-organizacion') : navigate(`/organizacion/${org.id}`),
+      )
       .catch((err: unknown) => {
         setError(
           err instanceof Error
@@ -121,7 +127,62 @@ export default function NewOrgPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+      {worksIn === null ? (
+        <div className="mt-6 rounded-lg border border-line bg-surface p-6 text-center">
+          <h2 className="text-lg font-semibold text-text-main">
+            ¿Trabajas en esta organización?
+          </h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Si trabajas aquí podrás gestionar su página, publicar pedidos e
+            inventario desde tu cuenta.
+          </p>
+          <div className="mt-4 flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setWorksIn(true)}
+              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+            >
+              Sí, trabajo aquí
+            </button>
+            <button
+              type="button"
+              onClick={() => setWorksIn(false)}
+              className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
+            >
+              No, solo la publico
+            </button>
+          </div>
+        </div>
+      ) : worksIn === true && meQuery.isPending ? (
+        <p className="mt-6 text-center text-sm text-text-muted" role="status">
+          Cargando sesión…
+        </p>
+      ) : worksIn === true && !isAuthenticated ? (
+        <div className="mt-6 rounded-lg border border-line bg-surface p-6 text-center">
+          <h2 className="text-lg font-semibold text-text-main">
+            Necesitas una cuenta para gestionarla
+          </h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Inicia sesión o crea una cuenta para publicar tu organización y
+            gestionarla. Después volverás aquí para completar la publicación.
+          </p>
+          <div className="mt-4 flex justify-center gap-3">
+            <Link
+              to="/iniciar-sesion?returnTo=/nuevo-centro"
+              className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
+            >
+              Iniciar sesión
+            </Link>
+            <Link
+              to="/registro?returnTo=/nuevo-centro"
+              className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+            >
+              Crear cuenta
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <fieldset className="rounded-lg border border-line bg-surface p-4">
           <legend className="px-1 text-sm font-semibold text-text-muted">
             La organización
@@ -296,12 +357,14 @@ export default function NewOrgPage() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="contactName" className={labelClass}>
-                Persona responsable (opcional)
+                {worksIn === false
+                  ? 'Persona de contacto (opcional)'
+                  : 'Persona responsable (opcional)'}
               </label>
               <input
                 id="contactName"
                 maxLength={120}
-                placeholder="Quién la administra"
+                placeholder={worksIn === false ? 'Quién atiende ahí' : 'Quién la administra'}
                 value={form.contactName}
                 onChange={(e) => patch({ contactName: e.target.value })}
                 className={`mt-1 ${inputClass}`}
@@ -327,6 +390,7 @@ export default function NewOrgPage() {
           </button>
         </div>
       </form>
+      )}
     </div>
   )
 }

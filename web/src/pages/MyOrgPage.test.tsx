@@ -21,6 +21,8 @@ vi.mock('../api/client', () => ({
     deleteOrgItem: vi.fn(),
     approveOrgMember: vi.fn(),
     rejectOrgMember: vi.fn(),
+    helpOrgs: vi.fn(),
+    joinOrg: vi.fn(),
     logout: vi.fn(),
   },
 }))
@@ -36,6 +38,8 @@ const mockedUpdateOrgItem = vi.mocked(api.updateOrgItem)
 const mockedDeleteOrgItem = vi.mocked(api.deleteOrgItem)
 const mockedApproveOrgMember = vi.mocked(api.approveOrgMember)
 const mockedRejectOrgMember = vi.mocked(api.rejectOrgMember)
+const mockedHelpOrgs = vi.mocked(api.helpOrgs)
+const mockedJoinOrg = vi.mocked(api.joinOrg)
 
 const staff: Staff = {
   id: 's1',
@@ -62,6 +66,7 @@ const org: HelpOrg = {
   hours: null,
   accepts: null,
   status: 'open',
+  managed: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 }
@@ -106,15 +111,24 @@ beforeEach(() => {
   mockedDeleteOrgItem.mockReset()
   mockedApproveOrgMember.mockReset()
   mockedRejectOrgMember.mockReset()
+  mockedHelpOrgs.mockReset()
+  mockedJoinOrg.mockReset()
 
   mockedMe.mockResolvedValue({
     authenticated: true,
     name: staff.name,
     email: staff.email,
     staff,
+    pendingOrgId: null,
   })
   mockedHelpOrg.mockResolvedValue(org)
   mockedOrgMembers.mockResolvedValue({ members: [] })
+  mockedHelpOrgs.mockResolvedValue({
+    helpOrgs: [org],
+    total: 1,
+    limit: 50,
+    offset: 0,
+  })
   mockedRequests.mockResolvedValue({ requests: [], total: 0, limit: 50, offset: 0 })
   mockedCities.mockResolvedValue({
     cities: [
@@ -245,5 +259,94 @@ describe('MyOrgPage — solicitudes pendientes', () => {
     await waitFor(() =>
       expect(mockedRejectOrgMember).toHaveBeenCalledWith('o1', 's2'),
     )
+  })
+})
+
+describe('MyOrgPage — sin organización vinculada', () => {
+  it('invita a iniciar sesión cuando no hay sesión', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: false,
+      name: null,
+      email: null,
+      staff: null,
+      pendingOrgId: null,
+    })
+
+    renderPage()
+
+    expect(
+      await screen.findByRole('link', { name: 'Iniciar sesión' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Publicar tu organización'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('ofrece publicar una organización o solicitar gestionar una existente', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: 'Ciudadana',
+      email: 'ciudadana@correo.org',
+      staff: null,
+      pendingOrgId: null,
+    })
+
+    renderPage()
+
+    expect(
+      await screen.findByRole('link', { name: 'Publicar tu organización' }),
+    ).toHaveAttribute('href', '/nuevo-centro')
+    expect(
+      screen.getByLabelText('¿Trabajas en una organización ya publicada?'),
+    ).toBeInTheDocument()
+  })
+
+  it('envía la solicitud a la organización elegida', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: 'Ciudadana',
+      email: 'ciudadana@correo.org',
+      staff: null,
+      pendingOrgId: null,
+    })
+    mockedJoinOrg.mockResolvedValue({
+      membership: { id: 'm1', orgId: 'o1', role: 'member', status: 'pending' },
+    })
+
+    renderPage()
+    await screen.findByRole('link', { name: 'Publicar tu organización' })
+    await screen.findByRole('option', { name: 'Centro La Florida' })
+
+    await userEvent.selectOptions(
+      screen.getByLabelText('¿Trabajas en una organización ya publicada?'),
+      'o1',
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Solicitar gestionar esta organización' }),
+    )
+
+    await waitFor(() => expect(mockedJoinOrg).toHaveBeenCalledWith('o1'))
+    expect(
+      await screen.findByText(/pendiente de aprobación/),
+    ).toBeInTheDocument()
+  })
+
+  it('muestra el estado pendiente cuando ya hay una solicitud sin aprobar', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: 'Ciudadana',
+      email: 'ciudadana@correo.org',
+      staff: null,
+      pendingOrgId: 'o1',
+    })
+
+    renderPage()
+
+    expect(
+      await screen.findByText(/pendiente de aprobación/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Ver la organización' }),
+    ).toHaveAttribute('href', '/organizacion/o1')
   })
 })

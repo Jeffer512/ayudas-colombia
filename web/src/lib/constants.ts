@@ -100,6 +100,8 @@ export const HELP_ORG_TYPE_LABELS: Record<string, string> = {
   oficial: 'Coordinada por la red',
 }
 
+export const HELP_ORG_MANAGED_LABEL = 'Gestionada por la red'
+
 export const HELP_ORG_CATEGORY_LABELS: Record<string, string> = {
   acopio: 'Centro de acopio',
   psicologia: 'Apoyo psicológico',

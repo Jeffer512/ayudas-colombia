@@ -322,6 +322,7 @@ export interface HelpOrg {
   hours: string | null
   accepts: string | null
   status: HelpOrgStatus
+  managed: boolean
   items?: HelpOrgItem[]
   createdAt: string
   updatedAt: string
@@ -372,6 +373,7 @@ export type NewHelpOrg = {
   contactPhone?: string
   hours?: string
   accepts?: string
+  claim?: boolean
 }
 
 export interface Staff {
@@ -382,6 +384,13 @@ export interface Staff {
   role: 'manager' | 'member'
   orgId: string
   status: 'active' | 'pending'
+}
+
+export type JoinedOrgMembership = {
+  id: string
+  orgId: string
+  role: Staff['role']
+  status: Staff['status']
 }
 
 export interface RegisterResult {

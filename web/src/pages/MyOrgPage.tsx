@@ -23,6 +23,24 @@ export default function MyOrgPage() {
 
   const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
   const staff = meQuery.data?.staff
+  const pendingOrgId = meQuery.data?.pendingOrgId ?? null
+
+  const orgsQuery = useQuery({
+    queryKey: ['help-orgs'],
+    queryFn: () => api.helpOrgs(),
+    enabled: meQuery.data?.authenticated === true && !staff,
+  })
+  const [joinOrgId, setJoinOrgId] = useState('')
+  const [joinError, setJoinError] = useState<string | null>(null)
+
+  const joinMutation = useMutation({
+    mutationFn: () => api.joinOrg(joinOrgId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['me'] })
+      setJoinError(null)
+    },
+    onError: (err: Error) => setJoinError(err.message),
+  })
 
   const orgQuery = useQuery({
     queryKey: ['help-org', staff?.orgId],
@@ -146,7 +164,7 @@ export default function MyOrgPage() {
     return <p role="status">Cargando sesión…</p>
   }
 
-  if (!staff) {
+  if (meQuery.data?.authenticated === false) {
     return (
       <div className="mx-auto max-w-lg rounded-lg border border-line bg-surface p-8 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Mi organización</h1>
@@ -166,6 +184,89 @@ export default function MyOrgPage() {
             Regístrate
           </Link>
         </p>
+      </div>
+    )
+  }
+
+  if (!staff) {
+    if (pendingOrgId) {
+      return (
+        <div className="mx-auto max-w-lg rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight">Mi organización</h1>
+          <p className="mt-2 text-sm text-amber-800 dark:text-amber-300">
+            Tu solicitud para gestionar una organización está{' '}
+            <strong>pendiente de aprobación</strong>. Cuando el manager la
+            apruebe podrás publicar pedidos e inventario.
+          </p>
+          <Link
+            to={`/organizacion/${pendingOrgId}`}
+            className="mt-4 inline-block rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+          >
+            Ver la organización
+          </Link>
+        </div>
+      )
+    }
+
+    const orgs = orgsQuery.data?.helpOrgs ?? []
+    return (
+      <div className="mx-auto max-w-lg rounded-lg border border-line bg-surface p-8">
+        <h1 className="text-2xl font-bold tracking-tight">Mi organización</h1>
+        <p className="mt-2 text-sm text-text-muted">
+          Aún no gestionas ninguna organización de la Red de ayudas. Publica una
+          nueva o solicita gestionar una que ya exista.
+        </p>
+        <Link
+          to="/nuevo-centro"
+          className="mt-4 inline-block rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+        >
+          Publicar tu organización
+        </Link>
+
+        <div className="mt-6 border-t border-line pt-5">
+          <label htmlFor="joinOrg" className="text-sm font-medium text-text-muted">
+            ¿Trabajas en una organización ya publicada?
+          </label>
+          <select
+            id="joinOrg"
+            value={joinOrgId}
+            onChange={(e) => setJoinOrgId(e.target.value)}
+            className={`mt-1 ${inputClass}`}
+          >
+            <option value="">Selecciona una organización…</option>
+            {orgs.map((org) => (
+              <option key={org.id} value={org.id}>
+                {org.name}
+              </option>
+            ))}
+          </select>
+          {joinError && (
+            <div
+              role="alert"
+              className="mt-2 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+            >
+              {joinError}
+            </div>
+          )}
+          {joinMutation.isSuccess && (
+            <div
+              role="status"
+              className="mt-2 rounded-md border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-3 text-sm text-green-700 dark:text-green-300"
+            >
+              Solicitud enviada. Queda pendiente de aprobación por el manager.
+            </div>
+          )}
+          <button
+            type="button"
+            disabled={!joinOrgId || joinMutation.isPending}
+            onClick={() => joinMutation.mutate()}
+            className="mt-3 w-full rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+          >
+            {joinMutation.isPending
+              ? 'Enviando…'
+              : 'Solicitar gestionar esta organización'}
+          </button>
+        </div>
       </div>
     )
   }
