@@ -5,6 +5,7 @@ import { OFFER_STATUSES, REQUEST_STATUSES } from '../constants.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 import { setAvisoStatus } from '../services/avisos.js'
+import { hideCityMessage } from '../services/cityMessages.js'
 import { updateOfferStatus } from '../services/offers.js'
 import { listReports, reviewReport } from '../services/reports.js'
 import { updateRequestStatus } from '../services/requests.js'
@@ -77,5 +78,12 @@ adminRouter.post(
   '/reports/:id/review',
   asyncHandler(async (req, res) => {
     res.json(await reviewReport(String(req.params.id)))
+  }),
+)
+
+adminRouter.delete(
+  '/city-messages/:id',
+  asyncHandler(async (req, res) => {
+    res.json(await hideCityMessage(String(req.params.id)))
   }),
 )

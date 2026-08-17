@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const REPORT_KINDS = ['request', 'offer', 'aviso', 'org'] as const
+export const REPORT_KINDS = ['request', 'offer', 'aviso', 'org', 'message'] as const
 export const REPORT_REASONS = [
   'fake',
   'unreachable',

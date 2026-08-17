@@ -1,7 +1,7 @@
 import request from 'supertest'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
-import { createAviso, createOffer, createRequest, ensureCity } from './factories.js'
+import { createAviso, createCityMessage, createOffer, createRequest, ensureCity } from './factories.js'
 
 const app = createApp()
 
@@ -76,5 +76,25 @@ describe('POST /api/admin', () => {
       .send({ status: 'resolved' })
 
     expect(res.status).toBe(404)
+  })
+
+  it('exige token para ocultar un mensaje del tablón', async () => {
+    const message = await createCityMessage()
+    const res = await request(app).delete(`/api/admin/city-messages/${message.id}`)
+    expect(res.status).toBe(403)
+  })
+
+  it('oculta un mensaje del tablón y deja de listarse', async () => {
+    const message = await createCityMessage({ body: 'Contenido inapropiado' })
+
+    const res = await request(app)
+      .delete(`/api/admin/city-messages/${message.id}`)
+      .set('x-admin-token', ADMIN_TOKEN)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ id: message.id, status: 'hidden' })
+
+    const list = await request(app).get('/api/city-messages?city=pereira')
+    expect(list.body.messages).toHaveLength(0)
   })
 })

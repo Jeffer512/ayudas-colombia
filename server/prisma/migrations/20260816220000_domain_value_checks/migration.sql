@@ -89,7 +89,7 @@ ALTER TABLE "help_org_staff" ADD CONSTRAINT "help_org_staff_status_check"
 
 ALTER TABLE "post_reports" DROP CONSTRAINT IF EXISTS "post_reports_kind_check";
 ALTER TABLE "post_reports" ADD CONSTRAINT "post_reports_kind_check"
-  CHECK ("kind" IN ('request','offer','aviso','org'));
+  CHECK ("kind" IN ('request','offer','aviso','org','message'));
 
 ALTER TABLE "post_reports" DROP CONSTRAINT IF EXISTS "post_reports_reason_check";
 ALTER TABLE "post_reports" ADD CONSTRAINT "post_reports_reason_check"

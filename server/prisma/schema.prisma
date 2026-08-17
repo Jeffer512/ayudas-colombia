@@ -24,6 +24,7 @@ verifyTokenHash      String?        @map("verify_token_hash")
   claims      OfferClaim[]
   reporters   Reporter[]
   reports     PostReport[]
+  messages    CityMessage[]
 
   @@map("users")
 }
@@ -41,6 +42,7 @@ model City {
   offers    Offer[]
   avisos    Aviso[]
   helpOrgs  HelpOrg[]
+  messages  CityMessage[]
 
   @@map("cities")
 }
@@ -314,4 +316,21 @@ model PostReport {
   @@index([status])
   @@index([kind, targetId])
   @@map("post_reports")
+}
+
+model CityMessage {
+  id        String   @id @default(uuid())
+  cityCode  String   @map("city_code")
+  name      String
+  body      String
+  userId    String?  @map("user_id")
+  markerId  String?  @map("marker_id")
+  status    String   @default("open")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  city City @relation(fields: [cityCode], references: [code])
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([cityCode, status, createdAt])
+  @@map("city_messages")
 }

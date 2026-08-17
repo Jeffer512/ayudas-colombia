@@ -18,6 +18,8 @@ async function findTarget(kind: string, id: string) {
       return prisma.aviso.findUnique({ where: { id } })
     case 'org':
       return prisma.helpOrg.findUnique({ where: { id } })
+    case 'message':
+      return prisma.cityMessage.findUnique({ where: { id } })
     default:
       return null
   }
@@ -96,6 +98,16 @@ export async function listReports(filters: ReportFilters) {
       case 'org':
         rows = await prisma.helpOrg.findMany({ where: { id: { in: ids } }, select })
         break
+      case 'message': {
+        const messages = await prisma.cityMessage.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, body: true },
+        })
+        for (const message of messages) {
+          titleById.set(message.id, message.body)
+        }
+        break
+      }
     }
     for (const row of rows) {
       titleById.set(row.id, row.title)

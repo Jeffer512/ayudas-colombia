@@ -1,6 +1,7 @@
 import type {
-  HelpOrgUncheckedCreateInput,
   AvisoUncheckedCreateInput,
+  CityMessageUncheckedCreateInput,
+  HelpOrgUncheckedCreateInput,
   OfferUncheckedCreateInput,
   RequestUncheckedCreateInput,
   ReporterUncheckedCreateInput,
@@ -114,6 +115,22 @@ export async function createHelpOrg(
       cityId: city.id,
       resolveCode: '1234',
       ...data,
+    },
+    include: { city: true },
+  })
+}
+
+export async function createCityMessage(
+  messageData: Partial<CityMessageUncheckedCreateInput> = {},
+) {
+  const city = await ensureCity()
+  return prisma.cityMessage.create({
+    data: {
+      cityCode: city.code,
+      name: 'Vecino de Pereira',
+      body: 'Escuché una alerta en el barrio Centro.',
+      status: 'open',
+      ...messageData,
     },
     include: { city: true },
   })
