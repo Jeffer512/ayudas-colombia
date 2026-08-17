@@ -97,10 +97,10 @@ export const MARKER_COLORS = {
 
 export const HELP_ORG_TYPE_LABELS: Record<string, string> = {
   ciudadano: 'Comunitaria',
-  oficial: 'Coordinada por la red',
+  oficial: 'Oficial',
 }
 
-export const HELP_ORG_MANAGED_LABEL = 'Gestionada por la red'
+export const HELP_ORG_MANAGED_LABEL = 'Gestionada por su equipo'
 
 export const HELP_ORG_CATEGORY_LABELS: Record<string, string> = {
   acopio: 'Centro de acopio',

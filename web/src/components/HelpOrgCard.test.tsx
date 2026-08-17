@@ -39,12 +39,12 @@ describe('HelpOrgCard', () => {
   it('muestra el distintivo de organización gestionada cuando managed es true', () => {
     renderCard(org({ managed: true }))
 
-    expect(screen.getByText('Gestionada por la red')).toBeInTheDocument()
+    expect(screen.getByText('Gestionada por su equipo')).toBeInTheDocument()
   })
 
   it('omite el distintivo cuando la organización no es gestionada', () => {
     renderCard(org({ managed: false }))
 
-    expect(screen.queryByText('Gestionada por la red')).not.toBeInTheDocument()
+    expect(screen.queryByText('Gestionada por su equipo')).not.toBeInTheDocument()
   })
 })

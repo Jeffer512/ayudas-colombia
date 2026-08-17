@@ -75,6 +75,13 @@ export default function HelpOrgDetailPage() {
         <p className="mt-3 whitespace-pre-line text-text-muted">{org.description}</p>
       )}
 
+      {!org.managed && (
+        <p className="mt-3 rounded-md border border-line bg-surface p-3 text-sm text-text-muted">
+          Publicada por un voluntario de la comunidad. Si trabajas aquí, puedes
+          vincularte con tu cuenta para gestionarla.
+        </p>
+      )}
+
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {org.address && (
           <div>
