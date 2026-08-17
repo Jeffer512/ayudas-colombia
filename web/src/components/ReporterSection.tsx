@@ -58,6 +58,9 @@ export default function ReporterSection({
           </label>
           <input
             id="phone"
+            type="tel"
+            inputMode="tel"
+            maxLength={30}
             placeholder="Ej: 310 555 1234"
             value={phone}
             onChange={(e) => onPatch((prev) => ({ ...prev, phone: e.target.value }))}

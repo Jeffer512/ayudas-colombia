@@ -628,4 +628,53 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
       ),
     )
   })
+
+  it('rechaza un teléfono inválido al publicar', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
+    await user.type(
+      screen.getByLabelText('Descripción (opcional)'),
+      'Pongo a disposición kits de aseo para las familias afectadas.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), 'no-me-sabe')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Teléfono inválido',
+    )
+    expect(mockedCreate).not.toHaveBeenCalled()
+  })
+
+  it('acepta un teléfono con separadores y prefijo', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-6',
+      resolveCode: '4444',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_offered')
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
+    await user.type(
+      screen.getByLabelText('Descripción (opcional)'),
+      'Pongo a disposición kits de aseo para las familias afectadas.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '+57 (310) 555-2222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reporter: expect.objectContaining({ phone: '+57 (310) 555-2222' }),
+        }),
+      ),
+    )
+  })
 })

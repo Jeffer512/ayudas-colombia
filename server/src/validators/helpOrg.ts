@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { HELP_ORG_CATEGORIES, HELP_ORG_ITEM_KINDS } from '../constants.js'
-import { contactVisibilitySchema } from './common.js'
+import { contactVisibilitySchema, phoneSchema } from './common.js'
 
 export const createHelpOrgSchema = z.object({
   name: z.string().trim().min(2, 'Nombre requerido').max(140),
@@ -11,7 +11,7 @@ export const createHelpOrgSchema = z.object({
   cityCode: z.string().trim().min(1, 'Ciudad requerida').max(60),
   category: z.enum(HELP_ORG_CATEGORIES).optional(),
   contactName: z.string().trim().max(120).optional(),
-  contactPhone: z.string().trim().max(30).optional(),
+  contactPhone: phoneSchema.optional(),
   hours: z.string().trim().max(200).optional(),
   accepts: z.string().trim().max(2000).optional(),
   claim: z.boolean().optional(),
@@ -27,7 +27,7 @@ export const updateHelpOrgSchema = z.object({
   lng: z.number().min(-180).max(180).nullable().optional(),
   category: z.enum(HELP_ORG_CATEGORIES).optional(),
   contactName: z.string().trim().max(120).nullable().optional(),
-  contactPhone: z.string().trim().max(30).nullable().optional(),
+  contactPhone: phoneSchema.nullable().optional(),
   hours: z.string().trim().max(200).nullable().optional(),
   accepts: z.string().trim().max(2000).nullable().optional(),
 })

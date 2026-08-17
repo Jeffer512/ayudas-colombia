@@ -15,6 +15,7 @@ import {
 } from '../lib/constants'
 import { defaultCity } from '../lib/geo'
 import { compressImage } from '../lib/image'
+import { isValidPhone } from '../lib/phone'
 import type {
   ContactVisibility,
   NewRequest,
@@ -135,6 +136,11 @@ export default function RequestForm({
       setError(
         'Deja al menos un medio de contacto: teléfono, WhatsApp o correo.',
       )
+      setSubmitting(false)
+      return
+    }
+    if (phone && !isValidPhone(phone)) {
+      setError('Teléfono inválido: usa entre 7 y 15 dígitos.')
       setSubmitting(false)
       return
     }

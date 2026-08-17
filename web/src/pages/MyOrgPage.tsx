@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { formatItemQuantity } from '../lib/format'
 import { defaultCity } from '../lib/geo'
+import { isValidPhone } from '../lib/phone'
 import RequestCard from '../components/RequestCard'
 import {
   HELP_ORG_CATEGORY_LABELS,
@@ -400,6 +401,12 @@ export default function MyOrgPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault()
+                if (profile!.contactPhone && !isValidPhone(profile!.contactPhone)) {
+                  setProfileError(
+                    'Teléfono de contacto inválido: usa entre 7 y 15 dígitos.',
+                  )
+                  return
+                }
                 updateProfileMutation.mutate()
               }}
               className="mt-3 space-y-3"
@@ -494,6 +501,8 @@ export default function MyOrgPage() {
                   </label>
                   <input
                     id="profileContactPhone"
+                    type="tel"
+                    inputMode="tel"
                     maxLength={30}
                     value={profile.contactPhone}
                     onChange={(e) =>

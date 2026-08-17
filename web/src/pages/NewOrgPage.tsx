@@ -6,6 +6,7 @@ import { api } from '../api/client'
 import Map from '../components/Map'
 import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
 import { cityCenter, defaultCity } from '../lib/geo'
+import { isValidPhone } from '../lib/phone'
 import type { HelpOrgCategory } from '../lib/types'
 
 interface OrgForm {
@@ -74,6 +75,10 @@ export default function NewOrgPage() {
     e.preventDefault()
     if (form.lat === null || form.lng === null) {
       setError('Marca en el mapa el punto donde opera la organización.')
+      return
+    }
+    if (form.contactPhone.trim() && !isValidPhone(form.contactPhone)) {
+      setError('Teléfono de contacto inválido: usa entre 7 y 15 dígitos.')
       return
     }
     setSubmitting(true)
@@ -233,6 +238,8 @@ export default function NewOrgPage() {
             </label>
             <input
               id="contactPhone"
+              type="tel"
+              inputMode="tel"
               maxLength={30}
               placeholder="Ej: 310 555 2222"
               value={form.contactPhone}

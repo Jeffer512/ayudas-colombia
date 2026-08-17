@@ -227,4 +227,25 @@ describe('NewOrgPage', () => {
       await screen.findByRole('alert'),
     ).toHaveTextContent('Ya estás vinculado a una organización')
   })
+
+  it('rechaza un teléfono de contacto inválido', async () => {
+    renderPage()
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'No, solo la publico' }),
+    )
+    await userEvent.type(screen.getByLabelText('Nombre'), 'Centro La Florida')
+    await userEvent.click(screen.getByRole('button', { name: 'PICK' }))
+    await userEvent.type(
+      screen.getByLabelText('Teléfono de contacto'),
+      'novecientos',
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Publicar organización' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Teléfono de contacto inválido',
+    )
+    expect(mockedCreate).not.toHaveBeenCalled()
+  })
 })

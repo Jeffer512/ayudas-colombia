@@ -206,6 +206,21 @@ describe('/api/help-orgs', () => {
     expect(noLat.status).toBe(400)
   })
 
+  it('rechaza un teléfono de contacto inválido y acepta uno con formato', async () => {
+    const bad = await requestPOST().send({
+      ...validOrg,
+      contactPhone: 'veinticuatro siete',
+    })
+    expect(bad.status).toBe(400)
+
+    const ok = await requestPOST().send({
+      ...validOrg,
+      contactPhone: '+57 (310) 555-2222',
+    })
+    expect(ok.status).toBe(201)
+    expect(ok.body.contactPhone).toBe('+57 (310) 555-2222')
+  })
+
   it('lista las organizaciones y filtra por categoría', async () => {
     await createHelpOrg({ name: 'Centro A', category: 'acopio' })
     await createHelpOrg({ name: 'Centro B', category: 'albergue' })

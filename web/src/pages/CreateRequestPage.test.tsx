@@ -329,4 +329,55 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     )
     expect(mockedCreate).not.toHaveBeenCalled()
   })
+
+  it('rechaza un teléfono inválido al publicar', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
+    await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
+    await user.type(
+      screen.getByLabelText('Descripción (opcional)'),
+      'Las familias del sector requieren agua para cocinar y beber.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
+    await user.type(screen.getByLabelText('Teléfono'), 'no-contesto')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Teléfono inválido',
+    )
+    expect(mockedCreate).not.toHaveBeenCalled()
+  })
+
+  it('acepta un teléfono con separadores y prefijo', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-5',
+      resolveCode: '4321',
+    } as unknown as CreatedRequest)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'supplies_request')
+    await user.type(screen.getByLabelText('Título'), 'Necesitamos agua potable hoy')
+    await user.type(
+      screen.getByLabelText('Descripción (opcional)'),
+      'Las familias del sector requieren agua para cocinar y beber.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'María Gómez')
+    await user.type(screen.getByLabelText('Teléfono'), '+57 (310) 555-1234')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar pedido' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reporter: expect.objectContaining({
+            phone: '+57 (310) 555-1234',
+          }),
+        }),
+      ),
+    )
+  })
 })

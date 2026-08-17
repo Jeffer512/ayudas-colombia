@@ -178,6 +178,25 @@ describe('MyOrgPage — datos de la organización', () => {
     )
   })
 
+  it('rechaza guardar un teléfono de contacto inválido', async () => {
+    renderPage()
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Editar perfil' }),
+    )
+
+    await userEvent.type(
+      await screen.findByLabelText('Teléfono de contacto'),
+      'horizontal',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Teléfono de contacto inválido',
+    )
+    expect(mockedUpdateHelpOrg).not.toHaveBeenCalled()
+  })
+
   it('el manager ve la sección de datos de la organización', async () => {
     renderPage()
 

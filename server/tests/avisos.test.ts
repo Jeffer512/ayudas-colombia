@@ -119,6 +119,17 @@ describe('POST /api/avisos', () => {
 
     expect(res.status).toBe(400)
   })
+
+  it('rechaza un teléfono inválido aunque no sea obligatorio', async () => {
+    const res = await request(app)
+      .post('/api/avisos')
+      .send({
+        ...validAviso,
+        reporter: { name: 'María Gómez', phone: 'infalible' },
+      })
+
+    expect(res.status).toBe(400)
+  })
 })
 
 describe('POST /api/avisos/:id/mark', () => {

@@ -134,6 +134,24 @@ describe('POST /api/offers', () => {
     expect(badLat.status).toBe(400)
   })
 
+  it('rechaza un teléfono inválido y acepta uno con formato', async () => {
+    const bad = await request(app)
+      .post('/api/offers')
+      .send({ ...validOffer, reporter: { name: 'Carmen Vila', phone: 'abc' } })
+    expect(bad.status).toBe(400)
+
+    const ok = await request(app)
+      .post('/api/offers')
+      .send({
+        ...validOffer,
+        reporter: { name: 'Carmen Vila', phone: '+57 (310) 555-2222' },
+      })
+    expect(ok.status).toBe(201)
+    expect(ok.body.reporter).toMatchObject({
+      phone: '+57 (310) 555-2222',
+    })
+  })
+
   it('guarda ítems y zona en ofertas de suministros', async () => {
     const res = await request(app)
       .post('/api/offers')

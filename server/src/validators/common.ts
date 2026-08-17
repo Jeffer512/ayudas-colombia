@@ -1,9 +1,19 @@
 import { z } from 'zod'
 
+export const phoneSchema = z
+  .string()
+  .trim()
+  .max(30)
+  .refine((value) => {
+    if (value === '') return true
+    const digits = (value.match(/\d/g) ?? []).length
+    return /^[0-9+()\-. ]+$/.test(value) && digits >= 7 && digits <= 15
+  }, 'Teléfono inválido: usa entre 7 y 15 dígitos')
+
 export const reporterSchema = z
   .object({
     name: z.string().trim().min(1, 'Nombre requerido').max(120),
-    phone: z.string().trim().max(30).optional(),
+    phone: phoneSchema.optional(),
     whatsapp: z.string().trim().max(40).optional(),
     email: z
       .union([z.string().email('Correo inválido'), z.literal('')])
@@ -25,7 +35,7 @@ export const reporterSchema = z
 
 export const anonymousReporterSchema = z.object({
   name: z.string().trim().min(1, 'Nombre requerido').max(120),
-  phone: z.string().trim().max(30).optional(),
+  phone: phoneSchema.optional(),
   whatsapp: z.string().trim().max(40).optional(),
   email: z
     .union([z.string().email('Correo inválido'), z.literal('')])

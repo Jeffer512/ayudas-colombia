@@ -131,4 +131,24 @@ describe('CreateAvisoPage', () => {
       await screen.findByRole('heading', { name: 'Aviso publicado' }),
     ).toBeInTheDocument()
   })
+
+  it('rechaza un teléfono inválido aunque no sea obligatorio', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.type(screen.getByLabelText('Título'), 'Ruta alterna por el centro')
+    await user.type(
+      screen.getByLabelText('Descripción (opcional)'),
+      'La vía queda bloqueada entre las 10am y 3pm por trabajos.',
+    )
+    await user.type(screen.getByLabelText('Tu nombre'), 'Andrés Mora')
+    await user.type(screen.getByLabelText('Teléfono'), 'y sin número')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar aviso' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Teléfono inválido',
+    )
+    expect(mockedCreate).not.toHaveBeenCalled()
+  })
 })
