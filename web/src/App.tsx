@@ -15,6 +15,7 @@ import VerifyEmailPage from './pages/VerifyEmailPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import AvisoDetailPage from './pages/AvisoDetailPage'
+import ChatPage from './pages/ChatPage'
 import OfferDetailPage from './pages/OfferDetailPage'
 import OfferEditPage from './pages/OfferEditPage'
 import RequestDetailPage from './pages/RequestDetailPage'
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/pedir-ayuda" element={<CreateRequestPage />} />
             <Route path="/ofrecer-ayuda" element={<CreateOfferPage />} />
             <Route path="/transporte" element={<TransportHubPage />} />
+            <Route path="/chat" element={<ChatPage />} />
             <Route path="/informar" element={<CreateAvisoPage />} />
             <Route path="/pedido/:id" element={<RequestDetailPage />} />
             <Route path="/pedido/:id/editar" element={<RequestEditPage />} />

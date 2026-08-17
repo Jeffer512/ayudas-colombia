@@ -1,4 +1,8 @@
 import type {
+  City,
+  CityMessage,
+  CityMessageFilters,
+  CityMessageListResponse,
   HelpOrg,
   HelpOrgFilters,
   HelpOrgItem,
@@ -8,12 +12,12 @@ import type {
   Aviso,
   AvisoFilters,
   AvisoListResponse,
-  City,
   CreatedAviso,
   CreatedOffer,
   CreatedRequest,
   NewHelpOrg,
   NewAviso,
+  NewCityMessage,
   NewOffer,
   NewOrgRequest,
   NewReport,
@@ -92,6 +96,14 @@ function markerId(): string | undefined {
 export const api = {
   cities(): Promise<{ cities: City[] }> {
     return http('/cities')
+  },
+
+  cityMessages(filters: CityMessageFilters): Promise<CityMessageListResponse> {
+    return http(`/city-messages${buildQuery(filters)}`)
+  },
+
+  createCityMessage(body: NewCityMessage): Promise<CityMessage> {
+    return http('/city-messages', { method: 'POST', body: JSON.stringify(body) })
   },
 
   requests(filters: RequestFilters): Promise<RequestListResponse> {

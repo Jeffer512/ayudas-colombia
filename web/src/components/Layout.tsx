@@ -54,6 +54,9 @@ export default function Layout() {
             <NavLink to="/transporte" className={navClass}>
               Centro de carga
             </NavLink>
+            <NavLink to="/chat" className={navClass}>
+              Chat
+            </NavLink>
             <NavLink to="/red-de-ayudas" className={navClass}>
               Red de ayudas
             </NavLink>

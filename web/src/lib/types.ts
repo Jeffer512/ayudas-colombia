@@ -65,7 +65,7 @@ export interface CityRef {
   name: string
 }
 
-export type ReportKind = 'request' | 'offer' | 'aviso' | 'org'
+export type ReportKind = 'request' | 'offer' | 'aviso' | 'org' | 'message'
 export type ReportReason =
   | 'fake'
   | 'unreachable'
@@ -78,6 +78,34 @@ export type NewReport = {
   targetId: string
   reason: ReportReason
   note?: string
+}
+
+export interface CityMessage {
+  id: string
+  city: CityRef
+  name: string
+  body: string
+  createdAt: string
+}
+
+export interface CityMessageListResponse {
+  messages: CityMessage[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface CityMessageFilters {
+  city?: string
+  limit?: number
+  offset?: number
+}
+
+export type NewCityMessage = {
+  city: string
+  name: string
+  body: string
+  markerId?: string
 }
 
 export interface Request {
