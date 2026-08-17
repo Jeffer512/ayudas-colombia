@@ -9,6 +9,7 @@ export interface SeedCity {
 export const cities: SeedCity[] = [
   { code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
   { code: 'dosquebradas', name: 'Dosquebradas', department: 'Risaralda', centerLat: 4.839, centerLng: -75.6762 },
+  { code: 'santa-rosa-de-cabal', name: 'Santa Rosa de Cabal', department: 'Risaralda', centerLat: 4.8683, centerLng: -75.6214 },
   { code: 'manizales', name: 'Manizales', department: 'Caldas', centerLat: 5.0703, centerLng: -75.5138 },
   { code: 'armenia', name: 'Armenia', department: 'Quindío', centerLat: 4.5339, centerLng: -75.6811 },
   { code: 'cartago', name: 'Cartago', department: 'Valle del Cauca', centerLat: 4.7464, centerLng: -75.9117 },
