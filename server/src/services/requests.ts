@@ -39,10 +39,19 @@ function generateResolveCode(): string {
 export function serializeRequest(
   request: SerializedRequest,
   helperCount = 0,
-  helperList?: { name: string | null; note: string | null; createdAt: Date }[],
+  helperList?: {
+    name: string | null
+    note: string | null
+    transport: string | null
+    status: string
+    phone: string | null
+    whatsapp: string | null
+    createdAt: Date
+  }[],
   viewer?: Viewer,
 ) {
   const ownerId = request.reporter.userId
+  const owner = isOwner(viewer, ownerId)
   const contactVisibility = (request.contactVisibility ?? 'public') as 'public' | 'users'
   const contactRestricted = !canSeeContact(contactVisibility, viewer, ownerId)
 
@@ -80,6 +89,11 @@ export function serializeRequest(
       ? helperList.map((helper) => ({
           name: helper.name ?? null,
           note: helper.note ?? null,
+          transport: helper.transport ?? null,
+          status: helper.status,
+          ...(owner
+            ? { phone: helper.phone ?? null, whatsapp: helper.whatsapp ?? null }
+            : {}),
           createdAt: helper.createdAt,
         }))
       : undefined,
@@ -167,7 +181,15 @@ export async function getRequest(id: string, viewer?: Viewer) {
     prisma.requestHelper.findMany({
       where: { requestId: id },
       orderBy: { createdAt: 'desc' },
-      select: { name: true, note: true, createdAt: true },
+      select: {
+        name: true,
+        note: true,
+        transport: true,
+        status: true,
+        phone: true,
+        whatsapp: true,
+        createdAt: true,
+      },
     }),
   ])
   if (!request) throw new ApiError(404, 'Solicitud no encontrada')
@@ -267,15 +289,95 @@ export async function helpRequest(
     if (existing) return getRequest(id)
   }
 
-  await prisma.requestHelper.create({
-    data: {
-      requestId: id,
-      markerId: input.markerId ?? null,
-      name: input.name ?? null,
-      note: input.note ?? null,
-    },
+  const isSupplies = request.type === 'supplies_request'
+  const transport = input.transport ?? null
+  const phone = input.phone?.trim() || null
+  const whatsapp = input.whatsapp?.trim() || null
+  const name = input.name?.trim() || null
+
+  if (isSupplies) {
+    if (!transport) {
+      throw new ApiError(400, 'Indica si puedes transportar los suministros')
+    }
+    const requesterPicksUp = request.transport === 'can_transport'
+    if (requesterPicksUp && !phone && !whatsapp) {
+      throw new ApiError(
+        400,
+        'Deja tu teléfono o WhatsApp para coordinar la recogida',
+      )
+    }
+    if (transport === 'needs_transport' && !phone && !whatsapp) {
+      throw new ApiError(
+        400,
+        'Deja tu teléfono o WhatsApp para que quien transporte pueda contactarte',
+      )
+    }
+  } else if (transport) {
+    throw new ApiError(
+      400,
+      'El campo de transporte solo aplica a solicitudes de suministros',
+    )
+  }
+
+  const needsLinkedOffer =
+    isSupplies && transport === 'needs_transport' && request.transport !== 'can_transport'
+  if (needsLinkedOffer && !name) {
+    throw new ApiError(400, 'Escribe tu nombre para coordinar la entrega')
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const helper = await tx.requestHelper.create({
+      data: {
+        requestId: id,
+        markerId: input.markerId ?? null,
+        name,
+        note: input.note?.trim() || null,
+        transport,
+        phone,
+        whatsapp,
+      },
+    })
+
+    if (needsLinkedOffer) {
+      const reporter = await tx.reporter.create({
+        data: {
+          userId: viewer?.sub ?? null,
+          name: name ?? 'Voluntario anónimo',
+          phone,
+          whatsapp,
+        },
+      })
+      const offer = await tx.offer.create({
+        data: {
+          type: 'supplies_offered',
+          transport: 'needs_transport',
+          items: request.items ?? [],
+          status: 'open',
+          title: `Suministros para el pedido: ${request.title}`,
+          description: input.note?.trim() || null,
+          address: request.address,
+          lat: request.lat,
+          lng: request.lng,
+          cityId: request.cityId,
+          reporterId: reporter.id,
+          contactVisibility: 'users',
+          resolveCode: generateResolveCode(),
+          requestId: id,
+        },
+      })
+      await tx.requestHelper.update({
+        where: { id: helper.id },
+        data: { offerId: offer.id },
+      })
+    }
+
+    await tx.request.update({
+      where: { id },
+      data: { updatedAt: new Date() },
+    })
   })
-  return getRequest(id)
+
+  return getRequest(id, viewer)
 }
 
 export async function updateRequest(
@@ -466,6 +568,14 @@ export async function updateRequestStatus(
         actorName: input.actorName ?? null,
       },
     }),
+    ...(CLOSED_STATES.includes(input.status)
+      ? [
+          prisma.offer.updateMany({
+            where: { requestId: id, status: 'open' },
+            data: { status: 'unavailable', resolvedAt: new Date() },
+          }),
+        ]
+      : []),
   ])
 
   return getRequest(id, viewer)
@@ -476,6 +586,9 @@ export async function closeStaleRequests() {
     where: {
       status: 'open',
       updatedAt: { lt: new Date(Date.now() - STALE_REQUEST_MS) },
+      linkedOffers: {
+        none: { status: 'in_transit' },
+      },
     },
     select: { id: true },
   })
@@ -493,6 +606,10 @@ export async function closeStaleRequests() {
           note: AUTO_CLOSE_NOTE,
           actorName: 'Sistema',
         },
+      }),
+      prisma.offer.updateMany({
+        where: { requestId: id, status: 'open' },
+        data: { status: 'unavailable', resolvedAt: new Date() },
       }),
     ])
     console.log(`[auto-close] request ${id}`)

@@ -45,6 +45,14 @@ const editLimiter = rateLimit({
   message: { error: 'Demasiadas ediciones, intenta más tarde' },
 })
 
+const helpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas ofertas de ayuda, intenta más tarde' },
+})
+
 export const requestsRouter = Router()
 
 requestsRouter.get(
@@ -120,7 +128,7 @@ requestsRouter.post(
 
 requestsRouter.post(
   '/:id/help',
-  statusLimiter,
+  helpLimiter,
   asyncHandler(async (req, res) => {
     const input = helpRequestSchema.parse(req.body)
     res.json(

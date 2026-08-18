@@ -18,6 +18,16 @@ function readMigrationSql(folderHint: string): string | null {
   return readFileSync(join(migrationsDir, folder, 'migration.sql'), 'utf8')
 }
 
+async function applyCheckConstraints(db: Client) {
+  const checkSqls = [
+    readMigrationSql('domain_value_checks'),
+    readMigrationSql('request_helper_value_checks'),
+  ]
+  for (const checkSql of checkSqls) {
+    if (checkSql) await db.query(checkSql)
+  }
+}
+
 export default async function globalSetup() {
   const url = new URL(env.databaseUrl)
   const dbName = url.pathname.slice(1)
@@ -54,8 +64,7 @@ export default async function globalSetup() {
   try {
     await db.connect()
     await db.query(SINGLE_COMMITTED_CLAIM_INDEX)
-    const checkSql = readMigrationSql('domain_value_checks')
-    if (checkSql) await db.query(checkSql)
+    await applyCheckConstraints(db)
   } finally {
     await db.end()
   }

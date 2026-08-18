@@ -93,6 +93,7 @@ model Request {
   org      HelpOrg?       @relation(fields: [helpOrgId], references: [id], onDelete: SetNull)
   events   RequestEvent[]
   helpers  RequestHelper[]
+  linkedOffers Offer[]
 
   @@index([cityId, status])
   @@index([type])
@@ -115,17 +116,25 @@ model RequestEvent {
 }
 
 model RequestHelper {
-  id        BigInt   @id @default(autoincrement())
-  requestId String   @map("request_id")
-  markerId  String?  @map("marker_id")
-  name      String?
-  note      String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id          BigInt    @id @default(autoincrement())
+  requestId   String    @map("request_id")
+  markerId    String?   @map("marker_id")
+  name        String?
+  note        String?
+  transport   String?
+  phone       String?
+  whatsapp    String?
+  status      String    @default("offered")
+  offerId     String?   @map("offer_id")
+  deliveredAt DateTime? @map("delivered_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  offer   Offer?  @relation(fields: [offerId], references: [id], onDelete: SetNull)
 
   @@unique([requestId, markerId])
   @@index([requestId])
+  @@index([offerId])
   @@map("request_helpers")
 }
 
@@ -155,9 +164,17 @@ model Offer {
   claims           OfferClaim[]
   volunteerDetails VolunteerDetails?
   transportDetails TransportDetails?
+  helpers          RequestHelper[]
+  request          Request?          @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  destinationOrg   HelpOrg?          @relation(fields: [destinationOrgId], references: [id], onDelete: SetNull)
+
+  requestId       String?  @map("request_id")
+  destinationOrgId String? @map("destination_org_id")
 
   @@index([cityId, status])
   @@index([type])
+  @@index([requestId])
+  @@index([destinationOrgId])
   @@map("offers")
 }
 
@@ -185,6 +202,8 @@ model OfferClaim {
   claimerId  String?   @map("claimer_id")
   status     String    @default("committed")
   note       String?
+  phone      String?
+  whatsapp   String?
   claimedAt  DateTime  @default(now()) @map("claimed_at")
   resolvedAt DateTime? @map("resolved_at")
   createdAt  DateTime  @default(now()) @map("created_at")
@@ -257,6 +276,7 @@ model HelpOrg {
   staff    HelpOrgStaff[]
   requests Request[]
   items    HelpOrgItem[]
+  deliveryTargets Offer[]
 
   @@index([cityId, status])
   @@index([category])

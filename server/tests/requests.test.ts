@@ -2,7 +2,7 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { prisma } from '../src/db.js'
-import { createRequest, ensureCity } from './factories.js'
+import { createRequest, createOffer, ensureCity } from './factories.js'
 import { closeStaleRequests } from '../src/services/requests.js'
 
 const app = createApp()
@@ -824,5 +824,214 @@ describe('POST /api/requests/:id/help', () => {
 
     const detail = await request(app).get(`/api/requests/${created.body.id}`)
     expect(detail.body.helpers).toBe(0)
+  })
+})
+
+describe('POST /api/requests/:id/help · transporte y contacto', () => {
+  beforeEach(async () => {
+    await ensureCity()
+  })
+
+  it('rechaza indicar transporte en un pedido que no es de suministros', async () => {
+    const created = await createRequest({ type: 'volunteers_request' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila', transport: 'can_transport' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe(
+      'El campo de transporte solo aplica a solicitudes de suministros',
+    )
+  })
+
+  it('exige indicar transporte al ayudar en un pedido de suministros', async () => {
+    const created = await createRequest({ type: 'supplies_request' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila', note: 'Llevo agua' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Indica si puedes transportar los suministros')
+  })
+
+  it('registra a quien puede llevar suministros sin crear una oferta vinculada', async () => {
+    const created = await createRequest({ type: 'supplies_request' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila', note: 'Llevo agua', transport: 'can_transport' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.helpers).toBe(1)
+    expect(res.body.helperList[0]).toMatchObject({
+      name: 'Camila',
+      note: 'Llevo agua',
+      transport: 'can_transport',
+      status: 'offered',
+    })
+    const linked = await prisma.offer.findFirst({ where: { requestId: created.id } })
+    expect(linked).toBeNull()
+  })
+
+  it('exige contacto cuando quien pide puede recoger los suministros', async () => {
+    const created = await createRequest({ type: 'supplies_request', transport: 'can_transport' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila', transport: 'needs_transport' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe(
+      'Deja tu teléfono o WhatsApp para coordinar la recogida',
+    )
+  })
+
+  it('exige nombre al crear una oferta vinculada', async () => {
+    const created = await createRequest({ type: 'supplies_request', transport: 'needs_transport' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ note: 'Tengo agua', transport: 'needs_transport', phone: '3115550000' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('nombre')
+  })
+
+  it('crea una oferta vinculada cuando no puede transportar y el pedido necesita transporte', async () => {
+    const created = await createRequest({
+      type: 'supplies_request',
+      transport: 'needs_transport',
+      items: ['Agua'],
+    })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({
+        name: 'Camila',
+        note: 'Tengo 20 botellas',
+        transport: 'needs_transport',
+        phone: '3115550000',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.helpers).toBe(1)
+
+    const helper = await prisma.requestHelper.findFirst({
+      where: { requestId: created.id },
+    })
+    expect(helper).toMatchObject({
+      name: 'Camila',
+      transport: 'needs_transport',
+      phone: '3115550000',
+      status: 'offered',
+    })
+
+    const offer = await prisma.offer.findFirst({ where: { requestId: created.id } })
+    expect(offer).not.toBeNull()
+    expect(offer?.type).toBe('supplies_offered')
+    expect(offer?.transport).toBe('needs_transport')
+    expect(offer?.status).toBe('open')
+    expect(offer?.items).toEqual(['Agua'])
+    expect(offer?.contactVisibility).toBe('users')
+    expect(helper?.offerId).toBe(offer?.id)
+
+    const list = await request(app).get('/api/offers').query({ forTransport: 'true' })
+    expect(list.body.offers.map((o: { id: string }) => o.id)).toContain(offer!.id)
+  })
+
+  it('no crea oferta vinculada cuando quien pide puede recoger', async () => {
+    const created = await createRequest({ type: 'supplies_request', transport: 'can_transport' })
+    const res = await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila', transport: 'needs_transport', phone: '3115550000' })
+
+    expect(res.status).toBe(200)
+    const linked = await prisma.offer.findFirst({ where: { requestId: created.id } })
+    expect(linked).toBeNull()
+  })
+
+  it('oculta el contacto del ayudante a quienes no son el autor', async () => {
+    const created = await createRequest({ type: 'supplies_request' })
+    await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila', transport: 'can_transport', phone: '3115550000' })
+
+    const detail = await request(app).get(`/api/requests/${created.id}`)
+    expect(detail.body.helperList[0]).toMatchObject({ name: 'Camila' })
+    expect(detail.body.helperList[0].phone).toBeUndefined()
+  })
+
+  it('muestra el contacto del ayudante a quien publicó el pedido', async () => {
+    const registered = await request(app).post('/api/auth/register').send({
+      email: 'autora@correo.org',
+      password: 'contrasena-segura',
+      name: 'Autora',
+    })
+    const token = new URL(
+      registered.body.verificationUrl,
+      'http://localhost',
+    ).searchParams.get('token')
+    await request(app).post('/api/auth/verify-email').send({ token })
+    const agent = request.agent(app)
+    await agent
+      .post('/api/auth/login')
+      .send({ email: 'autora@correo.org', password: 'contrasena-segura' })
+
+    const created = await agent
+      .post('/api/requests')
+      .send({ ...validRequest, reporter: { name: 'Autora', phone: '3101112222' } })
+    await request(app)
+      .post(`/api/requests/${created.body.id}/help`)
+      .send({ name: 'Camila', transport: 'can_transport', phone: '3115550000' })
+
+    const detail = await agent.get(`/api/requests/${created.body.id}`)
+    expect(detail.body.helperList[0]).toMatchObject({
+      name: 'Camila',
+      phone: '3115550000',
+    })
+  })
+
+  it('cierra las ofertas vinculadas cuando el pedido se resuelve', async () => {
+    const created = await createRequest({ type: 'supplies_request', transport: 'needs_transport' })
+    await request(app)
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Camila', transport: 'needs_transport', phone: '3115550000' })
+
+    const offer = await prisma.offer.findFirst({ where: { requestId: created.id } })
+    expect(offer?.status).toBe('open')
+
+    await request(app)
+      .post(`/api/requests/${created.id}/status`)
+      .send({ status: 'resolved', resolveCode: '1234' })
+
+    const after = await prisma.offer.findFirst({ where: { requestId: created.id } })
+    expect(after?.status).toBe('unavailable')
+  })
+})
+
+describe('cierre automático con ofertas vinculadas', () => {
+  it('no cierra un pedido vencido con una entrega en camino', async () => {
+    const created = await createRequest({
+      type: 'supplies_request',
+      transport: 'needs_transport',
+      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    })
+    await createOffer({ transport: 'needs_transport', requestId: created.id, status: 'in_transit' })
+    await closeStaleRequests()
+
+    const res = await request(app).get(`/api/requests/${created.id}`)
+    expect(res.body.status).toBe('open')
+  })
+
+  it('cierra un pedido vencido y su oferta vinculada pendiente', async () => {
+    const created = await createRequest({
+      type: 'supplies_request',
+      transport: 'needs_transport',
+      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+    })
+    const offer = await createOffer({ transport: 'needs_transport', requestId: created.id })
+    await closeStaleRequests()
+
+    const res = await request(app).get(`/api/requests/${created.id}`)
+    expect(res.body.status).toBe('resolved')
+
+    const after = await prisma.offer.findFirst({ where: { requestId: created.id } })
+    expect(after?.status).toBe('unavailable')
   })
 })

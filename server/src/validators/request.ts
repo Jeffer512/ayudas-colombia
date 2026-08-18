@@ -5,7 +5,7 @@ import {
   TRANSPORT_OPTIONS,
   URGENCIES,
 } from '../constants.js'
-import { cityCodeSchema, contactVisibilitySchema, coordinatesSchema, reporterSchema, tagListSchema } from './common.js'
+import { cityCodeSchema, contactVisibilitySchema, coordinatesSchema, phoneSchema, reporterSchema, tagListSchema } from './common.js'
 
 const PHOTO_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]*={0,2}$/
 
@@ -96,6 +96,9 @@ export const helpRequestSchema = z.object({
   markerId: z.string().trim().max(100).optional(),
   name: z.string().trim().max(120).optional(),
   note: z.string().trim().max(2000).optional(),
+  transport: z.enum(TRANSPORT_OPTIONS).optional(),
+  phone: phoneSchema.optional(),
+  whatsapp: z.string().trim().max(40).optional(),
 })
 
 export type HelpRequestInput = z.infer<typeof helpRequestSchema>

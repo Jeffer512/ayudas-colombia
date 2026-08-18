@@ -26,6 +26,9 @@ export type Urgency = (typeof URGENCIES)[number]
 export const TRANSPORT_OPTIONS = ['can_transport', 'needs_transport'] as const
 export type TransportOption = (typeof TRANSPORT_OPTIONS)[number]
 
+export const HELPER_STATUSES = ['offered', 'accepted', 'delivered', 'cancelled'] as const
+export type HelperStatus = (typeof HELPER_STATUSES)[number]
+
 export const REQUEST_STATUSES = [
   'open',
   'resolved',
