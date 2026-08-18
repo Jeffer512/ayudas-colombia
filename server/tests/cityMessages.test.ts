@@ -87,6 +87,53 @@ describe('GET /api/city-messages', () => {
     expect(res.status).toBe(200)
     expect(res.body).toEqual({ messages: [], total: 0, limit: 50, offset: 0 })
   })
+
+  it('marca como propios los mensajes del dispositivo anónimo por markerId', async () => {
+    const mine = await createCityMessage({ markerId: 'm-mine', body: 'Mensaje mío' })
+    await createCityMessage({ markerId: 'm-other', body: 'Mensaje ajeno' })
+
+    const res = await request(app).get('/api/city-messages?city=pereira&markerId=m-mine')
+    const mineMsg = res.body.messages.find((m: { id: string }) => m.id === mine.id)
+    const otherMsg = res.body.messages.find((m: { id: string }) => m.id !== mine.id)
+    expect(mineMsg.mine).toBe(true)
+    expect(otherMsg.mine).toBe(false)
+  })
+
+  it('no marca mensajes como propios sin un markerId', async () => {
+    await createCityMessage({ markerId: 'm-mine', body: 'Mensaje mío' })
+
+    const res = await request(app).get('/api/city-messages?city=pereira')
+    expect(res.body.messages[0].mine).toBe(false)
+  })
+
+  it('marca los mensajes del usuario conectado como propios por su id', async () => {
+    const agent = await registerAndVerify('identidad-1@example.com')
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: 'identidad-1@example.com' },
+    })
+    const mine = await createCityMessage({
+      userId: user.id,
+      markerId: null,
+      body: 'Mensaje de mi cuenta',
+    })
+    await createCityMessage({ body: 'Mensaje anónimo' })
+
+    const asUser = await agent.get('/api/city-messages?city=pereira')
+    const mineMsg = asUser.body.messages.find(
+      (m: { id: string }) => m.id === mine.id,
+    )
+    const anonMsg = asUser.body.messages.find(
+      (m: { id: string }) => m.id !== mine.id,
+    )
+    expect(mineMsg.mine).toBe(true)
+    expect(anonMsg.mine).toBe(false)
+
+    const asAnonymous = await request(app).get('/api/city-messages?city=pereira')
+    const aMsg = asAnonymous.body.messages.find(
+      (m: { id: string }) => m.id === mine.id,
+    )
+    expect(aMsg.mine).toBe(false)
+  })
 })
 
 describe('POST /api/city-messages', () => {
@@ -107,6 +154,7 @@ describe('POST /api/city-messages', () => {
       city: { code: 'pereira', name: 'Pereira' },
     })
     expect(res.body.id).toBeTruthy()
+    expect(res.body.mine).toBe(true)
 
     const stored = await prisma.cityMessage.findUnique({ where: { id: res.body.id } })
     expect(stored?.status).toBe('open')
@@ -120,6 +168,7 @@ describe('POST /api/city-messages', () => {
       .send({ city: 'pereira', name: 'Lina', body: 'Ofrezco transporte al centro' })
 
     expect(res.status).toBe(201)
+    expect(res.body.mine).toBe(true)
     const stored = await prisma.cityMessage.findUnique({ where: { id: res.body.id } })
     expect(stored?.userId).toBeTruthy()
   })
@@ -186,7 +235,8 @@ describe('POST /api/city-messages', () => {
           expect(res.headers['x-accel-buffering']).toBe('no')
           res.on('data', (chunk: Buffer) => {
             for (const line of chunk.toString().split('\n')) lines.push(line)
-            if (lines.some((line) => line.includes('"type":"new"'))) resolve()
+            if (lines.some((line) => line.includes('Mensaje en vivo')))
+              resolve()
           })
         },
       )
@@ -210,9 +260,11 @@ describe('POST /api/city-messages', () => {
         .map((line) => line.slice(5))
       const event = received
         .map((raw) => JSON.parse(raw))
-        .find((e) => e.type === 'new')
+        .find((e) => e.message?.body === 'Mensaje en vivo')
       expect(event.message.body).toBe('Mensaje en vivo')
       expect(event.message.city.code).toBe('pereira')
+      expect(event.type).toBeUndefined()
+      expect(event.message.mine).toBeUndefined()
     } finally {
       server.closeAllConnections()
       await new Promise<void>((resolve) => server.close(() => resolve()))

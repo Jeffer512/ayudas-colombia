@@ -13,6 +13,7 @@ export interface CityMessageDto {
   city: { code: string; name: string }
   name: string
   body: string
+  markerId: string | null
   createdAt: string
 }
 
@@ -20,6 +21,7 @@ function serialize(message: {
   id: string
   name: string
   body: string
+  markerId: string | null
   createdAt: Date
   city: { code: string; name: string }
 }): CityMessageDto {
@@ -28,11 +30,15 @@ function serialize(message: {
     city: { code: message.city.code, name: message.city.name },
     name: message.name,
     body: message.body,
+    markerId: message.markerId,
     createdAt: message.createdAt.toISOString(),
   }
 }
 
-export async function listCityMessages(filters: CityMessageFilters) {
+export async function listCityMessages(
+  filters: CityMessageFilters,
+  viewer: Viewer,
+) {
   const city = await prisma.city.findUnique({ where: { code: filters.city } })
   if (!city) {
     return { messages: [], total: 0, limit: filters.limit, offset: filters.offset }
@@ -56,9 +62,14 @@ export async function listCityMessages(filters: CityMessageFilters) {
   ])
 
   return {
-    messages: rows.map((message) =>
-      serialize({ ...message, city: { code: city.code, name: city.name } }),
-    ),
+    messages: rows.map((message) => {
+      const base = serialize({ ...message, city: { code: city.code, name: city.name } })
+      const mine =
+        message.userId != null
+          ? message.userId === viewer.sub
+          : filters.markerId != null && message.markerId === filters.markerId
+      return { ...base, mine }
+    }),
     total,
     limit: filters.limit,
     offset: filters.offset,
