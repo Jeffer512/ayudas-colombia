@@ -65,69 +65,8 @@
   font-display: swap;
 }
 
-/* === PRIMITIVES (raw palette, no meaning) === */
+/* === PRIMITIVES (standard palettes come from Tailwind; only bespoke dark tints live here) === */
 :root {
-  --white: #ffffff;
-
-  /* zinc — neutrals */
-  --zinc-50: #fafafa;
-  --zinc-100: #f4f4f5;
-  --zinc-200: #e4e4e7;
-  --zinc-300: #d4d4d8;
-  --zinc-400: #a1a1aa;
-  --zinc-500: #71717a;
-  --zinc-600: #52525b;
-  --zinc-700: #3f3f46;
-  --zinc-800: #27272a;
-  --zinc-900: #18181b;
-  --zinc-950: #09090b;
-
-  /* blue — action */
-  --blue-50: #eff6ff;
-  --blue-100: #dbeafe;
-  --blue-300: #93c5fd;
-  --blue-400: #60a5fa;
-  --blue-500: #3b82f6;
-  --blue-600: #2563eb;
-  --blue-700: #1d4ed8;
-  --blue-900: #1e3a8a;
-
-  /* green — positive / available */
-  --green-50: #f0fdf4;
-  --green-100: #dcfce7;
-  --green-300: #86efac;
-  --green-400: #4ade80;
-  --green-600: #16a34a;
-  --green-700: #15803d;
-  --green-950: #052e16;
-
-  /* red — danger */
-  --red-50: #fef2f2;
-  --red-300: #fca5a5;
-  --red-400: #f87171;
-  --red-600: #dc2626;
-  --red-700: #b91c1c;
-  --red-950: #450a0a;
-
-  /* amber — warning */
-  --amber-50: #fffbeb;
-  --amber-400: #fbbf24;
-  --amber-600: #d97706;
-
-  /* orange — high urgency */
-  --orange-400: #fb923c;
-  --orange-600: #ea580c;
-
-  /* teal — organizations */
-  --teal-100: #ccfbf1;
-  --teal-300: #5eead4;
-  --teal-400: #2dd4bf;
-  --teal-600: #0d9488;
-  --teal-700: #0f766e;
-  --teal-900: #134e4a;
-  --teal-950: #042f2e;
-
-  /* dark-mode surface tints (bespoke) */
   --dark-bg: #0a0a0b;
   --dark-surface: #17171a;
   --dark-surface-2: #212124;
@@ -142,51 +81,51 @@
 
 /* === SEMANTIC TOKENS (light = default) === */
 :root {
-  --bg: var(--zinc-50);
-  --surface: var(--white);
-  --surface-2: var(--zinc-100);
+  --bg: var(--color-zinc-50);
+  --surface: var(--color-white);
+  --surface-2: var(--color-zinc-100);
 
-  --fg: var(--zinc-900);
-  --fg-muted: var(--zinc-600);
-  --fg-subtle: var(--zinc-500);
+  --fg: var(--color-zinc-900);
+  --fg-muted: var(--color-zinc-600);
+  --fg-subtle: var(--color-zinc-500);
 
-  --border: var(--zinc-200);
-  --border-strong: var(--zinc-300);
+  --border: var(--color-zinc-200);
+  --border-strong: var(--color-zinc-300);
 
-  --primary: var(--blue-600);
-  --primary-hover: var(--blue-700);
-  --on-primary: var(--white);
-  --primary-muted: var(--blue-50);
+  --primary: var(--color-sky-700);
+  --primary-hover: var(--color-sky-800);
+  --on-primary: var(--color-white);
+  --primary-muted: var(--color-sky-50);
 
-  --accent: var(--green-600);
-  --accent-hover: var(--green-700);
-  --on-accent: var(--white);
-  --accent-muted: var(--green-50);
+  --accent: var(--color-green-600);
+  --accent-hover: var(--color-green-700);
+  --on-accent: var(--color-white);
+  --accent-muted: var(--color-green-50);
 
-  --danger: var(--red-600);
-  --danger-hover: var(--red-700);
-  --on-danger: var(--white);
-  --danger-muted: var(--red-50);
+  --danger: var(--color-red-600);
+  --danger-hover: var(--color-red-700);
+  --on-danger: var(--color-white);
+  --danger-muted: var(--color-red-50);
 
-  --warning: var(--amber-600);
-  --warning-muted: var(--amber-50);
+  --warning: var(--color-amber-600);
+  --warning-muted: var(--color-amber-50);
 
-  --org: var(--teal-600);
-  --org-hover: var(--teal-700);
-  --on-org: var(--white);
-  --org-muted: var(--teal-100);
+  --org: var(--color-teal-600);
+  --org-hover: var(--color-teal-700);
+  --on-org: var(--color-white);
+  --org-muted: var(--color-teal-100);
 
-  --ring: var(--blue-600);
+  --ring: var(--color-sky-700);
 
-  --status-critical: var(--red-600);
-  --status-high: var(--orange-600);
-  --status-medium: var(--amber-600);
-  --status-low: var(--green-600);
+  --status-critical: var(--color-red-600);
+  --status-high: var(--color-orange-600);
+  --status-medium: var(--color-amber-600);
+  --status-low: var(--color-green-600);
 
-  --marker-needs: var(--red-600);
-  --marker-offers: var(--green-600);
-  --marker-avisos: var(--blue-600);
-  --marker-helpOrgs: var(--teal-600);
+  --marker-needs: var(--color-red-600);
+  --marker-offers: var(--color-green-600);
+  --marker-avisos: var(--color-blue-600);
+  --marker-helpOrgs: var(--color-teal-600);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -195,47 +134,47 @@
     --surface: var(--dark-surface);
     --surface-2: var(--dark-surface-2);
 
-    --fg: var(--zinc-100);
-    --fg-muted: var(--zinc-400);
+    --fg: var(--color-zinc-100);
+    --fg-muted: var(--color-zinc-400);
     --fg-subtle: var(--dark-fg-subtle);
 
     --border: var(--dark-border);
     --border-strong: var(--dark-border-strong);
 
-    --primary: var(--blue-400);
-    --primary-hover: var(--blue-300);
-    --on-primary: var(--white);
+    --primary: var(--color-sky-400);
+    --primary-hover: var(--color-sky-300);
+    --on-primary: var(--color-white);
     --primary-muted: var(--dark-primary-muted);
 
-    --accent: var(--green-400);
-    --accent-hover: var(--green-300);
-    --on-accent: var(--green-950);
+    --accent: var(--color-green-400);
+    --accent-hover: var(--color-green-300);
+    --on-accent: var(--color-green-950);
     --accent-muted: var(--dark-accent-muted);
 
-    --danger: var(--red-400);
-    --danger-hover: var(--red-300);
-    --on-danger: var(--red-950);
+    --danger: var(--color-red-400);
+    --danger-hover: var(--color-red-300);
+    --on-danger: var(--color-red-950);
     --danger-muted: var(--dark-danger-muted);
 
-    --warning: var(--amber-400);
+    --warning: var(--color-amber-400);
     --warning-muted: var(--dark-warning-muted);
 
-    --org: var(--teal-400);
-    --org-hover: var(--teal-300);
-    --on-org: var(--teal-950);
-    --org-muted: var(--teal-900);
+    --org: var(--color-teal-400);
+    --org-hover: var(--color-teal-300);
+    --on-org: var(--color-teal-950);
+    --org-muted: var(--color-teal-900);
 
-    --ring: var(--blue-300);
+    --ring: var(--color-sky-300);
 
-    --status-critical: var(--red-400);
-    --status-high: var(--orange-400);
-    --status-medium: var(--amber-400);
-    --status-low: var(--green-400);
+    --status-critical: var(--color-red-400);
+    --status-high: var(--color-orange-400);
+    --status-medium: var(--color-amber-400);
+    --status-low: var(--color-green-400);
 
-    --marker-needs: var(--red-400);
-    --marker-offers: var(--green-400);
-    --marker-avisos: var(--blue-300);
-    --marker-helpOrgs: var(--teal-400);
+    --marker-needs: var(--color-red-400);
+    --marker-offers: var(--color-green-400);
+    --marker-avisos: var(--color-blue-300);
+    --marker-helpOrgs: var(--color-teal-400);
   }
 }
 
