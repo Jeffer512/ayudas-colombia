@@ -17,6 +17,7 @@ import {
   VOLUNTEER_CAPABILITY_OPTIONS,
 } from '../lib/constants'
 import { defaultCity } from '../lib/geo'
+import Button from './ui/Button'
 import { isValidPhone } from '../lib/phone'
 import type {
   ContactVisibility,
@@ -487,22 +488,12 @@ export default function OfferForm({
         )}
 
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
-          >
+          <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`rounded-md px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50 ${
-              editing ? 'bg-primary hover:bg-primary-hover' : 'bg-emerald-700'
-            }`}
-          >
+          </Button>
+          <Button type="submit" disabled={submitting}>
             {submitting ? submittingLabel : submitLabel}
-          </button>
+          </Button>
         </div>
       </form>
     </>

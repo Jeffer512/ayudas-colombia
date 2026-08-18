@@ -10,6 +10,7 @@ import SuccessScreen from '../components/SuccessScreen'
 import { URGENCY_META } from '../lib/constants'
 import { defaultCity } from '../lib/geo'
 import { isValidPhone } from '../lib/phone'
+import Button from '../components/ui/Button'
 import type {
   ContactVisibility,
   CreatedAviso,
@@ -235,20 +236,12 @@ export default function CreateAvisoPage() {
         />
 
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
-          >
+          <Button type="button" variant="outline" onClick={() => navigate('/')}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
-          >
+          </Button>
+          <Button type="submit" disabled={submitting}>
             {submitting ? 'Publicando…' : 'Publicar aviso'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>
