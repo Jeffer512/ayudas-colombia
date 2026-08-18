@@ -27,6 +27,7 @@ const transportOffer: Offer = {
   transport: 'needs_transport',
   items: ['Kits de aseo'],
   zone: 'Centro',
+  destination: { type: 'anywhere' },
   volunteer: null,
   vehicle: null,
   status: 'open',
@@ -61,6 +62,8 @@ const assignedOffer: Offer = {
     claimerName: 'Voluntaria',
     mine: true,
     note: null,
+    phone: null,
+    whatsapp: null,
     claimedAt: '2026-08-13T12:00:00Z',
   },
 }
@@ -196,8 +199,11 @@ describe('TransportHubPage', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Me comprometo a llevarla' }),
     )
+    await user.click(
+      await screen.findByRole('button', { name: 'Confirmar compromiso' }),
+    )
 
-    await waitFor(() => expect(mockedClaim).toHaveBeenCalledWith('o1'))
+    await waitFor(() => expect(mockedClaim).toHaveBeenCalledWith('o1', {}))
   })
 
   it('muestra las cargas comprometidas y el botón para cancelar el propio compromiso', async () => {
@@ -308,5 +314,58 @@ describe('TransportHubPage', () => {
     expect(
       await screen.findByText('Aún no hay ofertas de transporte'),
     ).toBeInTheDocument()
+  })
+
+  it('muestra el destino cuando la carga está ligada a un pedido', async () => {
+    mockedOffers.mockImplementation((filters) => {
+      if (filters?.type === 'transport_offered') return Promise.resolve(emptyResponse)
+      if (filters?.forTransport === 'assigned') return Promise.resolve(emptyResponse)
+      return Promise.resolve({
+        offers: [
+          {
+            ...transportOffer,
+            destination: {
+              type: 'request',
+              request: {
+                id: 'r9',
+                title: 'Familias de La Almería',
+                address: 'Calle 7 #3-20',
+                city: { code: 'pereira', name: 'Pereira' },
+              },
+            },
+          },
+        ],
+        total: 1,
+        limit: 50,
+        offset: 0,
+      })
+    })
+    renderHub()
+
+    const link = await screen.findByRole('link', {
+      name: 'Para el pedido: Familias de La Almería',
+    })
+    expect(link).toHaveAttribute('href', '/pedido/r9')
+  })
+
+  it('guarda el contacto de quien se compromete', async () => {
+    mockedMe.mockResolvedValue(loggedInMe)
+    mockedClaim.mockResolvedValue({ ...transportOffer, status: 'in_transit' })
+    const user = userEvent.setup()
+    renderHub()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Me comprometo a llevarla' }),
+    )
+    await user.type(screen.getByLabelText('Teléfono (opcional)'), '3115550000')
+    await user.click(
+      await screen.findByRole('button', { name: 'Confirmar compromiso' }),
+    )
+
+    await waitFor(() =>
+      expect(mockedClaim).toHaveBeenCalledWith('o1', {
+        phone: '3115550000',
+      }),
+    )
   })
 })

@@ -21,6 +21,7 @@ export type Urgency = 'critical' | 'high' | 'medium' | 'low'
 
 export type RequestStatus = 'open' | 'resolved' | 'duplicate' | 'invalid'
 export type OfferStatus = 'open' | 'in_transit' | 'fulfilled' | 'unavailable'
+export type HelperStatus = 'offered' | 'accepted' | 'delivered' | 'cancelled'
 export type AvisoStatus = 'open' | 'closed'
 export type HelpOrgCategory = 'acopio' | 'psicologia' | 'voluntarios' | 'albergue' | 'other'
 export type HelpOrgType = 'ciudadano' | 'oficial'
@@ -50,8 +51,26 @@ export interface RequestEvent {
 export interface RequestHelper {
   name: string | null
   note: string | null
+  transport: TransportOption | null
+  status: HelperStatus
+  phone: string | null
+  whatsapp: string | null
   createdAt: string
 }
+
+export type OfferDestination =
+  | { type: 'anywhere' }
+  | { type: 'acopio'; org: { id: string; name: string } }
+  | { type: 'org'; org: { id: string; name: string } }
+  | {
+      type: 'request'
+      request: {
+        id: string
+        title: string
+        address: string | null
+        city: CityRef
+      }
+    }
 
 export interface Reporter {
   name: string
@@ -132,6 +151,7 @@ export interface Request {
   organization?: { id: string; name: string; category: HelpOrgCategory }
   helpers: number
   helperList?: RequestHelper[]
+  linkedOfferPresent?: boolean
   resolvedAt: string | null
   createdAt: string
   updatedAt: string
@@ -144,6 +164,8 @@ export interface OfferClaim {
   claimerName: string | null
   mine: boolean
   note: string | null
+  phone: string | null
+  whatsapp: string | null
   claimedAt: string
 }
 
@@ -179,6 +201,7 @@ export interface Offer {
   audience?: OfferAudience
   claim: OfferClaim | null
   canClaim: boolean
+  destination: OfferDestination
   resolvedAt: string | null
   createdAt: string
   updatedAt: string
@@ -291,6 +314,7 @@ export type NewOffer = {
   cityCode: string
   contactVisibility?: ContactVisibility
   audience?: OfferAudience
+  destinationOrgId?: string
   reporter: ReporterInput
 }
 
@@ -330,6 +354,20 @@ export type StatusUpdate = {
   actorName?: string
 }
 
+export type NewHelpRequest = {
+  markerId?: string
+  name?: string
+  note?: string
+  transport?: TransportOption
+  phone?: string
+  whatsapp?: string
+}
+
+export type NewClaim = {
+  phone?: string
+  whatsapp?: string
+}
+
 export type UpdateRequest = {
   title: string
   description?: string | null
@@ -365,6 +403,7 @@ export type UpdateOffer = {
   contactVisibility?: ContactVisibility
   audience?: OfferAudience
   transport?: TransportOption | null
+  destinationOrgId?: string | null
   resolveCode?: string
 }
 

@@ -28,6 +28,15 @@ export const TRANSPORT_LABELS: Record<TransportOption, string> = {
   needs_transport: 'Necesita transporte',
 }
 
+export const HELPER_STATUS_LABELS: Record<string, string> = {
+  offered: 'Ofreció su ayuda',
+  accepted: 'Entrega en camino',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado',
+}
+
+export const FAR_AWAY_DESTINATION_LABEL = 'Donde se necesite'
+
 export const SUPPLIES_ITEM_OPTIONS = [
   'Agua potable',
   'Alimentación',

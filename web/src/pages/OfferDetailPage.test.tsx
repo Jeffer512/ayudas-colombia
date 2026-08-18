@@ -32,6 +32,7 @@ const baseOffer: Offer = {
   transport: 'can_transport',
   items: ['Kits de aseo'],
   zone: 'Centro',
+  destination: { type: 'anywhere' },
   volunteer: null,
   vehicle: null,
   status: 'open',
@@ -217,6 +218,8 @@ describe('OfferDetailPage', () => {
         claimerName: 'Voluntaria',
         mine: false,
         note: null,
+        phone: null,
+        whatsapp: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
     })
@@ -246,6 +249,8 @@ describe('OfferDetailPage', () => {
         claimerName: 'Voluntaria',
         mine: false,
         note: null,
+        phone: null,
+        whatsapp: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
     })
@@ -341,6 +346,8 @@ describe('OfferDetailPage', () => {
         claimerName: 'Voluntaria',
         mine: true,
         note: null,
+        phone: null,
+        whatsapp: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
     })
@@ -362,6 +369,8 @@ describe('OfferDetailPage', () => {
         claimerName: 'Voluntaria',
         mine: false,
         note: null,
+        phone: null,
+        whatsapp: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
     })
@@ -389,6 +398,8 @@ describe('OfferDetailPage', () => {
         claimerName: 'Voluntaria',
         mine: true,
         note: null,
+        phone: null,
+        whatsapp: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
     })
@@ -485,6 +496,8 @@ describe('OfferDetailPage', () => {
         claimerName: 'Voluntaria',
         mine: false,
         note: null,
+        phone: null,
+        whatsapp: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
     })
@@ -506,5 +519,85 @@ describe('OfferDetailPage', () => {
     expect(
       screen.queryByRole('button', { name: 'Editar oferta' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('muestra el destino para un pedido concreto', async () => {
+    renderPage({
+      ...baseOffer,
+      destination: {
+        type: 'request',
+        request: {
+          id: 'r9',
+          title: 'Familias de La Almería',
+          address: 'Calle 7 #3-20',
+          city: { code: 'pereira', name: 'Pereira' },
+        },
+      },
+    })
+
+    const link = await screen.findByRole('link', {
+      name: /Para el pedido: Familias de La Almería/,
+    })
+    expect(link).toHaveAttribute('href', '/pedido/r9')
+    expect(screen.getByText('Calle 7 #3-20 · Pereira')).toBeInTheDocument()
+  })
+
+  it('muestra el destino en un punto de acopio', async () => {
+    renderPage({
+      ...baseOffer,
+      destination: { type: 'acopio', org: { id: 'org-9', name: 'Comedor Esperanza' } },
+    })
+
+    expect(
+      await screen.findByText('Destino'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Comedor Esperanza')).toBeInTheDocument()
+  })
+
+  it('muestra el contacto de quien se compromete cuando soy el dueño', async () => {
+    renderPage({
+      ...baseOffer,
+      isOwner: true,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        mine: false,
+        note: null,
+        phone: '3115550000',
+        whatsapp: '3110001111',
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    expect(
+      await screen.findByText(/Voluntaria se comprometió/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Contacto: 3115550000 · 3110001111'),
+    ).toBeInTheDocument()
+  })
+
+  it('no muestra el contacto del compromiso a personas ajenas', async () => {
+    renderPage({
+      ...baseOffer,
+      status: 'in_transit',
+      claim: {
+        id: 'c1',
+        status: 'committed',
+        claimerName: 'Voluntaria',
+        mine: false,
+        note: null,
+        phone: '3115550000',
+        whatsapp: null,
+        claimedAt: '2026-08-14T12:00:00Z',
+      },
+    })
+
+    expect(
+      await screen.findByText(/Voluntaria se comprometió/),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Contacto:/)).not.toBeInTheDocument()
   })
 })

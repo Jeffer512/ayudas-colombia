@@ -49,6 +49,7 @@ export function serializeRequest(
     createdAt: Date
   }[],
   viewer?: Viewer,
+  linkedOfferPresent?: boolean,
 ) {
   const ownerId = request.reporter.userId
   const owner = isOwner(viewer, ownerId)
@@ -109,6 +110,7 @@ export function serializeRequest(
           createdAt: e.createdAt,
         }))
       : undefined,
+    ...(linkedOfferPresent !== undefined ? { linkedOfferPresent } : {}),
   }
 }
 
@@ -167,16 +169,18 @@ export async function listRequests(filters: RequestFilters, viewer?: Viewer) {
 export async function getRequest(id: string, viewer?: Viewer) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Solicitud no encontrada')
 
-  const [request, helpers, helperList] = await prisma.$transaction([
-    prisma.request.findUnique({
-      where: { id },
-      include: {
-        city: true,
-        reporter: true,
-        org: true,
-        events: { orderBy: { createdAt: 'asc' } },
-      },
-    }),
+  const request = await prisma.request.findUnique({
+    where: { id },
+    include: {
+      city: true,
+      reporter: true,
+      org: true,
+      events: { orderBy: { createdAt: 'asc' } },
+    },
+  })
+  if (!request) throw new ApiError(404, 'Solicitud no encontrada')
+
+  const [helpers, helperList] = await Promise.all([
     prisma.requestHelper.count({ where: { requestId: id } }),
     prisma.requestHelper.findMany({
       where: { requestId: id },
@@ -192,8 +196,19 @@ export async function getRequest(id: string, viewer?: Viewer) {
       },
     }),
   ])
-  if (!request) throw new ApiError(404, 'Solicitud no encontrada')
-  return serializeRequest(request, helpers, helperList, viewer)
+
+  const linkedOffers =
+    viewer && viewer.sub
+      ? await prisma.offer.count({
+          where: {
+            requestId: id,
+            reporter: { userId: viewer.sub },
+            status: { in: ['open', 'in_transit'] },
+          },
+        })
+      : 0
+
+  return serializeRequest(request, helpers, helperList, viewer, linkedOffers > 0)
 }
 
 export async function createRequest(input: CreateRequestInput, viewer?: Viewer) {

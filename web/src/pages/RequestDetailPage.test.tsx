@@ -130,7 +130,7 @@ describe('RequestDetailPage', () => {
     mockedHelpRequest.mockResolvedValue({
       ...baseRequest,
       helpers: 2,
-      helperList: [{ name: 'Camila', note: 'Llevo agua', createdAt: '2026-08-14T10:00:00Z' }],
+      helperList: [{ name: 'Camila', transport: 'needs_transport', status: 'offered', phone: '3121234567', whatsapp: null, note: 'Llevo agua', createdAt: '2026-08-14T10:00:00Z' }],
     })
     const user = userEvent.setup()
     renderPage()
@@ -141,6 +141,10 @@ describe('RequestDetailPage', () => {
       screen.getByLabelText('¿Qué vas a aportar? (opcional)'),
       'Llevo agua',
     )
+    await user.selectOptions(
+      screen.getByLabelText('¿Puedes transportar los suministros?'),
+      'can_transport',
+    )
     await user.click(screen.getByRole('button', { name: 'Confirmar' }))
 
     await waitFor(() =>
@@ -148,6 +152,7 @@ describe('RequestDetailPage', () => {
         markerId: 'device-abc',
         name: 'Camila',
         note: 'Llevo agua',
+        transport: 'can_transport',
       }),
     )
     expect(
@@ -160,8 +165,8 @@ describe('RequestDetailPage', () => {
       ...baseRequest,
       helpers: 2,
       helperList: [
-        { name: 'Camila', note: 'Llevo agua', createdAt: '2026-08-14T10:00:00Z' },
-        { name: null, note: null, createdAt: '2026-08-14T11:00:00Z' },
+        { name: 'Camila', transport: 'can_transport', status: 'offered', phone: null, whatsapp: null, note: 'Llevo agua', createdAt: '2026-08-14T10:00:00Z' },
+        { name: null, transport: null, status: 'offered', phone: null, whatsapp: null, note: null, createdAt: '2026-08-14T11:00:00Z' },
       ],
     })
 
@@ -413,6 +418,80 @@ describe('RequestDetailPage', () => {
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Editar pedido' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('pide teléfono y nombre a quien no puede transportar', async () => {
+    mockedHelpRequest.mockResolvedValue({
+      ...baseRequest,
+      helpers: 1,
+      helperList: [],
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Voy a ayudar' }))
+    await user.selectOptions(
+      screen.getByLabelText('¿Puedes transportar los suministros?'),
+      'needs_transport',
+    )
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+    expect(
+      await screen.findByText(
+        'Deja tu teléfono o WhatsApp para coordinar la entrega',
+      ),
+    ).toBeInTheDocument()
+    expect(mockedHelpRequest).not.toHaveBeenCalled()
+
+    await user.type(screen.getByLabelText('Teléfono'), '3121112222')
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+    expect(
+      await screen.findByText('Escribe tu nombre para coordinar la entrega'),
+    ).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Tu nombre'), 'Camila')
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+    await waitFor(() =>
+      expect(mockedHelpRequest).toHaveBeenCalledWith('r1', {
+        markerId: 'device-abc',
+        name: 'Camila',
+        transport: 'needs_transport',
+        phone: '3121112222',
+      }),
+    )
+  })
+
+  it('pide un contacto cuando la persona recoge directamente', async () => {
+    renderPage({ ...baseRequest, transport: 'can_transport' })
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Voy a ayudar' }))
+
+    expect(
+      screen.queryByText('¿Puedes transportar los suministros?'),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+    expect(
+      await screen.findByText(
+        'Deja tu teléfono o WhatsApp para coordinar la recogida',
+      ),
+    ).toBeInTheDocument()
+    expect(mockedHelpRequest).not.toHaveBeenCalled()
+  })
+
+  it('considera ayudado un pedido con oferta ligada', async () => {
+    renderPage({ ...baseRequest, linkedOfferPresent: true })
+
+    expect(
+      await screen.findByText('Ya estás ayudando en este pedido'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Voy a ayudar' }),
     ).not.toBeInTheDocument()
   })
 })

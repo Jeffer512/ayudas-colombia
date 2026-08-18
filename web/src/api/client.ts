@@ -15,9 +15,11 @@ import type {
   CreatedAviso,
   CreatedOffer,
   CreatedRequest,
-  NewHelpOrg,
   NewAviso,
+  NewClaim,
   NewCityMessage,
+  NewHelpOrg,
+  NewHelpRequest,
   NewOffer,
   NewOrgRequest,
   NewReport,
@@ -136,7 +138,7 @@ export const api = {
     })
   },
 
-  helpRequest(id: string, body: { markerId?: string; name?: string; note?: string }): Promise<Request> {
+  helpRequest(id: string, body: NewHelpRequest): Promise<Request> {
     return http(`/requests/${id}/help`, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -180,8 +182,11 @@ export const api = {
     })
   },
 
-  claimOffer(id: string): Promise<Offer> {
-    return http(`/offers/${id}/claim`, { method: 'POST' })
+  claimOffer(id: string, body?: NewClaim): Promise<Offer> {
+    return http(`/offers/${id}/claim`, {
+      method: 'POST',
+      body: JSON.stringify(body ?? {}),
+    })
   },
 
   cancelClaim(id: string): Promise<Offer> {

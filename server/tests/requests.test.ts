@@ -935,6 +935,37 @@ describe('POST /api/requests/:id/help · transporte y contacto', () => {
     expect(list.body.offers.map((o: { id: string }) => o.id)).toContain(offer!.id)
   })
 
+  it('reporta la oferta vinculada al dueño de la carga', async () => {
+    const created = await createRequest({
+      type: 'supplies_request',
+      transport: 'needs_transport',
+    })
+    const registered = await request(app).post('/api/auth/register').send({
+      email: 'carga-owner@correo.org',
+      password: 'contrasena-segura',
+      name: 'Cargador',
+    })
+    const token = new URL(
+      registered.body.verificationUrl,
+      'http://localhost',
+    ).searchParams.get('token')
+    await request(app).post('/api/auth/verify-email').send({ token })
+    const agent = request.agent(app)
+    await agent
+      .post('/api/auth/login')
+      .send({ email: 'carga-owner@correo.org', password: 'contrasena-segura' })
+
+    await agent
+      .post(`/api/requests/${created.id}/help`)
+      .send({ name: 'Cargador', transport: 'needs_transport', phone: '3115550000' })
+
+    const detail = await agent.get(`/api/requests/${created.id}`)
+    expect(detail.body.linkedOfferPresent).toBe(true)
+
+    const stranger = await request(app).get(`/api/requests/${created.id}`)
+    expect(stranger.body.linkedOfferPresent).toBe(false)
+  })
+
   it('no crea oferta vinculada cuando quien pide puede recoger', async () => {
     const created = await createRequest({ type: 'supplies_request', transport: 'can_transport' })
     const res = await request(app)

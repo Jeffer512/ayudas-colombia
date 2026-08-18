@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, SetStateAction } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
@@ -132,11 +132,31 @@ export default function OfferForm({
   const [audience, setAudience] = useState<OfferAudience>(
     editing ? (initial!.audience ?? 'users') : 'users',
   )
+  const [destinationOrgId, setDestinationOrgId] = useState(() => {
+    if (!editing) return ''
+    const dest = initial!.destination
+    return dest.type === 'acopio' || dest.type === 'org' ? dest.org.id : ''
+  })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const citiesQuery = useQuery({ queryKey: ['cities'], queryFn: api.cities })
   const cities = citiesQuery.data?.cities ?? []
+
+  const showDestination =
+    type === 'supplies_offered' && transport === 'needs_transport'
+  const destinationOrgsQuery = useQuery({
+    queryKey: ['help-orgs', { city: location.cityCode, status: 'open' }],
+    queryFn: () => api.helpOrgs({ city: location.cityCode, status: 'open' }),
+    enabled: showDestination && Boolean(location.cityCode),
+  })
+  const destinationOrgs = destinationOrgsQuery.data?.helpOrgs ?? []
+  const destinationAcopio = destinationOrgs.filter(
+    (org) => org.category === 'acopio',
+  )
+  const destinationOther = destinationOrgs.filter(
+    (org) => org.category !== 'acopio',
+  )
 
   useEffect(() => {
     if (!editing && !location.cityCode && cities.length > 0) {
@@ -152,6 +172,16 @@ export default function OfferForm({
     type === 'transport_offered'
   const zoneLabel =
     type === 'volunteers_offered' ? 'Zona donde puedes ayudar' : 'Zona de entrega'
+
+  function patchLocation(patch: SetStateAction<LocationState>) {
+    const prev = location
+    setLocation(patch)
+    const next =
+      typeof patch === 'function' ? patch(prev) : patch
+    if (next.cityCode !== undefined && next.cityCode !== prev.cityCode) {
+      setDestinationOrgId('')
+    }
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -196,6 +226,9 @@ export default function OfferForm({
         base.transport = transport || null
         base.items = items
         base.zone = zone.trim() || null
+        base.destinationOrgId = showDestination
+          ? destinationOrgId.trim() || null
+          : null
       } else if (type === 'volunteers_offered') {
         base.volunteer = {
           capabilities,
@@ -216,6 +249,9 @@ export default function OfferForm({
         type: type as OfferType,
         ...(canTransport && transport ? { transport } : {}),
         ...(items.length ? { items } : {}),
+        ...(showDestination && destinationOrgId
+          ? { destinationOrgId }
+          : {}),
         ...(zone.trim() && showZone ? { zone: zone.trim() } : {}),
         ...(type === 'volunteers_offered'
           ? {
@@ -333,6 +369,47 @@ export default function OfferForm({
                   se comprometa a llevarlas.
                 </p>
               )}
+            </div>
+          )}
+
+          {showDestination && (
+            <div className="mt-4">
+              <label htmlFor="destinationOrgId" className={labelClass}>
+                ¿Hacia dónde llevarlas?
+              </label>
+              <select
+                id="destinationOrgId"
+                value={destinationOrgId}
+                onChange={(e) => setDestinationOrgId(e.target.value)}
+                className={`mt-1 ${inputClass}`}
+              >
+                <option value="">Donde se necesite</option>
+                {destinationAcopio.length > 0 && (
+                  <optgroup label="Centros de acopio">
+                    {destinationAcopio.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {destinationOther.length > 0 && (
+                  <optgroup label="Otras organizaciones">
+                    {destinationOther.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+              {!destinationOrgsQuery.isPending &&
+                destinationOrgs.length === 0 && (
+                  <p className="mt-1 text-xs text-fg-muted">
+                    No hay organizaciones abiertas en esta ciudad; se llevará
+                    donde se necesite.
+                  </p>
+                )}
             </div>
           )}
 
@@ -467,7 +544,7 @@ export default function OfferForm({
               ? 'Indica arriba la zona donde puedes entregar; no hace falta dar tu dirección exacta.'
               : undefined
           }
-          onPatch={setLocation}
+          onPatch={patchLocation}
         />
 
         <ReporterSection

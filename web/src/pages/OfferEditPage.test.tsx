@@ -32,6 +32,7 @@ const baseOffer: Offer = {
   transport: 'can_transport',
   items: ['Alimentación'],
   zone: 'Centro',
+  destination: { type: 'anywhere' },
   volunteer: null,
   vehicle: null,
   status: 'open',
@@ -192,6 +193,8 @@ describe('OfferEditPage', () => {
         claimerName: 'Voluntaria',
         mine: false,
         note: null,
+        phone: null,
+        whatsapp: null,
         claimedAt: '2026-08-14T12:00:00Z',
       },
     })

@@ -7,6 +7,7 @@ import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import {
+  FAR_AWAY_DESTINATION_LABEL,
   OFFER_STATUS_META,
   OFFER_TYPE_LABELS,
   TRANSPORT_LABELS,
@@ -136,6 +137,38 @@ export default function OfferDetailPage() {
             <dd className="text-fg">{offer.zone}</dd>
           </div>
         )}
+        {offer.destination.type === 'request' && (
+          <div>
+            <dt className="font-medium text-fg-muted">Destino</dt>
+            <dd className="text-fg">
+              <Link
+                to={`/pedido/${offer.destination.request.id}`}
+                className="text-primary hover:underline"
+              >
+                Para el pedido: {offer.destination.request.title}
+              </Link>
+              {offer.destination.request.address && (
+                <p className="text-sm text-fg-muted">
+                  {offer.destination.request.address} ·{' '}
+                  {offer.destination.request.city.name}
+                </p>
+              )}
+            </dd>
+          </div>
+        )}
+        {(offer.destination.type === 'acopio' ||
+          offer.destination.type === 'org') && (
+          <div>
+            <dt className="font-medium text-fg-muted">Destino</dt>
+            <dd className="text-fg">{offer.destination.org.name}</dd>
+          </div>
+        )}
+        {offer.destination.type === 'anywhere' && (
+          <div>
+            <dt className="font-medium text-fg-muted">Destino</dt>
+            <dd className="text-fg">{FAR_AWAY_DESTINATION_LABEL}</dd>
+          </div>
+        )}
         {offer.volunteer && (
           <>
             {offer.volunteer.capabilities.length > 0 && (
@@ -209,6 +242,13 @@ export default function OfferDetailPage() {
               : 'Alguien se comprometió a llevar esta oferta.'}{' '}
             Coordina con esa persona y confirma la entrega cuando esté hecha.
           </p>
+          {offer.isOwner && (offer.claim.phone || offer.claim.whatsapp) && (
+            <p className="mt-1 text-sm font-medium text-warning ">
+              Contacto: {offer.claim.phone || ''}
+              {offer.claim.phone && offer.claim.whatsapp ? ' · ' : ''}
+              {offer.claim.whatsapp || ''}
+            </p>
+          )}
           {offer.claim.mine && (
             <>
               {cancelClaimMutation.isError && (

@@ -4,12 +4,48 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import EntityList from '../components/EntityList'
 import { formatDate } from '../lib/format'
-import { TRANSPORT_LABELS, OFFER_TYPE_LABELS } from '../lib/constants'
+import {
+  FAR_AWAY_DESTINATION_LABEL,
+  TRANSPORT_LABELS,
+  OFFER_TYPE_LABELS,
+} from '../lib/constants'
 import type { Offer } from '../lib/types'
+
+function DestinationChip({ offer }: { offer: Offer }) {
+  const dest = offer.destination
+  if (dest.type === 'request') {
+    return (
+      <Link
+        to={`/pedido/${dest.request.id}`}
+        className="inline-block max-w-full truncate rounded-full bg-primary-muted  px-2 py-0.5 text-primary  hover:underline"
+        title={dest.request.title}
+      >
+        Para el pedido: {dest.request.title}
+      </Link>
+    )
+  }
+  if (dest.type === 'acopio' || dest.type === 'org') {
+    return (
+      <span className="inline-block rounded-full bg-primary-muted  px-2 py-0.5 text-primary ">
+        Destino: {dest.org.name}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-block rounded-full bg-surface-2 px-2 py-0.5 text-fg-muted">
+      {FAR_AWAY_DESTINATION_LABEL}
+    </span>
+  )
+}
 
 export default function TransportHubPage() {
   const queryClient = useQueryClient()
   const [error, setError] = useState<string | null>(null)
+  const [claimPrompt, setClaimPrompt] = useState<{
+    id: string
+    phone: string
+    whatsapp: string
+  } | null>(null)
 
   const availableQuery = useQuery({
     queryKey: ['offers', { forTransport: true }],
@@ -34,10 +70,15 @@ export default function TransportHubPage() {
   })
 
   const claimMutation = useMutation({
-    mutationFn: (id: string) => api.claimOffer(id),
+    mutationFn: (payload: { id: string; phone?: string; whatsapp?: string }) =>
+      api.claimOffer(payload.id, {
+        ...(payload.phone ? { phone: payload.phone } : {}),
+        ...(payload.whatsapp ? { whatsapp: payload.whatsapp } : {}),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offers'] })
       setError(null)
+      setClaimPrompt(null)
     },
     onError: (err: unknown) => {
       setError(
@@ -142,6 +183,7 @@ export default function TransportHubPage() {
                       <span className="inline-block rounded-full bg-warning-muted  px-2 py-0.5 text-warning ">
                         {TRANSPORT_LABELS[offer.transport ?? 'needs_transport']}
                       </span>
+                      <DestinationChip offer={offer} />
                       <span>{offer.city.name}</span>
                       {offer.address ? (
                         <span className="truncate">{offer.address}</span>
@@ -168,15 +210,94 @@ export default function TransportHubPage() {
                   {offer.canClaim &&
                     loginKnown &&
                     (loggedIn ? (
-                      <button
-                        onClick={() => claimMutation.mutate(offer.id)}
-                        disabled={claimMutation.isPending}
-                        className="shrink-0 rounded-md bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning disabled:opacity-50"
-                      >
-                        {claimMutation.isPending
-                          ? 'Reservando…'
-                          : 'Me comprometo a llevarla'}
-                      </button>
+                      claimPrompt?.id === offer.id ? (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault()
+                            claimMutation.mutate({
+                              id: offer.id,
+                              phone: claimPrompt.phone.trim() || undefined,
+                              whatsapp: claimPrompt.whatsapp.trim() || undefined,
+                            })
+                          }}
+                          className="flex w-full flex-col gap-2 sm:w-auto sm:items-end"
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <div>
+                              <label
+                                htmlFor={`claimPhone-${offer.id}`}
+                                className="text-xs font-medium text-fg-muted"
+                              >
+                                Teléfono (opcional)
+                              </label>
+                              <input
+                                id={`claimPhone-${offer.id}`}
+                                inputMode="tel"
+                                placeholder="Ej: 311 555 0000"
+                                value={claimPrompt.phone}
+                                onChange={(e) =>
+                                  setClaimPrompt({
+                                    ...claimPrompt,
+                                    phone: e.target.value,
+                                  })
+                                }
+                                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary sm:w-44"
+                              />
+                            </div>
+                            <div>
+                              <label
+                                htmlFor={`claimWhatsapp-${offer.id}`}
+                                className="text-xs font-medium text-fg-muted"
+                              >
+                                WhatsApp (opcional)
+                              </label>
+                              <input
+                                id={`claimWhatsapp-${offer.id}`}
+                                placeholder="Ej: 311 555 0000"
+                                value={claimPrompt.whatsapp}
+                                onChange={(e) =>
+                                  setClaimPrompt({
+                                    ...claimPrompt,
+                                    whatsapp: e.target.value,
+                                  })
+                                }
+                                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary sm:w-44"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="submit"
+                              disabled={claimMutation.isPending}
+                              className="rounded-md bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning disabled:opacity-50"
+                            >
+                              {claimMutation.isPending
+                                ? 'Reservando…'
+                                : 'Confirmar compromiso'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setClaimPrompt(null)}
+                              className="rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          onClick={() =>
+                            setClaimPrompt({
+                              id: offer.id,
+                              phone: '',
+                              whatsapp: '',
+                            })
+                          }
+                          className="shrink-0 rounded-md bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning"
+                        >
+                          Me comprometo a llevarla
+                        </button>
+                      )
                     ) : (
                       <Link
                         to="/iniciar-sesion"
@@ -220,6 +341,7 @@ export default function TransportHubPage() {
                         <span className="inline-block rounded-full bg-warning-muted  px-2 py-0.5 text-warning ">
                           En camino
                         </span>
+                        <DestinationChip offer={offer} />
                         <span>{offer.city.name}</span>
                         {offer.claim?.claimerName ? (
                           <span>

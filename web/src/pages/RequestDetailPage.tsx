@@ -7,13 +7,15 @@ import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import {
+  HELPER_STATUS_LABELS,
   REQUEST_STATUS_META,
   REQUEST_TYPE_LABELS,
   TRANSPORT_LABELS,
+  TRANSPORT_OPTIONS,
   URGENCY_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
-import type { StatusUpdate } from '../lib/types'
+import type { NewHelpRequest, StatusUpdate, TransportOption } from '../lib/types'
 
 const inputClass =
   'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
@@ -28,8 +30,12 @@ export default function RequestDetailPage() {
   const [note, setNote] = useState('')
   const [resolveCode, setResolveCode] = useState('')
   const [helpMode, setHelpMode] = useState(false)
+  const [helpError, setHelpError] = useState<string | null>(null)
   const [helperName, setHelperName] = useState('')
   const [helperNote, setHelperNote] = useState('')
+  const [helperTransport, setHelperTransport] = useState<TransportOption | ''>('')
+  const [helperPhone, setHelperPhone] = useState('')
+  const [helperWhatsapp, setHelperWhatsapp] = useState('')
   const [iHelped, setIHelped] = useState(false)
 
   const { data: request, isPending, isError } = useQuery({
@@ -49,14 +55,16 @@ export default function RequestDetailPage() {
   })
 
   const helpMutation = useMutation({
-    mutationFn: (body: { markerId?: string; name?: string; note?: string }) =>
-      api.helpRequest(id, body),
+    mutationFn: (body: NewHelpRequest) => api.helpRequest(id, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['request', id] })
       queryClient.invalidateQueries({ queryKey: ['requests'] })
       setHelpMode(false)
       setHelperName('')
       setHelperNote('')
+      setHelperTransport('')
+      setHelperPhone('')
+      setHelperWhatsapp('')
       setIHelped(true)
     },
   })
@@ -92,6 +100,11 @@ export default function RequestDetailPage() {
   const typeLabel = REQUEST_TYPE_LABELS[request.type] ?? request.type
   const canBeMarkedActive = request.status === 'open'
   const canReopen = request.status !== 'open'
+  const isSupplies = request.type === 'supplies_request'
+  const requesterPicksUp = isSupplies && request.transport === 'can_transport'
+  const asksTransport = isSupplies && !requesterPicksUp
+  const helpedByLinkedOffer = request.linkedOfferPresent === true
+  const helped = iHelped || helpedByLinkedOffer
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -387,28 +400,35 @@ export default function RequestDetailPage() {
           <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-300">
             {request.isOwner
               ? 'Tú creaste este pedido. Los demás pueden registrarse aquí para ayudarte.'
-              : iHelped
+              : helped
                 ? 'Gracias por ayudar. Tu apoyo a este pedido ya quedó registrado.'
-                : 'Registra que puedes ayudar para que los demás coordinen sus esfuerzos.'}
+                : !isSupplies
+                  ? 'Registra que puedes ayudar para que los demás coordinen sus esfuerzos.'
+                  : requesterPicksUp
+                    ? 'Si puedes ayudar, registra tu apoyo y deja un contacto para coordinar la recogida.'
+                    : 'Si puedes ayudar, indica si puedes llevar los suministros hasta donde se necesitan.'}
           </p>
 
-          {!request.isOwner && helpMutation.isError && (
+          {!request.isOwner && (helpError || helpMutation.isError) && (
             <div
               role="alert"
               className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
             >
-              {(helpMutation.error as Error).message}
+              {helpError ?? (helpMutation.error as Error).message}
             </div>
           )}
 
           {!request.isOwner &&
-            (iHelped ? (
+            (helped ? (
               <p className="mt-3 inline-block rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
                 Ya estás ayudando en este pedido
               </p>
             ) : !helpMode ? (
               <button
-                onClick={() => setHelpMode(true)}
+                onClick={() => {
+                  setHelpError(null)
+                  setHelpMode(true)
+                }}
                 className="mt-3 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
               >
                 Voy a ayudar
@@ -417,10 +437,38 @@ export default function RequestDetailPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
+                  const phone = helperPhone.trim()
+                  const whatsapp = helperWhatsapp.trim()
+                  setHelpError(null)
+                  if (asksTransport && !helperTransport) {
+                    setHelpError('Indica si puedes transportar los suministros')
+                    return
+                  }
+                  if (
+                    (requesterPicksUp || helperTransport === 'needs_transport') &&
+                    !phone &&
+                    !whatsapp
+                  ) {
+                    setHelpError(
+                      requesterPicksUp
+                        ? 'Deja tu teléfono o WhatsApp para coordinar la recogida'
+                        : 'Deja tu teléfono o WhatsApp para coordinar la entrega',
+                    )
+                    return
+                  }
+                  if (helperTransport === 'needs_transport' && !helperName.trim()) {
+                    setHelpError('Escribe tu nombre para coordinar la entrega')
+                    return
+                  }
                   helpMutation.mutate({
                     markerId: api.markerId(),
                     name: helperName.trim() || undefined,
                     note: helperNote.trim() || undefined,
+                    ...(asksTransport && helperTransport
+                      ? { transport: helperTransport }
+                      : {}),
+                    ...(phone ? { phone } : {}),
+                    ...(whatsapp ? { whatsapp } : {}),
                   })
                 }}
                 className="mt-3 space-y-3"
@@ -430,11 +478,12 @@ export default function RequestDetailPage() {
                     htmlFor="helperName"
                     className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
                   >
-                    Tu nombre (opcional)
+                    Tu nombre{' '}
+                    {helperTransport === 'needs_transport' ? '' : '(opcional)'}
                   </label>
                   <input
                     id="helperName"
-                    placeholder="Ej: Camila"
+                    placeholder="Tu nombre"
                     value={helperName}
                     onChange={(e) => setHelperName(e.target.value)}
                     className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
@@ -455,6 +504,86 @@ export default function RequestDetailPage() {
                     className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
                   />
                 </div>
+
+                {asksTransport && (
+                  <div>
+                    <label
+                      htmlFor="helperTransport"
+                      className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                    >
+                      ¿Puedes transportar los suministros?
+                    </label>
+                    <select
+                      id="helperTransport"
+                      value={helperTransport}
+                      onChange={(e) =>
+                        setHelperTransport(e.target.value as TransportOption)
+                      }
+                      className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg focus:border-emerald-600"
+                    >
+                      <option value="">Selecciona una opción…</option>
+                      {TRANSPORT_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {TRANSPORT_LABELS[option]}
+                        </option>
+                      ))}
+                    </select>
+                    {helperTransport === 'can_transport' && (
+                      <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                        Llévalos hasta donde los necesitan; no hace falta dejar
+                        contacto.
+                      </p>
+                    )}
+                    {helperTransport === 'needs_transport' && (
+                      <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                        Publicaremos una carga en el centro de carga para que
+                        alguien lleve los suministros hasta el pedido.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {(requesterPicksUp || helperTransport === 'needs_transport') && (
+                  <>
+                    <div>
+                      <label
+                        htmlFor="helperPhone"
+                        className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                      >
+                        Teléfono
+                      </label>
+                      <input
+                        id="helperPhone"
+                        inputMode="tel"
+                        placeholder="Ej: 311 555 0000"
+                        value={helperPhone}
+                        onChange={(e) => setHelperPhone(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="helperWhatsapp"
+                        className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                      >
+                        WhatsApp
+                      </label>
+                      <input
+                        id="helperWhatsapp"
+                        placeholder="Ej: 311 555 0000 o @tu.usuario"
+                        value={helperWhatsapp}
+                        onChange={(e) => setHelperWhatsapp(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
+                      />
+                    </div>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                      {requesterPicksUp
+                        ? 'Deja al menos un contacto para coordinar la recogida.'
+                        : 'Deja al menos un contacto para coordinar la entrega de los suministros.'}
+                    </p>
+                  </>
+                )}
+
                 <div className="flex gap-2">
                   <button
                     type="submit"
@@ -465,7 +594,10 @@ export default function RequestDetailPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setHelpMode(false)}
+                    onClick={() => {
+                      setHelpMode(false)
+                      setHelpError(null)
+                    }}
                     className="rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/40"
                   >
                     Cancelar
@@ -477,18 +609,36 @@ export default function RequestDetailPage() {
           {request.helperList && request.helperList.length > 0 && (
             <ul className="mt-4 space-y-2">
               {request.helperList.map((helper, index) => (
-                <li
-                  key={index}
-                  className="rounded-md bg-surface p-3 text-sm"
-                >
-                  <p className="font-medium text-emerald-900 dark:text-emerald-300">
-                    {helper.name ?? 'Alguien'}
-                    <span className="ml-2 font-normal text-emerald-600">
+                <li key={index} className="rounded-md bg-surface p-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <p className="font-medium text-emerald-900 dark:text-emerald-300">
+                      {helper.name ?? 'Alguien'}
+                    </p>
+                    <span className="font-normal text-emerald-600">
                       {formatDate(helper.createdAt)}
                     </span>
-                  </p>
+                    {helper.transport && (
+                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 text-xs text-emerald-800 dark:text-emerald-300">
+                        {TRANSPORT_LABELS[helper.transport]}
+                      </span>
+                    )}
+                    {request.isOwner && helper.status && (
+                      <span className="text-xs text-emerald-700 dark:text-emerald-300">
+                        {HELPER_STATUS_LABELS[helper.status] ?? helper.status}
+                      </span>
+                    )}
+                  </div>
                   {helper.note && (
-                    <p className="mt-0.5 text-emerald-800 dark:text-emerald-300">{helper.note}</p>
+                    <p className="mt-0.5 text-emerald-800 dark:text-emerald-300">
+                      {helper.note}
+                    </p>
+                  )}
+                  {request.isOwner && (helper.phone || helper.whatsapp) && (
+                    <p className="mt-0.5 text-xs text-emerald-800 dark:text-emerald-300">
+                      Contacto: {helper.phone || ''}
+                      {helper.phone && helper.whatsapp ? ' · ' : ''}
+                      {helper.whatsapp || ''}
+                    </p>
                   )}
                 </li>
               ))}

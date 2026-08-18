@@ -111,6 +111,7 @@ const offersResponse: OfferListResponse = {
       transport: null,
       items: [],
       zone: null,
+      destination: { type: 'anywhere' },
       volunteer: {
         capabilities: ['Repartir comida'],
         availability: 'Fines de semana',

@@ -12,6 +12,7 @@ vi.mock('../api/client', () => ({
     cities: vi.fn(),
     createOffer: vi.fn(),
     me: vi.fn(),
+    helpOrgs: vi.fn(),
   },
 }))
 
@@ -23,6 +24,7 @@ vi.mock('../components/Map', () => ({
 const mockedCities = vi.mocked(api.cities)
 const mockedCreate = vi.mocked(api.createOffer)
 const mockedMe = vi.mocked(api.me)
+const mockedOrg = vi.mocked(api.helpOrgs)
 
 function renderPage(route?: string) {
   const queryClient = new QueryClient({
@@ -42,12 +44,39 @@ describe('CreateOfferPage', () => {
     mockedCities.mockReset()
     mockedCreate.mockReset()
     mockedMe.mockReset()
+    mockedOrg.mockReset()
     mockedMe.mockResolvedValue({
       authenticated: false,
       name: null,
       email: null,
       staff: null,
       pendingOrgId: null,
+    })
+    mockedOrg.mockResolvedValue({
+      helpOrgs: [
+        {
+          id: 'org-acopio-1',
+          type: 'ciudadano',
+          category: 'acopio',
+          name: 'Comedor Esperanza',
+          description: null,
+          address: 'Calle 7 #3-20',
+          lat: 4.81,
+          lng: -75.7,
+          city: { code: 'pereira', name: 'Pereira' },
+          contactName: null,
+          contactPhone: null,
+          hours: null,
+          accepts: null,
+          status: 'open',
+          managed: false,
+          createdAt: '2026-08-01T12:00:00Z',
+          updatedAt: '2026-08-01T12:00:00Z',
+        },
+      ],
+      total: 1,
+      limit: 20,
+      offset: 0,
     })
     mockedCities.mockResolvedValue({
       cities: [
@@ -673,6 +702,43 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
       expect(mockedCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           reporter: expect.objectContaining({ phone: '+57 (310) 555-2222' }),
+        }),
+      ),
+    )
+  })
+
+  it('envía el destino cuando el suministro requiere transporte', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-7',
+      resolveCode: '3333',
+    } as unknown as CreatedOffer)
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.selectOptions(
+      await screen.findByLabelText('Tipo'),
+      'supplies_offered',
+    )
+    await user.selectOptions(
+      await screen.findByLabelText('Transporte'),
+      'needs_transport',
+    )
+    await user.selectOptions(
+      await screen.findByLabelText('¿Hacia dónde llevarlas?'),
+      'org-acopio-1',
+    )
+    await user.type(screen.getByLabelText('Título'), 'Ofrezco suministros')
+    await user.type(screen.getByLabelText('Tu nombre'), 'Laura Cifuentes')
+    await user.type(screen.getByLabelText('Teléfono'), '3105552222')
+
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    await waitFor(() =>
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'supplies_offered',
+          transport: 'needs_transport',
+          destinationOrgId: 'org-acopio-1',
         }),
       ),
     )
