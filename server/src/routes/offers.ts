@@ -14,6 +14,7 @@ import {
   verifyOfferCode,
 } from '../services/offers.js'
 import {
+  claimSchema,
   createOfferSchema,
   offerFiltersSchema,
   updateOfferSchema,
@@ -122,7 +123,12 @@ offersRouter.post(
   '/:id/claim',
   requireSession,
   asyncHandler(async (req, res) => {
-    const offer = await claimOffer(String(req.params.id), viewerFromSession(req.session))
+    const input = claimSchema.parse(req.body ?? {})
+    const offer = await claimOffer(
+      String(req.params.id),
+      viewerFromSession(req.session),
+      input,
+    )
     res.json(offer)
   }),
 )

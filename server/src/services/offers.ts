@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import type {
+  ClaimInput,
   CreateOfferInput,
   OfferFilters,
   UpdateOfferInput,
@@ -22,6 +23,13 @@ type SerializedOffer = Offer & {
   city: City
   reporter: Reporter
   claims?: ClaimWithUser[]
+  request?: {
+    id: string
+    title: string
+    address: string | null
+    city: { code: string; name: string }
+  } | null
+  destinationOrg?: { id: string; name: string; category: string } | null
   volunteerDetails?: {
     capabilities: string[]
     availability: string | null
@@ -50,7 +58,30 @@ export function serializeOffer(offer: SerializedOffer, viewer?: Viewer) {
   const ownerId = offer.reporter.userId
   const contactVisibility = (offer.contactVisibility ?? 'public') as ContactVisibility
   const audience = (offer.audience ?? 'users') as OfferAudience
-  const contactRestricted = !canSeeContact(contactVisibility, viewer, ownerId)
+  const isClaimerOfLinked =
+    offer.requestId != null &&
+    activeClaim != null &&
+    isOwner(viewer, activeClaim.claimerId)
+  const contactRestricted =
+    !canSeeContact(contactVisibility, viewer, ownerId) && !isClaimerOfLinked
+
+  const destination =
+    offer.requestId != null && offer.request
+      ? {
+          type: 'request' as const,
+          request: {
+            id: offer.request.id,
+            title: offer.request.title,
+            address: offer.request.address ?? null,
+            city: offer.request.city,
+          },
+        }
+      : offer.destinationOrg
+        ? {
+            type: offer.destinationOrg.category === 'acopio' ? ('acopio' as const) : ('org' as const),
+            org: { id: offer.destinationOrg.id, name: offer.destinationOrg.name },
+          }
+        : { type: 'anywhere' as const }
 
   return {
     id: offer.id,
@@ -97,9 +128,14 @@ export function serializeOffer(offer: SerializedOffer, viewer?: Viewer) {
           claimerName: activeClaim.claimer?.name ?? null,
           mine: isOwner(viewer, activeClaim.claimerId),
           note: activeClaim.note ?? null,
+          phone: isOwner(viewer, ownerId) ? (activeClaim.phone ?? null) : null,
+          whatsapp: isOwner(viewer, ownerId)
+            ? (activeClaim.whatsapp ?? null)
+            : null,
           claimedAt: activeClaim.claimedAt,
         }
       : null,
+    destination,
     canClaim: canClaimOffer(offer),
     resolvedAt: offer.resolvedAt,
     createdAt: offer.createdAt,
@@ -121,6 +157,15 @@ const OFFER_INCLUDE = {
   reporter: true,
   volunteerDetails: true,
   transportDetails: true,
+  request: {
+    select: {
+      id: true,
+      title: true,
+      address: true,
+      city: { select: { code: true, name: true } },
+    },
+  },
+  destinationOrg: { select: { id: true, name: true, category: true } },
   claims: {
     include: { claimer: { select: { name: true } } },
     orderBy: { claimedAt: 'desc' as const },
@@ -162,6 +207,7 @@ function audienceAwareWhere(filters: OfferFilters, allowedVolunteerAudiences: Of
     where.transport = 'needs_transport'
     where.status = filters.forTransport === 'assigned' ? 'in_transit' : 'open'
   } else {
+    where.requestId = null
     if (filters.type) where.type = filters.type
     if (filters.status === 'active') {
       where.status = 'open'
@@ -203,7 +249,7 @@ export async function getOffer(id: string, viewer?: Viewer) {
   return serializeOffer(offer, viewer)
 }
 
-export async function claimOffer(id: string, viewer: Viewer) {
+export async function claimOffer(id: string, viewer: Viewer, input: ClaimInput = {}) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Oferta no encontrada')
 
   const offer = await prisma.offer.findUnique({
@@ -228,8 +274,20 @@ export async function claimOffer(id: string, viewer: Viewer) {
         throw new ApiError(409, 'Alguien ya se comprometió a llevar esta oferta')
       }
       await tx.offerClaim.create({
-        data: { offerId: id, claimerId: viewer.sub, status: 'committed' },
+        data: {
+          offerId: id,
+          claimerId: viewer.sub,
+          status: 'committed',
+          phone: input.phone?.trim() || null,
+          whatsapp: input.whatsapp?.trim() || null,
+        },
       })
+      if (offer.requestId) {
+        await tx.requestHelper.updateMany({
+          where: { offerId: id },
+          data: { status: 'accepted' },
+        })
+      }
     })
   } catch (err) {
     if (err instanceof ApiError) throw err
@@ -271,6 +329,10 @@ export async function cancelClaim(id: string, viewer: Viewer) {
       where: { offerId: id, status: 'committed', claimerId: viewer.sub },
       data: { status: 'cancelled', resolvedAt: new Date() },
     })
+    await tx.requestHelper.updateMany({
+      where: { offerId: id },
+      data: { status: 'offered' },
+    })
   })
 
   return getOffer(id, viewer)
@@ -302,6 +364,29 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
     throw new ApiError(400, 'Los datos de vehículo solo aplican a ofertas de transporte')
   }
 
+  if (input.destinationOrgId && input.type !== 'supplies_offered') {
+    throw new ApiError(
+      400,
+      'El destino solo aplica a ofertas de suministros',
+    )
+  }
+  if (input.destinationOrgId && input.transport !== 'needs_transport') {
+    throw new ApiError(
+      400,
+      'El destino solo aplica a ofertas de suministros que necesitan transporte',
+    )
+  }
+  let destinationOrgId: string | null = input.destinationOrgId ?? null
+  if (destinationOrgId) {
+    const org = await prisma.helpOrg.findUnique({ where: { id: destinationOrgId } })
+    if (!org || org.status !== 'open') {
+      throw new ApiError(400, 'Destino no encontrado')
+    }
+    if (org.cityId !== city.id) {
+      throw new ApiError(400, 'El destino debe estar en la misma ciudad de la oferta')
+    }
+  }
+
   const audience: OfferAudience =
     input.audience ??
     (input.type === 'volunteers_offered' ? 'users' : 'public')
@@ -323,6 +408,7 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
         transport: input.transport ?? null,
         items: input.items ?? [],
         zone: input.zone ?? null,
+        destinationOrgId,
         volunteerDetails: input.volunteer
           ? {
               create: {
@@ -414,6 +500,28 @@ export async function updateOffer(
     )
   }
 
+  if (
+    input.destinationOrgId &&
+    (offer.type !== 'supplies_offered' ||
+      (input.transport ?? offer.transport) !== 'needs_transport')
+  ) {
+    throw new ApiError(
+      400,
+      'El destino solo aplica a ofertas de suministros que necesitan transporte',
+    )
+  }
+  if (input.destinationOrgId) {
+    const org = await prisma.helpOrg.findUnique({
+      where: { id: input.destinationOrgId },
+    })
+    if (!org || org.status !== 'open') {
+      throw new ApiError(400, 'Destino no encontrado')
+    }
+    if (org.cityId !== offer.cityId) {
+      throw new ApiError(400, 'El destino debe estar en la misma ciudad de la oferta')
+    }
+  }
+
   const data: Prisma.OfferUpdateInput = {}
   if (input.title !== undefined) data.title = input.title
   if (input.description !== undefined) data.description = input.description
@@ -427,6 +535,11 @@ export async function updateOffer(
   }
   if (input.audience !== undefined) data.audience = input.audience
   if (input.transport !== undefined) data.transport = input.transport
+  if (input.destinationOrgId !== undefined) {
+    data.destinationOrg = input.destinationOrgId
+      ? { connect: { id: input.destinationOrgId } }
+      : { disconnect: true }
+  }
   if (input.volunteer !== undefined) {
     if (input.volunteer === null) {
       data.volunteerDetails = { delete: true }
@@ -572,6 +685,14 @@ export async function updateOfferStatus(
         resolvedAt: new Date(),
       },
     }),
+    ...(input.status === 'fulfilled'
+      ? [
+          prisma.requestHelper.updateMany({
+            where: { offerId: id },
+            data: { status: 'delivered', deliveredAt: new Date() },
+          }),
+        ]
+      : []),
   ])
 
   return getOffer(id, viewer)

@@ -2,7 +2,12 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { prisma } from '../src/db.js'
-import { createOffer, ensureCity } from './factories.js'
+import {
+  createHelpOrg,
+  createOffer,
+  createRequest,
+  ensureCity,
+} from './factories.js'
 
 const app = createApp()
 
@@ -832,5 +837,201 @@ describe('POST /api/offers/:id/status · voluntario comprometido', () => {
 
     expect(res.status).toBe(403)
     expect(res.body.error).toBe('Código de cierre incorrecto')
+  })
+})
+
+describe('ofertas vinculadas a un pedido', () => {
+  beforeEach(async () => {
+    await ensureCity()
+    await prisma.offer.deleteMany()
+    await prisma.request.deleteMany()
+  })
+
+  async function createLinkedOffer() {
+    const linked = await createRequest({
+      type: 'supplies_request',
+      transport: 'needs_transport',
+      title: 'Suministros para la cuadra',
+    })
+    const reporter = await prisma.reporter.create({
+      data: { name: 'Camila', phone: '3115550000' },
+    })
+    const offer = await createOffer({
+      transport: 'needs_transport',
+      requestId: linked.id,
+      contactVisibility: 'users',
+      reporterId: reporter.id,
+    })
+    await prisma.requestHelper.create({
+      data: {
+        requestId: linked.id,
+        offerId: offer.id,
+        name: 'Camila',
+        transport: 'needs_transport',
+        phone: '3115550000',
+        status: 'offered',
+      },
+    })
+    return { request: linked, offer }
+  }
+
+  it('oculta las ofertas vinculadas del listado general y las muestra en el centro de carga', async () => {
+    await createLinkedOffer()
+    await createOffer({ transport: 'can_transport' })
+
+    const general = await request(app).get('/api/offers')
+    expect(general.status).toBe(200)
+    expect(general.body.total).toBe(1)
+    expect(general.body.offers[0].destination).toEqual({ type: 'anywhere' })
+
+    const hub = await request(app).get('/api/offers').query({ forTransport: 'true' })
+    expect(hub.body.offers).toHaveLength(1)
+    expect(hub.body.offers[0].destination).toMatchObject({
+      type: 'request',
+      request: {
+        title: 'Suministros para la cuadra',
+        city: { code: 'pereira' },
+      },
+    })
+  })
+
+  it('serializa el destino según si es centro de acopio u otra organización', async () => {
+    const org = await createHelpOrg({ name: 'Centro cívico', category: 'acopio', status: 'open' })
+
+    const created = await request(app)
+      .post('/api/offers')
+      .send({ ...validOffer, transport: 'needs_transport', destinationOrgId: org.id })
+
+    expect(created.status).toBe(201)
+    expect(created.body.destination).toEqual({
+      type: 'acopio',
+      org: { id: org.id, name: 'Centro cívico' },
+    })
+  })
+
+  it('rechaza un destino en ofertas que no necesitan transporte', async () => {
+    const org = await createHelpOrg()
+
+    const canPickup = await request(app)
+      .post('/api/offers')
+      .send({ ...validOffer, transport: 'can_transport', destinationOrgId: org.id })
+    expect(canPickup.status).toBe(400)
+
+    const notSupplies = await request(app)
+      .post('/api/offers')
+      .send({ ...validOffer, type: 'shelter_offered', destinationOrgId: org.id })
+    expect(notSupplies.status).toBe(400)
+  })
+
+  it('rechaza un destino cerrado o de otra ciudad', async () => {
+    const closed = await createHelpOrg({ status: 'closed' })
+    const closedRes = await request(app)
+      .post('/api/offers')
+      .send({ ...validOffer, transport: 'needs_transport', destinationOrgId: closed.id })
+    expect(closedRes.status).toBe(400)
+
+    const otherCity = await prisma.city.create({
+      data: { code: 'armenia', name: 'Armenia', department: 'Quindío' },
+    })
+    const farOrg = await createHelpOrg({ cityId: otherCity.id })
+    const farRes = await request(app)
+      .post('/api/offers')
+      .send({ ...validOffer, transport: 'needs_transport', destinationOrgId: farOrg.id })
+    expect(farRes.status).toBe(400)
+  })
+
+  it('guarda el teléfono y WhatsApp al comprometerse a llevar la carga', async () => {
+    const agent = await loginCitizen()
+    const { offer } = await createLinkedOffer()
+
+    const res = await agent
+      .post(`/api/offers/${offer.id}/claim`)
+      .send({ phone: '3125557777', whatsapp: '3125557777' })
+
+    expect(res.status).toBe(200)
+    const claim = await prisma.offerClaim.findFirst({ where: { offerId: offer.id } })
+    expect(claim).toMatchObject({ phone: '3125557777', whatsapp: '3125557777' })
+  })
+
+  it('acepta al ayudante cuando alguien se compromete y lo regresa a oferta al cancelar', async () => {
+    const agent = await loginCitizen()
+    const { offer } = await createLinkedOffer()
+
+    await agent.post(`/api/offers/${offer.id}/claim`)
+    const helper = await prisma.requestHelper.findFirst({ where: { offerId: offer.id } })
+    expect(helper?.status).toBe('accepted')
+
+    const res = await agent.delete(`/api/offers/${offer.id}/claim`)
+    expect(res.status).toBe(200)
+    const after = await prisma.requestHelper.findFirst({ where: { offerId: offer.id } })
+    expect(after?.status).toBe('offered')
+  })
+
+  it('marca como entregado al ayudante cuando la oferta vinculada se entrega', async () => {
+    const agent = await loginCitizen()
+    const { offer } = await createLinkedOffer()
+    await agent.post(`/api/offers/${offer.id}/claim`)
+
+    const closed = await request(app)
+      .post(`/api/offers/${offer.id}/status`)
+      .send({ status: 'fulfilled', resolveCode: '1234' })
+
+    expect(closed.status).toBe(200)
+    const helper = await prisma.requestHelper.findFirst({ where: { offerId: offer.id } })
+    expect(helper?.status).toBe('delivered')
+    expect(helper?.deliveredAt).not.toBeNull()
+  })
+
+  it('el repartidor ve el contacto del ayudante en una oferta vinculada', async () => {
+    const agent = await loginCitizen('la-repartidora@correo.org')
+    const { offer } = await createLinkedOffer()
+
+    const anonymous = await request(app).get(`/api/offers/${offer.id}`)
+    expect(anonymous.body.contactRestricted).toBe(true)
+    expect(anonymous.body.reporter.phone).toBeNull()
+
+    await agent.post(`/api/offers/${offer.id}/claim`)
+    const after = await agent.get(`/api/offers/${offer.id}`)
+    expect(after.body.contactRestricted).toBe(false)
+    expect(after.body.reporter).toMatchObject({
+      name: 'Camila',
+      phone: '3115550000',
+    })
+
+    const stillHidden = await request(app).get(`/api/offers/${offer.id}`)
+    expect(stillHidden.body.reporter.phone).toBeNull()
+  })
+
+  it('el ayudante dueño de la oferta vinculada ve el contacto del repartidor', async () => {
+    const owner = await loginCitizen('dueña-del-pedido@correo.org')
+    const created = await owner.post('/api/requests').send({
+      type: 'supplies_request',
+      transport: 'needs_transport',
+      urgency: 'high',
+      title: 'Suministros para la cuadra',
+      description: 'Necesitamos agua y alimentos.',
+      cityCode: 'pereira',
+      reporter: { name: 'Camila', phone: '3115550000' },
+    })
+    const helperUser = await loginCitizen('quien-oferta@correo.org')
+    await helperUser.post(`/api/requests/${created.body.id}/help`).send({
+      name: 'Camila',
+      transport: 'needs_transport',
+      phone: '3115550000',
+    })
+    const offer = await prisma.offer.findFirst({
+      where: { requestId: created.body.id },
+    })
+
+    const repartidor = await loginCitizen('otro-repartidor@correo.org')
+    await repartidor
+      .post(`/api/offers/${offer!.id}/claim`)
+      .send({ phone: '3125559999' })
+
+    const detail = await helperUser.get(`/api/offers/${offer!.id}`)
+    expect(detail.body.claim).toMatchObject({
+      claimerName: 'Voluntaria',
+      phone: '3125559999',
+    })
   })
 })

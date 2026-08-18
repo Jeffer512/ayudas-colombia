@@ -8,6 +8,7 @@ import {
   cityCodeSchema,
   contactVisibilitySchema,
   coordinatesSchema,
+  phoneSchema,
   reporterSchema,
   tagListSchema,
 } from './common.js'
@@ -43,6 +44,7 @@ export const createOfferSchema = z.object({
   cityCode: cityCodeSchema,
   reporter: reporterSchema,
   contactVisibility: contactVisibilitySchema,
+  destinationOrgId: z.string().trim().uuid('Destino inválido').optional(),
   audience: z
     .enum(['public', 'users', 'orgs'], { message: 'Audiencia inválida' })
     .optional(),
@@ -100,10 +102,18 @@ export const updateOfferSchema = z.object({
     .enum(['public', 'users', 'orgs'], { message: 'Audiencia inválida' })
     .optional(),
   transport: z.enum(TRANSPORT_OPTIONS).nullable().optional(),
+  destinationOrgId: z.string().trim().uuid('Destino inválido').nullable().optional(),
   resolveCode: z.string().trim().min(4).max(6).optional(),
 })
 
 export type UpdateOfferInput = z.infer<typeof updateOfferSchema>
+
+export const claimSchema = z.object({
+  phone: phoneSchema.optional(),
+  whatsapp: z.string().trim().max(40).optional(),
+})
+
+export type ClaimInput = z.infer<typeof claimSchema>
 
 export const verifyResolveCodeSchema = z.object({
   resolveCode: z.string().trim().min(4, 'Código de cierre incorrecto').max(6),
