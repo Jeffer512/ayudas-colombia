@@ -48,6 +48,44 @@ function prependMessage(page: MessagesPage, message: CityMessage): MessagesPage 
   }
 }
 
+function MessageActions({ message, mine }: { message: CityMessage; mine: boolean }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Más opciones"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className={`absolute right-1 top-1 z-20 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 ${
+          mine ? 'text-white/80 hover:bg-white/10' : 'text-text-muted hover:bg-line'
+        }`}
+      >
+        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+          <circle cx="8" cy="3" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="8" cy="13" r="1.5" />
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div
+            data-testid="chat-menu-backdrop"
+            aria-hidden="true"
+            className="fixed inset-0 z-10"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 top-8 z-20 w-80 rounded-lg border border-line bg-page p-3 shadow-lg">
+            <ReportButton kind="message" targetId={message.id} />
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
 export default function ChatPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
@@ -278,13 +316,13 @@ export default function ChatPage() {
                     className={mine ? 'flex justify-end' : 'flex justify-start'}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-3 py-2 ${
+                      className={`group relative max-w-[80%] rounded-2xl px-3 py-2 ${
                         mine
                           ? 'rounded-br-sm bg-sky-700 text-white'
                           : 'rounded-bl-sm bg-page border border-line text-text-main'
                       }`}
                     >
-                      <div className="flex items-baseline justify-between gap-2">
+                      <div className="flex items-baseline justify-between gap-2 pr-5">
                         <span className="text-xs font-semibold">
                           {message.name}
                           {mine && (
@@ -296,9 +334,7 @@ export default function ChatPage() {
                         </span>
                       </div>
                       <p className="whitespace-pre-wrap text-sm">{message.body}</p>
-                      <div className="mt-1">
-                        <ReportButton kind="message" targetId={message.id} />
-                      </div>
+                      <MessageActions message={message} mine={mine} />
                     </div>
                   </div>
                 )

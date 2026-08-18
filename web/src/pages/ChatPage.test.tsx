@@ -22,6 +22,7 @@ const mockedCities = vi.mocked(api.cities)
 const mockedMessages = vi.mocked(api.cityMessages)
 const mockedCreate = vi.mocked(api.createCityMessage)
 const mockedMe = vi.mocked(api.me)
+const mockedCreateReport = vi.mocked(api.createReport)
 
 const cities = [
   { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8, centerLng: -75.7 },
@@ -293,5 +294,71 @@ describe('ChatPage', () => {
 
     expect(await screen.findByText('Mensaje viejo del día anterior')).toBeTruthy()
     expect(screen.getByText('El punto de acopio del parque cierra a las 6pm')).toBeTruthy()
+  })
+
+  it('muestra el botón de opciones solo al pasar el cursor por el mensaje', async () => {
+    renderPage()
+
+    await screen.findByText('El punto de acopio del parque cierra a las 6pm')
+
+    const dots = screen.getByRole('button', { name: 'Más opciones' })
+    expect(dots).toHaveClass('opacity-0', 'group-hover:opacity-100')
+  })
+
+  it('abre y cierra el menú de opciones del mensaje', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText('El punto de acopio del parque cierra a las 6pm')
+
+    const dots = screen.getByRole('button', { name: 'Más opciones' })
+    await user.click(dots)
+    expect(await screen.findByRole('link', { name: 'Inicia sesión' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Más opciones' }))
+    expect(screen.queryByRole('link', { name: 'Inicia sesión' })).not.toBeInTheDocument()
+  })
+
+  it('cierra el menú de opciones al pulsar fuera', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByText('El punto de acopio del parque cierra a las 6pm')
+
+    await user.click(screen.getByRole('button', { name: 'Más opciones' }))
+    expect(await screen.findByRole('link', { name: 'Inicia sesión' })).toBeInTheDocument()
+
+    await user.click(screen.getByTestId('chat-menu-backdrop'))
+    expect(screen.queryByRole('link', { name: 'Inicia sesión' })).not.toBeInTheDocument()
+  })
+
+  it('reporta un mensaje desde el menú de opciones', async () => {
+    const user = userEvent.setup()
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: 'Usuario Prueba',
+      email: 'usuario@example.com',
+      staff: null,
+      pendingOrgId: null,
+    })
+    mockedCreateReport.mockResolvedValue({ ok: true })
+    renderPage()
+
+    await screen.findByText('El punto de acopio del parque cierra a las 6pm')
+
+    await user.click(screen.getByRole('button', { name: 'Más opciones' }))
+    await user.click(screen.getByRole('button', { name: 'Reportar' }))
+    await user.click(screen.getByRole('radio', { name: 'Contenido falso o engañoso' }))
+    await user.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+
+    await waitFor(() =>
+      expect(mockedCreateReport).toHaveBeenCalledWith({
+        kind: 'message',
+        targetId: 'msg-1',
+        reason: 'fake',
+        note: undefined,
+      }),
+    )
+    expect(await screen.findByText(/tu reporte fue enviado/)).toBeInTheDocument()
   })
 })
