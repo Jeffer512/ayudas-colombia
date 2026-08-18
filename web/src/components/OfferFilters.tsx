@@ -5,12 +5,14 @@ import FilterBar from './FilterBar'
 interface OfferFiltersProps {
   value: OfferFilters
   cities: City[]
+  count?: number
   onChange: (filters: OfferFilters) => void
 }
 
 export default function OfferFiltersUi({
   value,
   cities,
+  count,
   onChange,
 }: OfferFiltersProps) {
   return (
@@ -19,6 +21,7 @@ export default function OfferFiltersUi({
       searchLabel="Buscar ofertas"
       searchPlaceholder="Buscar en ofertas…"
       cities={cities}
+      count={count}
       selects={[
         {
           key: 'type',

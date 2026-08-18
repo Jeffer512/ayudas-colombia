@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { Inbox } from 'lucide-react'
+import EmptyState from './ui/EmptyState'
 
 interface EntityListProps {
   children?: ReactNode
@@ -14,12 +16,7 @@ export default function EntityList({
   emptyHint,
 }: EntityListProps) {
   if (empty) {
-    return (
-      <div className="rounded-lg border border-dashed border-line bg-surface p-8 text-center text-text-muted">
-        <p className="font-medium">{emptyTitle}</p>
-        <p className="mt-1 text-sm">{emptyHint}</p>
-      </div>
-    )
+    return <EmptyState icon={<Inbox size={22} aria-hidden="true" />} title={emptyTitle} hint={emptyHint} />
   }
   return <ul className="flex flex-col gap-3">{children}</ul>
 }

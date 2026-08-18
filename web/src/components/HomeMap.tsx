@@ -55,7 +55,7 @@ export default function HomeMap({
     <MapContainer
       center={[center.lat, center.lng]}
       zoom={13}
-      className="h-96 w-full rounded-lg border border-line"
+      className="isolate h-96 w-full rounded-lg border border-border"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

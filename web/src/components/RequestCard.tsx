@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { CalendarDays, MapPin } from 'lucide-react'
 import {
   HELP_ORG_CATEGORY_LABELS,
   REQUEST_TYPE_LABELS,
@@ -20,18 +21,18 @@ export default function RequestCard({ request }: { request: Request }) {
   return (
     <Link
       to={`/pedido/${request.id}`}
-      className="block rounded-lg border border-line bg-surface p-4 shadow-sm transition hover:border-rose-400 dark:hover:border-rose-700 hover:shadow"
+      className="block rounded-lg border border-border bg-surface p-4 transition duration-fast hover:border-strong hover:shadow-sm"
     >
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={request.status} meta={REQUEST_STATUS_META} />
         {request.organization && (
-          <span className="inline-block rounded-full bg-teal-100 dark:bg-teal-950/40 px-2 py-0.5 text-xs font-medium text-teal-800 dark:text-teal-300">
+          <span className="inline-block rounded-full bg-primary-muted px-2 py-0.5 text-xs font-medium text-primary">
             {HELP_ORG_CATEGORY_LABELS[request.organization.category] ??
               request.organization.category}{' '}
             · {request.organization.name}
           </span>
         )}
-        <span className="text-xs text-text-muted">
+        <span className="text-xs text-fg-muted">
           {typeLabel} · {request.city.name}
         </span>
         <span
@@ -46,16 +47,16 @@ export default function RequestCard({ request }: { request: Request }) {
         </span>
       </div>
 
-      <h2 className="mt-2 font-semibold text-text-main">{request.title}</h2>
+      <h2 className="mt-2 font-semibold text-fg">{request.title}</h2>
       {request.photo && (
         <img
           src={request.photo}
           alt={`Foto de: ${request.title}`}
-          className="mt-2 h-20 w-20 rounded-md border border-line object-cover"
+          className="mt-2 h-20 w-20 rounded-md border border-border object-cover"
         />
       )}
       {request.description && (
-        <p className="mt-1 line-clamp-2 text-sm text-text-muted">
+        <p className="mt-1 line-clamp-2 text-sm text-fg-muted">
           {request.description}
         </p>
       )}
@@ -65,34 +66,40 @@ export default function RequestCard({ request }: { request: Request }) {
           {request.items.slice(0, 5).map((item) => (
             <span
               key={item}
-              className="inline-block rounded-full bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 text-xs text-rose-700 dark:text-rose-300"
+              className="inline-block rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted"
             >
               {item}
             </span>
           ))}
           {request.items.length > 5 && (
-            <span className="text-xs text-text-muted">
+            <span className="text-xs text-fg-muted">
               +{request.items.length - 5} más
             </span>
           )}
         </div>
       )}
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
         {request.transport && (
-          <span className="inline-block rounded-full bg-page dark:bg-white/10 px-2 py-0.5">
+          <span className="inline-block rounded-full bg-surface-2 px-2 py-0.5">
             {TRANSPORT_LABELS[request.transport]}
           </span>
         )}
         {request.helpers > 0 && (
-          <span className="inline-block rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-2 py-0.5 font-medium text-emerald-800 dark:text-emerald-300">
+          <span className="inline-block rounded-full bg-accent-muted px-2 py-0.5 font-medium text-accent-hover">
             {request.helpers === 1
               ? '1 persona está ayudando'
               : `${request.helpers} personas están ayudando`}
           </span>
         )}
-        <span>
-          {request.address ? `${request.address} · ` : null}
+        {request.address && (
+          <span className="inline-flex items-center gap-1">
+            <MapPin size={12} aria-hidden="true" />
+            {request.address}
+          </span>
+        )}
+        <span className="inline-flex items-center gap-1">
+          <CalendarDays size={12} aria-hidden="true" />
           {formatDate(request.createdAt)}
         </span>
       </div>

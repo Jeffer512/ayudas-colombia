@@ -41,7 +41,7 @@ export default function Map({ center, marker, onPick }: MapProps) {
     <MapContainer
       center={[center.lat, center.lng]}
       zoom={13}
-      className="h-72 w-full rounded-lg border border-line"
+      className="isolate h-72 w-full rounded-lg border border-border"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

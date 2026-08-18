@@ -32,11 +32,13 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 
 function Brand() {
   return (
-    <Link to="/" className="flex items-center gap-2.5">
-      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-on-primary">
+    <Link to="/" className="flex shrink-0 items-center gap-2.5">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-on-primary">
         <HeartHandshake size={18} aria-hidden="true" />
       </span>
-      <span className="font-display text-lg font-bold tracking-tight">Comunidad de ayuda</span>
+      <span className="hidden font-display text-lg font-bold tracking-tight sm:inline">
+        Comunidad de ayuda
+      </span>
     </Link>
   )
 }
@@ -120,10 +122,10 @@ export default function Layout() {
             </div>
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {authenticated ? (
               <>
-                <span className="hidden px-2 text-sm text-fg-muted sm:inline">
+                <span className="hidden px-2 text-sm text-fg-muted md:inline">
                   {me.data?.name ? `Hola, ${me.data.name}` : 'Hola'}
                 </span>
                 <Button
@@ -138,7 +140,10 @@ export default function Layout() {
               </>
             ) : (
               <>
-                <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/iniciar-sesion">
+                <Link
+                  className={`${buttonVariants({ variant: 'ghost', size: 'sm' })} hidden sm:inline-flex`}
+                  to="/iniciar-sesion"
+                >
                   <LogIn size={16} aria-hidden="true" />
                   Iniciar sesión
                 </Link>
@@ -197,20 +202,41 @@ export default function Layout() {
             >
               Mi organización
             </NavLink>
-            {authenticated && (
-              <Button
-                variant="ghost"
-                size="md"
-                className="w-full justify-start"
-                onClick={() => {
-                  setMenuOpen(false)
-                  logout.mutate()
-                }}
-                disabled={logout.isPending}
-              >
-                <LogOut size={18} aria-hidden="true" />
-                {logout.isPending ? 'Saliendo…' : 'Salir'}
-              </Button>
+            {authenticated ? (
+              <div className="mt-4 space-y-1 border-t border-border pt-4">
+                <Button
+                  variant="ghost"
+                  size="md"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    logout.mutate()
+                  }}
+                  disabled={logout.isPending}
+                >
+                  <LogOut size={18} aria-hidden="true" />
+                  {logout.isPending ? 'Saliendo…' : 'Salir'}
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-1 border-t border-border pt-4">
+                <NavLink
+                  to="/iniciar-sesion"
+                  onClick={() => setMenuOpen(false)}
+                  className={navLinkClass}
+                >
+                  <LogIn size={18} aria-hidden="true" />
+                  Iniciar sesión
+                </NavLink>
+                <NavLink
+                  to="/registro"
+                  onClick={() => setMenuOpen(false)}
+                  className={navLinkClass}
+                >
+                  <UserPlus size={18} aria-hidden="true" />
+                  Registrarse
+                </NavLink>
+              </div>
             )}
           </nav>
         </div>

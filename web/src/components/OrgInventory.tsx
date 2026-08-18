@@ -6,8 +6,8 @@ import { formatItemQuantity, timeAgo } from '../lib/format'
 import type { HelpOrgItem, HelpOrgItemKind } from '../lib/types'
 
 const SECTION_META: Record<HelpOrgItemKind, { title: string; color: string }> = {
-  available: { title: 'Tenemos disponible', color: 'text-emerald-700 dark:text-emerald-300' },
-  needed: { title: 'Necesitamos', color: 'text-rose-700 dark:text-rose-300' },
+  available: { title: 'Tenemos disponible', color: 'text-accent-hover' },
+  needed: { title: 'Necesitamos', color: 'text-danger' },
 }
 
 function lastUpdatedAt(items: HelpOrgItem[]): Date {
@@ -55,7 +55,7 @@ export default function OrgInventory({
                 key={item.id}
                 className="flex items-center justify-between gap-2 text-sm"
               >
-                <span className="text-text-main">{item.name}</span>
+                <span className="text-fg">{item.name}</span>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     HELP_ORG_ITEM_KIND_BADGE[kind].badgeClass
@@ -68,7 +68,7 @@ export default function OrgInventory({
           </ul>
         </div>
       ))}
-      <p className="text-xs text-text-muted">
+      <p className="text-xs text-fg-muted">
         Inventario actualizado {timeAgo(lastUpdatedAt(items).toISOString())}
       </p>
     </div>

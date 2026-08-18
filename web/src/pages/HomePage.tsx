@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { AlertTriangle, RefreshCw, Truck } from 'lucide-react'
 import { api } from '../api/client'
 import AvisoCard from '../components/AvisoCard'
 import AvisoFiltersUi from '../components/AvisoFilters'
@@ -10,6 +11,9 @@ import OfferCard from '../components/OfferCard'
 import OfferFiltersUi from '../components/OfferFilters'
 import RequestCard from '../components/RequestCard'
 import RequestFiltersUi from '../components/RequestFilters'
+import { buttonVariants } from '../components/ui/Button'
+import Skeleton from '../components/ui/Skeleton'
+import { Select } from '../components/ui/Input'
 import { defaultCity, getPosition, nearestCity } from '../lib/geo'
 import type {
   HelpOrg,
@@ -44,9 +48,9 @@ function storeMapCity(code: string) {
 }
 
 const SECTION_STYLES: Record<string, { color: string; dot: string }> = {
-  needs: { color: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-600' },
-  offers: { color: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-600' },
-  avisos: { color: 'text-sky-700', dot: 'bg-sky-600' },
+  needs: { color: 'text-danger', dot: 'bg-danger' },
+  offers: { color: 'text-accent-hover', dot: 'bg-accent' },
+  avisos: { color: 'text-primary', dot: 'bg-primary' },
 }
 
 function useDebounce<T>(value: T, delay = 300): T {
@@ -68,15 +72,60 @@ function SectionHeader({
   accent: { color: string; dot: string }
 }) {
   return (
-    <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg bg-surface px-4 py-3 shadow-sm">
-      <span className={`flex items-center gap-2 font-semibold ${accent.color}`}>
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h2
+        className={`flex items-center gap-2 font-display text-xl font-bold ${accent.color}`}
+      >
         <span className={`inline-block h-2.5 w-2.5 rounded-full ${accent.dot}`} />
         {title}
-      </span>
-      <span className="rounded-full bg-page dark:bg-white/10 px-2.5 py-0.5 text-sm font-medium text-text-muted">
+      </h2>
+      <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-sm font-medium text-fg-muted">
         {count === undefined ? '…' : `${count} activo(s)`}
       </span>
-    </summary>
+    </div>
+  )
+}
+
+function EntityError({
+  title,
+  onRetry,
+}: {
+  title: string
+  onRetry: () => void
+}) {
+  return (
+    <div className="rounded-lg border border-danger-muted bg-danger-muted p-4 text-center">
+      <p className="flex items-center justify-center gap-2 font-medium text-danger">
+        <AlertTriangle size={18} aria-hidden="true" />
+        {title}
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-on-danger transition duration-fast hover:bg-danger-hover"
+      >
+        <RefreshCw size={14} aria-hidden="true" />
+        Reintentar
+      </button>
+    </div>
+  )
+}
+
+function ListSkeleton() {
+  return (
+    <div role="status" aria-label="Cargando resultados" className="space-y-2">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="rounded-lg border border-border bg-surface p-4">
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+          <Skeleton className="mt-3 h-5 w-3/4" />
+          <Skeleton className="mt-2 h-3 w-full" />
+          <Skeleton className="mt-1.5 h-3 w-2/3" />
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -92,30 +141,18 @@ function RequestsSection({ cities }: { cities: City[] }) {
   const requests: Request[] = data?.requests ?? []
 
   return (
-    <details className="mt-4" open>
+    <section className="mt-8" aria-labelledby="requests-title">
       <SectionHeader
         title="Pedidos de ayuda"
         count={data?.total}
         accent={SECTION_STYLES.needs}
       />
-      <div className="mt-2 space-y-2">
-        <RequestFiltersUi value={filters} cities={cities} onChange={setFilters} />
+      <div className="space-y-2">
+        <RequestFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
         {isError && (
-          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-center text-red-700 dark:text-red-300">
-            <p className="font-medium">No pudimos cargar los pedidos</p>
-            <button
-              onClick={() => refetch()}
-              className="mt-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-            >
-              Reintentar
-            </button>
-          </div>
+          <EntityError title="No pudimos cargar los pedidos" onRetry={() => refetch()} />
         )}
-        {isPending && (
-          <p className="py-6 text-center text-sm text-text-muted" role="status">
-            Cargando pedidos…
-          </p>
-        )}
+        {isPending && <ListSkeleton />}
         {!isPending && !isError && (
           <EntityList
             empty={requests.length === 0}
@@ -130,7 +167,7 @@ function RequestsSection({ cities }: { cities: City[] }) {
           </EntityList>
         )}
       </div>
-    </details>
+    </section>
   )
 }
 
@@ -146,30 +183,18 @@ function OffersSection({ cities }: { cities: City[] }) {
   const offers: Offer[] = data?.offers ?? []
 
   return (
-    <details className="mt-4" open>
+    <section className="mt-8" aria-labelledby="offers-title">
       <SectionHeader
         title="Ofrecer ayuda"
         count={data?.total}
         accent={SECTION_STYLES.offers}
       />
-      <div className="mt-2 space-y-2">
-        <OfferFiltersUi value={filters} cities={cities} onChange={setFilters} />
+      <div className="space-y-2">
+        <OfferFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
         {isError && (
-          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-center text-red-700 dark:text-red-300">
-            <p className="font-medium">No pudimos cargar las ofertas</p>
-            <button
-              onClick={() => refetch()}
-              className="mt-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-            >
-              Reintentar
-            </button>
-          </div>
+          <EntityError title="No pudimos cargar las ofertas" onRetry={() => refetch()} />
         )}
-        {isPending && (
-          <p className="py-6 text-center text-sm text-text-muted" role="status">
-            Cargando ofertas…
-          </p>
-        )}
+        {isPending && <ListSkeleton />}
         {!isPending && !isError && (
           <EntityList
             empty={offers.length === 0}
@@ -184,7 +209,7 @@ function OffersSection({ cities }: { cities: City[] }) {
           </EntityList>
         )}
       </div>
-    </details>
+    </section>
   )
 }
 
@@ -200,30 +225,18 @@ function AvisosSection({ cities }: { cities: City[] }) {
   const avisos: Aviso[] = data?.avisos ?? []
 
   return (
-    <details className="mt-4" open>
+    <section className="mt-8" aria-labelledby="avisos-title">
       <SectionHeader
         title="Avisos"
         count={data?.total}
         accent={SECTION_STYLES.avisos}
       />
-      <div className="mt-2 space-y-2">
-        <AvisoFiltersUi value={filters} cities={cities} onChange={setFilters} />
+      <div className="space-y-2">
+        <AvisoFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
         {isError && (
-          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-center text-red-700 dark:text-red-300">
-            <p className="font-medium">No pudimos cargar los avisos</p>
-            <button
-              onClick={() => refetch()}
-              className="mt-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-            >
-              Reintentar
-            </button>
-          </div>
+          <EntityError title="No pudimos cargar los avisos" onRetry={() => refetch()} />
         )}
-        {isPending && (
-          <p className="py-6 text-center text-sm text-text-muted" role="status">
-            Cargando avisos…
-          </p>
-        )}
+        {isPending && <ListSkeleton />}
         {!isPending && !isError && (
           <EntityList
             empty={avisos.length === 0}
@@ -238,7 +251,7 @@ function AvisosSection({ cities }: { cities: City[] }) {
           </EntityList>
         )}
       </div>
-    </details>
+    </section>
   )
 }
 
@@ -306,10 +319,10 @@ export default function HomePage() {
   }
 
   const toggles: { key: string; label: string; dot: string; checked: boolean }[] = [
-    { key: 'needs', label: 'Necesito ayuda', dot: 'bg-rose-600', checked: showNeeds },
-    { key: 'offers', label: 'Ofrecer', dot: 'bg-emerald-600', checked: showOffers },
-    { key: 'avisos', label: 'Avisos', dot: 'bg-sky-600', checked: showAvisos },
-    { key: 'helpOrgs', label: 'Red de ayudas', dot: 'bg-teal-600', checked: showOrgs },
+    { key: 'needs', label: 'Necesito ayuda', dot: 'bg-danger', checked: showNeeds },
+    { key: 'offers', label: 'Ofrecer', dot: 'bg-accent', checked: showOffers },
+    { key: 'avisos', label: 'Avisos', dot: 'bg-primary', checked: showAvisos },
+    { key: 'helpOrgs', label: 'Red de ayudas', dot: 'bg-[var(--marker-helpOrgs)]', checked: showOrgs },
   ]
 
   const setToggle = (key: string, checked: boolean) => {
@@ -321,66 +334,79 @@ export default function HomePage() {
 
   return (
     <div>
-      <div className="mb-3">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Ayuda en {selectedCity?.name ?? 'Pereira'}
-        </h1>
-        <p className="mt-1 text-sm text-text-muted">
-          Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
-        </p>
-        <Link
-          to="/transporte"
-          className="mt-3 inline-flex items-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800"
-        >
-          Llevar suministros (centro de carga)
-        </Link>
-      </div>
+      <div className="rounded-lg border border-border bg-surface p-4 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-fg">
+              Ayuda en {selectedCity?.name ?? 'Pereira'}
+            </h1>
+            <p className="mt-1 text-sm text-fg-muted">
+              Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
+            </p>
+          </div>
+          <Link
+            to="/transporte"
+            className={buttonVariants({ variant: 'primary', size: 'lg' })}
+          >
+            <Truck size={18} aria-hidden="true" />
+            Llevar suministros (centro de carga)
+          </Link>
+        </div>
 
-      <select
-        value={mapCityCode}
-        onChange={(e) => setMapCity(e.target.value)}
-        aria-label="Centrar el mapa en"
-        className="mb-3 rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-text-muted focus:border-sky-500 focus:outline-none"
-      >
-        <option value="" disabled>
-          Elegir ciudad
-        </option>
-        {cities.map((c) => (
-          <option key={c.code} value={c.code}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Select
+            value={mapCityCode}
+            onChange={(e) => setMapCity(e.target.value)}
+            aria-label="Centrar el mapa en"
+            className="w-auto"
+          >
+            <option value="" disabled>
+              Elegir ciudad
+            </option>
+            {cities.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
 
-      <HomeMap
-        requests={requests}
-        offers={offers}
-        avisos={avisos}
-        helpOrgs={orgs}
-        center={mapCenter}
-        showNeeds={showNeeds}
-        showOffers={showOffers}
-        showAvisos={showAvisos}
-        showOrgs={showOrgs}
-      />
+          <div className="flex flex-wrap items-center gap-2">
+            {toggles.map((toggle) => (
+              <label
+                key={toggle.key}
+                className="flex cursor-pointer items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm text-fg-muted transition duration-fast hover:bg-surface-2"
+              >
+                <input
+                  type="checkbox"
+                  checked={toggle.checked}
+                  onChange={(e) => setToggle(toggle.key, e.target.checked)}
+                  aria-label={`Mostrar ${toggle.label}`}
+                  className="accent-primary"
+                />
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full ${toggle.dot}`}
+                  />
+                  {toggle.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-        {toggles.map((toggle) => (
-          <label key={toggle.key} className="flex items-center gap-2 text-text-muted">
-            <input
-              type="checkbox"
-              checked={toggle.checked}
-              onChange={(e) => setToggle(toggle.key, e.target.checked)}
-              aria-label={`Mostrar ${toggle.label}`}
-            />
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className={`inline-block h-2.5 w-2.5 rounded-full ${toggle.dot}`}
-              />
-              {toggle.label}
-            </span>
-          </label>
-        ))}
+        <div className="mt-4">
+          <HomeMap
+            requests={requests}
+            offers={offers}
+            avisos={avisos}
+            helpOrgs={orgs}
+            center={mapCenter}
+            showNeeds={showNeeds}
+            showOffers={showOffers}
+            showAvisos={showAvisos}
+            showOrgs={showOrgs}
+          />
+        </div>
       </div>
 
       <RequestsSection cities={cities} />

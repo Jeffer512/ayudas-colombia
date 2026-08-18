@@ -5,12 +5,14 @@ import FilterBar from './FilterBar'
 interface RequestFiltersProps {
   value: RequestFilters
   cities: City[]
+  count?: number
   onChange: (filters: RequestFilters) => void
 }
 
 export default function RequestFiltersUi({
   value,
   cities,
+  count,
   onChange,
 }: RequestFiltersProps) {
   return (
@@ -19,6 +21,7 @@ export default function RequestFiltersUi({
       searchLabel="Buscar solicitudes"
       searchPlaceholder="Buscar en pedidos…"
       cities={cities}
+      count={count}
       selects={[
         {
           key: 'type',

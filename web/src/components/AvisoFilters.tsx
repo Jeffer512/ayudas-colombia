@@ -5,12 +5,14 @@ import FilterBar from './FilterBar'
 interface AvisoFiltersProps {
   value: AvisoFilters
   cities: City[]
+  count?: number
   onChange: (filters: AvisoFilters) => void
 }
 
 export default function AvisoFiltersUi({
   value,
   cities,
+  count,
   onChange,
 }: AvisoFiltersProps) {
   return (
@@ -19,6 +21,7 @@ export default function AvisoFiltersUi({
       searchLabel="Buscar avisos"
       searchPlaceholder="Buscar en avisos…"
       cities={cities}
+      count={count}
       selects={[
         {
           key: 'status',
