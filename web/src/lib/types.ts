@@ -85,6 +85,8 @@ export interface CityMessage {
   city: CityRef
   name: string
   body: string
+  markerId: string | null
+  mine?: boolean
   createdAt: string
 }
 
@@ -99,6 +101,7 @@ export interface CityMessageFilters {
   city?: string
   limit?: number
   offset?: number
+  markerId?: string
 }
 
 export type NewCityMessage = {

@@ -14,8 +14,27 @@ import { timeAgo } from '../lib/format'
 import type { City, CityMessage, CityMessageListResponse } from '../lib/types'
 
 const PAGE_SIZE = 50
+const CHAT_NAME_KEY = 'ayudas_chat_name'
 
 type MessagesPage = CityMessageListResponse
+
+function readStoredChatName(): string {
+  try {
+    if (typeof window === 'undefined') return ''
+    return window.localStorage.getItem(CHAT_NAME_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function storeChatName(value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(CHAT_NAME_KEY, value)
+  } catch {
+    /* almacenamiento no disponible */
+  }
+}
 
 function prependMessage(page: MessagesPage, message: CityMessage): MessagesPage {
   const alreadyPresent = page.messages.some((m) => m.id === message.id)
@@ -56,7 +75,12 @@ export default function ChatPage() {
   const messagesQuery = useInfiniteQuery({
     queryKey: ['city-messages', cityCode],
     queryFn: ({ pageParam }) =>
-      api.cityMessages({ city: cityCode, limit: PAGE_SIZE, offset: pageParam }),
+      api.cityMessages({
+        city: cityCode,
+        limit: PAGE_SIZE,
+        offset: pageParam,
+        markerId: api.markerId(),
+      }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.offset + lastPage.messages.length < lastPage.total
@@ -65,20 +89,23 @@ export default function ChatPage() {
     enabled: Boolean(cityCode),
   })
 
-  const [name, setName] = useState('')
+  const [name, setName] = useState<string>(() => readStoredChatName())
   const [body, setBody] = useState('')
-  const [myMessageIds, setMyMessageIds] = useState<Set<string>>(() => new Set())
+  const nameTouched = useRef(false)
 
   useEffect(() => {
-    if (name) return
-    if (me.data?.authenticated && me.data.name) setName(me.data.name)
-  }, [me.data, name])
+    if (!me.data?.authenticated || !me.data.name) return
+    if (nameTouched.current) return
+    setName(me.data.name)
+  }, [me.data])
+
+  const myMarkerId = api.markerId()
 
   const createMessage = useMutation({
     mutationFn: api.createCityMessage,
     onSuccess: (created) => {
       setBody('')
-      setMyMessageIds((prev) => new Set(prev).add(created.id))
+      if (!me.data?.authenticated) storeChatName(name.trim())
       queryClient.setQueryData<InfiniteData<MessagesPage>>(
         ['city-messages', cityCode],
         (old) =>
@@ -242,7 +269,9 @@ export default function ChatPage() {
               </p>
             ) : (
               orderedMessages.map((message) => {
-                const mine = myMessageIds.has(message.id)
+                const mine =
+                  message.mine === true ||
+                  (message.markerId != null && message.markerId === myMarkerId)
                 return (
                   <div
                     key={message.id}
@@ -256,7 +285,12 @@ export default function ChatPage() {
                       }`}
                     >
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-xs font-semibold">{message.name}</span>
+                        <span className="text-xs font-semibold">
+                          {message.name}
+                          {mine && (
+                            <span className="ml-1 font-normal opacity-80">· tú</span>
+                          )}
+                        </span>
                         <span className="text-[10px] text-text-muted">
                           {timeAgo(message.createdAt)}
                         </span>
@@ -291,7 +325,10 @@ export default function ChatPage() {
                 aria-label="Tu nombre"
                 value={name}
                 maxLength={120}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  nameTouched.current = true
+                  setName(e.target.value)
+                }}
                 placeholder="Nombre"
                 className="w-32 rounded-md border border-line bg-page px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none"
               />

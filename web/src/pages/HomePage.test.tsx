@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api/client'
 import type {
   AvisoListResponse,
@@ -57,39 +57,6 @@ vi.mock('../lib/geo', async (importOriginal) => ({
   ...(await importOriginal()),
   getPosition: mockedGetPosition,
 }))
-
-class MemoryStorage {
-  private data = new Map<string, string>()
-  get length() {
-    return this.data.size
-  }
-  key(index: number) {
-    return Array.from(this.data.keys())[index] ?? null
-  }
-  getItem(key: string) {
-    return this.data.get(key) ?? null
-  }
-  setItem(key: string, value: string) {
-    this.data.set(String(key), String(value))
-  }
-  removeItem(key: string) {
-    this.data.delete(String(key))
-  }
-  clear() {
-    this.data.clear()
-  }
-}
-
-beforeAll(() => {
-  Object.defineProperty(window, 'localStorage', {
-    configurable: true,
-    value: new MemoryStorage(),
-  })
-})
-
-afterAll(() => {
-  delete (window as { localStorage?: unknown }).localStorage
-})
 
 function renderHomePage() {
   const queryClient = new QueryClient({

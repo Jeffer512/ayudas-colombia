@@ -33,6 +33,8 @@ const message: CityMessage = {
   city: { code: 'pereira', name: 'Pereira' },
   name: 'Lina',
   body: 'El punto de acopio del parque cierra a las 6pm',
+  markerId: 'm-other',
+  mine: false,
   createdAt: new Date().toISOString(),
 }
 
@@ -87,6 +89,7 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  window.localStorage.clear()
   mockedCities.mockResolvedValue({ cities })
   mockedMessages.mockResolvedValue(listResponse)
   mockedMe.mockResolvedValue({
@@ -110,7 +113,12 @@ describe('ChatPage', () => {
 
     expect(await screen.findByRole('heading', { name: /chat de pereira/i })).toBeTruthy()
     await waitFor(() => {
-      expect(mockedMessages).toHaveBeenCalledWith({ city: 'pereira', limit: 50, offset: 0 })
+      expect(mockedMessages).toHaveBeenCalledWith({
+        city: 'pereira',
+        limit: 50,
+        offset: 0,
+        markerId: 'm1',
+      })
     })
     expect(await screen.findByText('El punto de acopio del parque cierra a las 6pm')).toBeTruthy()
     expect(screen.getByText('Lina')).toBeTruthy()
@@ -126,7 +134,12 @@ describe('ChatPage', () => {
     await user.selectOptions(screen.getByLabelText('Ciudad'), 'armenia')
 
     await waitFor(() => {
-      expect(mockedMessages).toHaveBeenCalledWith({ city: 'armenia', limit: 50, offset: 0 })
+      expect(mockedMessages).toHaveBeenCalledWith({
+        city: 'armenia',
+        limit: 50,
+        offset: 0,
+        markerId: 'm1',
+      })
     })
     expect(await screen.findByText('Aún no hay mensajes en este chat. ¡Escribe el primero!')).toBeTruthy()
   })
@@ -137,6 +150,7 @@ describe('ChatPage', () => {
       ...message,
       id: 'msg-new',
       body: 'Se necesita agua en el barrio Centro',
+      mine: true,
     })
     renderPage()
 
@@ -161,6 +175,7 @@ describe('ChatPage', () => {
       )
     })
     expect(await screen.findByText('Se necesita agua en el barrio Centro')).toBeTruthy()
+    expect(screen.getByText('· tú')).toBeTruthy()
   })
 
   it('no publica si el mensaje está vacío', async () => {
@@ -182,7 +197,7 @@ describe('ChatPage', () => {
 
   it('no duplica el mensaje propio cuando el SSE también lo devuelve', async () => {
     const user = userEvent.setup()
-    const sent = { ...message, id: 'msg-sent', body: 'Mensaje del autor' }
+    const sent = { ...message, id: 'msg-sent', body: 'Mensaje del autor', mine: true }
     mockedCreate.mockResolvedValue(sent)
     renderPage()
 
@@ -200,6 +215,7 @@ describe('ChatPage', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Mensaje del autor')).toHaveLength(1)
     })
+    expect(screen.getByText('· tú')).toBeTruthy()
   })
 
   it('añade en tiempo real los mensajes ajenos que llegan por SSE', async () => {
@@ -218,6 +234,47 @@ describe('ChatPage', () => {
 
     view.unmount()
     expect(FakeEventSource.closed.length).toBeGreaterThan(0)
+  })
+
+  it('marca como propios los mensajes del mismo dispositivo anónimo por markerId', async () => {
+    mockedMessages.mockResolvedValue({
+      messages: [
+        {
+          ...message,
+          id: 'msg-mine',
+          markerId: 'm1',
+          mine: false,
+          body: 'Mi mensaje desde otro navegador de este equipo',
+        },
+      ],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    })
+    renderPage()
+
+    await screen.findByText('Mi mensaje desde otro navegador de este equipo')
+    expect(screen.getByText('· tú')).toBeTruthy()
+  })
+
+  it('recuerda el nombre anónimo entre visitas', async () => {
+    const user = userEvent.setup()
+    mockedCreate.mockResolvedValue({
+      ...message,
+      id: 'msg-nick',
+      body: 'Hola a todos',
+      mine: true,
+    })
+    renderPage()
+
+    await screen.findByText('El punto de acopio del parque cierra a las 6pm')
+
+    await user.type(screen.getByLabelText('Tu nombre'), 'Carlota')
+    await user.type(screen.getByLabelText('Mensaje'), 'Hola a todos')
+    await user.click(screen.getByRole('button', { name: 'Enviar' }))
+    await screen.findByText('Hola a todos')
+
+    expect(window.localStorage.getItem('ayudas_chat_name')).toBe('Carlota')
   })
 
   it('carga mensajes anteriores con el botón', async () => {
