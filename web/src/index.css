@@ -1,48 +1,252 @@
 @import "tailwindcss";
 
-@theme {
-  --color-surface: var(--surface);
-  --color-page: var(--page);
-  --color-text-main: var(--text-main);
-  --color-text-muted: var(--text-muted);
-  --color-line: var(--line);
+/* === FONTS (self-hosted) === */
+@font-face {
+  font-family: "Outfit";
+  src: url("/fonts/Outfit-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
+@font-face {
+  font-family: "Outfit";
+  src: url("/fonts/Outfit-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("/fonts/WorkSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("/fonts/WorkSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* === SEMANTIC TOKENS (light = default) === */
 :root {
-  --page: #fafafa;
+  --bg: #fafafa;
   --surface: #ffffff;
-  --text-main: #18181b;
-  --text-muted: #71717a;
-  --line: #e4e4e7;
+  --surface-2: #f4f4f5;
+
+  --fg: #18181b;
+  --fg-muted: #52525b;
+  --fg-subtle: #71717a;
+
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --on-primary: #ffffff;
+  --primary-muted: #eff6ff;
+
+  --accent: #16a34a;
+  --accent-hover: #15803d;
+  --on-accent: #ffffff;
+  --accent-muted: #f0fdf4;
+
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --on-danger: #ffffff;
+  --danger-muted: #fef2f2;
+
+  --ring: #2563eb;
+
+  --status-critical: #dc2626;
+  --status-high: #ea580c;
+  --status-medium: #d97706;
+  --status-low: #16a34a;
+
+  --marker-needs: #dc2626;
+  --marker-offers: #16a34a;
+  --marker-avisos: #2563eb;
+  --marker-helpOrgs: #0d9488;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --page: #09090b;
-    --surface: #18181b;
-    --text-main: #fafafa;
-    --text-muted: #a1a1aa;
-    --line: #27272a;
+    --bg: #0a0a0b;
+    --surface: #17171a;
+    --surface-2: #212124;
+
+    --fg: #f4f4f5;
+    --fg-muted: #a1a1aa;
+    --fg-subtle: #8b8b94;
+
+    --border: #2c2c31;
+    --border-strong: #3f3f46;
+
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --on-primary: #ffffff;
+    --primary-muted: #1e3a5f;
+
+    --accent: #4ade80;
+    --accent-hover: #86efac;
+    --on-accent: #052e16;
+    --accent-muted: #123f27;
+
+    --danger: #f87171;
+    --danger-hover: #fca5a5;
+    --on-danger: #450a0a;
+    --danger-muted: #46201f;
+
+    --ring: #60a5fa;
+
+    --status-critical: #f87171;
+    --status-high: #fb923c;
+    --status-medium: #fbbf24;
+    --status-low: #4ade80;
+
+    --marker-needs: #f87171;
+    --marker-offers: #4ade80;
+    --marker-avisos: #60a5fa;
+    --marker-helpOrgs: #2dd4bf;
   }
 }
 
 .dark {
-  --page: #09090b;
-  --surface: #18181b;
-  --text-main: #fafafa;
-  --text-muted: #a1a1aa;
-  --line: #27272a;
+  --bg: #0a0a0b;
+  --surface: #17171a;
+  --surface-2: #212124;
+
+  --fg: #f4f4f5;
+  --fg-muted: #a1a1aa;
+  --fg-subtle: #8b8b94;
+
+  --border: #2c2c31;
+  --border-strong: #3f3f46;
+
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --on-primary: #ffffff;
+  --primary-muted: #1e3a5f;
+
+  --accent: #4ade80;
+  --accent-hover: #86efac;
+  --on-accent: #052e16;
+  --accent-muted: #123f27;
+
+  --danger: #f87171;
+  --danger-hover: #fca5a5;
+  --on-danger: #450a0a;
+  --danger-muted: #46201f;
+
+  --ring: #60a5fa;
+
+  --status-critical: #f87171;
+  --status-high: #fb923c;
+  --status-medium: #fbbf24;
+  --status-low: #4ade80;
+
+  --marker-needs: #f87171;
+  --marker-offers: #4ade80;
+  --marker-avisos: #60a5fa;
+  --marker-helpOrgs: #2dd4bf;
 }
 
-html {
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+/* === TAILWIND THEME MAPPING === */
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-muted: var(--primary-muted);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-muted: var(--accent-muted);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-on-danger: var(--on-danger);
+  --color-danger-muted: var(--danger-muted);
+
+  --color-ring: var(--ring);
+
+  --color-status-critical: var(--status-critical);
+  --color-status-high: var(--status-high);
+  --color-status-medium: var(--status-medium);
+  --color-status-low: var(--status-low);
+
+  --color-marker-needs: var(--marker-needs);
+  --color-marker-offers: var(--marker-offers);
+  --color-marker-avisos: var(--marker-avisos);
+  --color-marker-helpOrgs: var(--marker-helpOrgs);
+
+  /* Legacy aliases (kept while components migrate) */
+  --color-page: var(--bg);
+  --color-text-main: var(--fg);
+  --color-text-muted: var(--fg-muted);
+  --color-line: var(--border);
+
+  --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", "Work Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
 }
 
-body {
-  margin: 0;
-  background-color: var(--page);
-  color: var(--text-main);
-  transition: background-color 0.3s ease, color 0.3s ease;
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--bg);
+    color: var(--fg);
+    font-size: 16px;
+    line-height: 1.5;
+    transition:
+      background-color var(--duration-normal) ease,
+      color var(--duration-normal) ease;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    line-height: 1.15;
+  }
+
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 /* Tailwind's preflight resets img sizing, which breaks Leaflet's tile grid */
@@ -51,26 +255,20 @@ body {
 }
 
 .map-marker {
-  border: 3px solid #fff;
+  border: 2px solid #fff;
   border-radius: 9999px;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.45);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
   width: 100%;
   height: 100%;
 }
 
-.map-marker-need {
-  background-color: #dc2626;
-}
-
-.map-marker-offer {
-  background-color: #16a34a;
-}
-
-.map-marker-info {
-  background-color: #2563eb;
-}
-
-.map-marker-acopio {
-  background-color: #0d9488;
-  border-radius: 4px;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

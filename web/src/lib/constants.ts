@@ -63,10 +63,10 @@ export const VEHICLE_TYPE_OPTIONS = [
 ]
 
 export const URGENCY_META: Record<string, { label: string; color: string }> = {
-  critical: { label: 'Crítica', color: '#dc2626' },
-  high: { label: 'Alta', color: '#ea580c' },
-  medium: { label: 'Media', color: '#d97706' },
-  low: { label: 'Baja', color: '#16a34a' },
+  critical: { label: 'Crítica', color: 'var(--status-critical)' },
+  high: { label: 'Alta', color: 'var(--status-high)' },
+  medium: { label: 'Media', color: 'var(--status-medium)' },
+  low: { label: 'Baja', color: 'var(--status-low)' },
 }
 
 export const REQUEST_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
@@ -89,10 +89,10 @@ export const AVISO_STATUS_META: Record<string, { label: string; badgeClass: stri
 }
 
 export const MARKER_COLORS = {
-  needs: '#dc2626',
-  offers: '#16a34a',
-  avisos: '#2563eb',
-  helpOrgs: '#0d9488',
+  needs: 'var(--marker-needs)',
+  offers: 'var(--marker-offers)',
+  avisos: 'var(--marker-avisos)',
+  helpOrgs: 'var(--marker-helpOrgs)',
 }
 
 export const HELP_ORG_TYPE_LABELS: Record<string, string> = {

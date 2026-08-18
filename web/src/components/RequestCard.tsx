@@ -14,7 +14,7 @@ export default function RequestCard({ request }: { request: Request }) {
   const typeLabel = REQUEST_TYPE_LABELS[request.type] ?? request.type
   const urgency = URGENCY_META[request.urgency] ?? {
     label: request.urgency,
-    color: '#64748b',
+    color: 'var(--fg-subtle)',
   }
 
   return (

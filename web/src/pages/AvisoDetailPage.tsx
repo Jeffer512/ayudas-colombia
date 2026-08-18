@@ -48,7 +48,7 @@ export default function AvisoDetailPage() {
 
   const urgency = URGENCY_META[aviso.urgency] ?? {
     label: aviso.urgency,
-    color: '#64748b',
+    color: 'var(--fg-subtle)',
   }
   const typeLabel = AVISO_TYPE_LABELS[aviso.type] ?? aviso.type
   const remaining = Math.max(0, MARK_THRESHOLD - aviso.marks)

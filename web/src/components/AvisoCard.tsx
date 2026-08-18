@@ -8,7 +8,7 @@ export default function AvisoCard({ aviso }: { aviso: Aviso }) {
   const typeLabel = AVISO_TYPE_LABELS[aviso.type] ?? aviso.type
   const urgency = URGENCY_META[aviso.urgency] ?? {
     label: aviso.urgency,
-    color: '#64748b',
+    color: 'var(--fg-subtle)',
   }
 
   return (

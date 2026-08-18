@@ -87,7 +87,7 @@ export default function RequestDetailPage() {
 
   const urgency = URGENCY_META[request.urgency] ?? {
     label: request.urgency,
-    color: '#64748b',
+    color: 'var(--fg-subtle)',
   }
   const typeLabel = REQUEST_TYPE_LABELS[request.type] ?? request.type
   const canBeMarkedActive = request.status === 'open'
