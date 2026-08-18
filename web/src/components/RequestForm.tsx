@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
+import Button from './ui/Button'
 import ContactVisibilitySection from './ContactVisibilitySection'
 import LocationSection from './LocationSection'
 import ReporterSection from './ReporterSection'
@@ -29,9 +30,9 @@ import type {
 const MISSING_TYPES: ReadonlySet<string> = new Set(['missing_person', 'missing_pet'])
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 interface LocationState {
   cityCode: string
@@ -207,15 +208,15 @@ export default function RequestForm({
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+          className="mt-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
         >
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <fieldset className="rounded-lg border border-line bg-surface p-4">
-          <legend className="px-1 text-sm font-semibold text-text-muted">
+        <fieldset className="rounded-lg border border-border bg-surface p-4">
+          <legend className="px-1 text-sm font-semibold text-fg-muted">
             ¿Qué necesitas?
           </legend>
 
@@ -285,7 +286,7 @@ export default function RequestForm({
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-xs text-fg-muted">
                 Si marcas "Necesito transporte", quien ofrezca suministros sabrá
                 que también debe poder llevarlos.
               </p>
@@ -300,7 +301,7 @@ export default function RequestForm({
                 options={SUPPLIES_ITEM_OPTIONS}
                 value={items}
                 onChange={setItems}
-                chipClassName="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"
+                chipClassName="bg-danger-muted  text-danger "
               />
             </div>
           )}
@@ -341,7 +342,7 @@ export default function RequestForm({
               <label htmlFor="photo" className={labelClass}>
                 Foto (opcional)
               </label>
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-xs text-fg-muted">
                 Una foto ayuda a identificar a la persona o la mascota. Se
                 reduce automáticamente al enviarla.
               </p>
@@ -350,7 +351,7 @@ export default function RequestForm({
                   <img
                     src={photo}
                     alt="Vista previa de la foto"
-                    className="h-40 w-40 rounded-md border border-line object-cover"
+                    className="h-40 w-40 rounded-md border border-border object-cover"
                   />
                   <button
                     type="button"
@@ -358,7 +359,7 @@ export default function RequestForm({
                       setPhoto(null)
                       setPhotoError(null)
                     }}
-                    className="rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-text-muted hover:bg-page"
+                    className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-fg-muted hover:bg-bg"
                   >
                     Quitar foto
                   </button>
@@ -368,7 +369,7 @@ export default function RequestForm({
                   id="photo"
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  className="mt-2 block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-sky-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-sky-700 hover:file:bg-sky-100"
+                  className="mt-2 block w-full text-sm text-fg-muted file:mr-3 file:rounded-md file:border-0 file:bg-primary-muted file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-primary-muted"
                   onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (!file) return
@@ -388,7 +389,7 @@ export default function RequestForm({
                 />
               )}
               {photoError && (
-                <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-300">
+                <p role="alert" className="mt-1 text-sm text-danger ">
                   {photoError}
                 </p>
               )}
@@ -421,22 +422,16 @@ export default function RequestForm({
         />
 
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
-          >
+          <Button variant="outline" onClick={onCancel}>
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant={editing ? 'primary' : 'danger'}
             disabled={submitting}
-            className={`rounded-md px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800 disabled:opacity-50 ${
-              editing ? 'bg-sky-700 hover:bg-sky-800' : 'bg-rose-700'
-            }`}
           >
             {submitting ? submittingLabel : submitLabel}
-          </button>
+          </Button>
         </div>
       </form>
     </>

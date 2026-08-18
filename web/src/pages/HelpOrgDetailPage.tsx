@@ -37,7 +37,7 @@ export default function HelpOrgDetailPage() {
 
   if (orgQuery.isError || !org) {
     return (
-      <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-center text-red-700 dark:text-red-300">
+      <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
         <p className="font-medium">No encontramos esta organización</p>
         <Link to="/red-de-ayudas" className="mt-2 inline-block text-sm underline">
           Volver a la red de ayudas
@@ -58,25 +58,25 @@ export default function HelpOrgDetailPage() {
           {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category}
         </span>
         {org.managed && (
-          <span className="inline-block rounded-full bg-sky-100 dark:bg-sky-950/40 px-2 py-0.5 text-xs font-medium text-sky-800 dark:text-sky-300">
+          <span className="inline-block rounded-full bg-primary-muted  px-2 py-0.5 text-xs font-medium text-primary ">
             {HELP_ORG_MANAGED_LABEL}
           </span>
         )}
-        <span className="text-sm text-text-muted">
+        <span className="text-sm text-fg-muted">
           {HELP_ORG_TYPE_LABELS[org.type] ?? org.type} · {org.city.name}
         </span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-text-main">
+      <h1 className="mt-2 text-2xl font-bold tracking-tight text-fg">
         {org.name}
       </h1>
 
       {org.description && (
-        <p className="mt-3 whitespace-pre-line text-text-muted">{org.description}</p>
+        <p className="mt-3 whitespace-pre-line text-fg-muted">{org.description}</p>
       )}
 
       {!org.managed && (
-        <p className="mt-3 rounded-md border border-line bg-surface p-3 text-sm text-text-muted">
+        <p className="mt-3 rounded-md border border-border bg-surface p-3 text-sm text-fg-muted">
           Publicada por un voluntario de la comunidad. Si trabajas aquí, puedes
           vincularte con tu cuenta para gestionarla.
         </p>
@@ -85,32 +85,32 @@ export default function HelpOrgDetailPage() {
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {org.address && (
           <div>
-            <dt className="font-medium text-text-muted">Dirección</dt>
-            <dd className="text-text-main">{org.address}</dd>
+            <dt className="font-medium text-fg-muted">Dirección</dt>
+            <dd className="text-fg">{org.address}</dd>
           </div>
         )}
         {org.hours && (
           <div>
-            <dt className="font-medium text-text-muted">Horario</dt>
-            <dd className="text-text-main">{org.hours}</dd>
+            <dt className="font-medium text-fg-muted">Horario</dt>
+            <dd className="text-fg">{org.hours}</dd>
           </div>
         )}
         {org.accepts && (
           <div>
-            <dt className="font-medium text-text-muted">¿Qué reciben?</dt>
-            <dd className="text-text-main">{org.accepts}</dd>
+            <dt className="font-medium text-fg-muted">¿Qué reciben?</dt>
+            <dd className="text-fg">{org.accepts}</dd>
           </div>
         )}
         {org.contactName && (
           <div>
-            <dt className="font-medium text-text-muted">Persona responsable</dt>
-            <dd className="text-text-main">{org.contactName}</dd>
+            <dt className="font-medium text-fg-muted">Persona responsable</dt>
+            <dd className="text-fg">{org.contactName}</dd>
           </div>
         )}
         {org.contactPhone && (
           <div>
-            <dt className="font-medium text-text-muted">Teléfono</dt>
-            <dd className="text-text-main">
+            <dt className="font-medium text-fg-muted">Teléfono</dt>
+            <dd className="text-fg">
               <a href={`tel:${org.contactPhone}`} className="text-teal-700 dark:text-teal-300">
                 {org.contactPhone}
               </a>
@@ -118,8 +118,8 @@ export default function HelpOrgDetailPage() {
           </div>
         )}
         <div>
-          <dt className="font-medium text-text-muted">Publicado</dt>
-          <dd className="text-text-main">{formatDate(org.createdAt)}</dd>
+          <dt className="font-medium text-fg-muted">Publicado</dt>
+          <dd className="text-fg">{formatDate(org.createdAt)}</dd>
         </div>
       </dl>
 
@@ -137,8 +137,8 @@ export default function HelpOrgDetailPage() {
       )}
 
       {org.items && org.items.length > 0 && (
-        <div className="mt-6 rounded-lg border border-line bg-surface p-4">
-          <h2 className="text-sm font-semibold text-text-muted">
+        <div className="mt-6 rounded-lg border border-border bg-surface p-4">
+          <h2 className="text-sm font-semibold text-fg-muted">
             Inventario de la organización
           </h2>
           <OrgInventory items={org.items} />
@@ -146,16 +146,16 @@ export default function HelpOrgDetailPage() {
       )}
 
       <section className="mt-8">
-        <h2 className="text-sm font-semibold text-text-muted">
+        <h2 className="text-sm font-semibold text-fg-muted">
           Pedidos publicados por esta organización
         </h2>
         {requestsQuery.isPending && (
-          <p className="py-6 text-center text-sm text-text-muted" role="status">
+          <p className="py-6 text-center text-sm text-fg-muted" role="status">
             Cargando pedidos…
           </p>
         )}
         {!requestsQuery.isPending && orgRequests.length === 0 && (
-          <p className="py-6 text-center text-sm text-text-muted">
+          <p className="py-6 text-center text-sm text-fg-muted">
             Esta organización no ha publicado pedidos todavía.
           </p>
         )}

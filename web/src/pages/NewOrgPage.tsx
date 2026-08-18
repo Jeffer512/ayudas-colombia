@@ -38,9 +38,9 @@ const initialForm: OrgForm = {
 }
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 const CATEGORY_OPTIONS: HelpOrgCategory[] = [
   'acopio',
@@ -117,7 +117,7 @@ export default function NewOrgPage() {
       <h1 className="text-2xl font-bold tracking-tight">
         Publicar una organización de ayuda
       </h1>
-      <p className="mt-1 text-sm text-text-muted">
+      <p className="mt-1 text-sm text-fg-muted">
         Centros de acopio, albergues, grupos de voluntarios o equipos de apoyo.
         Aparecerá en la <strong>Red de ayudas</strong>; las organizaciones
         oficiales las marca la coordinación de la emergencia.
@@ -126,18 +126,18 @@ export default function NewOrgPage() {
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+          className="mt-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
         >
           {error}
         </div>
       )}
 
       {worksIn === null ? (
-        <div className="mt-6 rounded-lg border border-line bg-surface p-6 text-center">
-          <h2 className="text-lg font-semibold text-text-main">
+        <div className="mt-6 rounded-lg border border-border bg-surface p-6 text-center">
+          <h2 className="text-lg font-semibold text-fg">
             ¿Trabajas en esta organización?
           </h2>
-          <p className="mt-1 text-sm text-text-muted">
+          <p className="mt-1 text-sm text-fg-muted">
             Si trabajas aquí podrás gestionar su página, publicar pedidos e
             inventario desde tu cuenta.
           </p>
@@ -152,35 +152,35 @@ export default function NewOrgPage() {
             <button
               type="button"
               onClick={() => setWorksIn(false)}
-              className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
+              className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
             >
               No, solo la publico
             </button>
           </div>
         </div>
       ) : worksIn === true && meQuery.isPending ? (
-        <p className="mt-6 text-center text-sm text-text-muted" role="status">
+        <p className="mt-6 text-center text-sm text-fg-muted" role="status">
           Cargando sesión…
         </p>
       ) : worksIn === true && !isAuthenticated ? (
-        <div className="mt-6 rounded-lg border border-line bg-surface p-6 text-center">
-          <h2 className="text-lg font-semibold text-text-main">
+        <div className="mt-6 rounded-lg border border-border bg-surface p-6 text-center">
+          <h2 className="text-lg font-semibold text-fg">
             Necesitas una cuenta para gestionarla
           </h2>
-          <p className="mt-1 text-sm text-text-muted">
+          <p className="mt-1 text-sm text-fg-muted">
             Inicia sesión o crea una cuenta para publicar tu organización y
             gestionarla. Después volverás aquí para completar la publicación.
           </p>
           <div className="mt-4 flex justify-center gap-3">
             <Link
               to="/iniciar-sesion?returnTo=/nuevo-centro"
-              className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
+              className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
             >
               Iniciar sesión
             </Link>
             <Link
               to="/registro?returnTo=/nuevo-centro"
-              className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
             >
               Crear cuenta
             </Link>
@@ -188,8 +188,8 @@ export default function NewOrgPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <fieldset className="rounded-lg border border-line bg-surface p-4">
-          <legend className="px-1 text-sm font-semibold text-text-muted">
+        <fieldset className="rounded-lg border border-border bg-surface p-4">
+          <legend className="px-1 text-sm font-semibold text-fg-muted">
             La organización
           </legend>
 
@@ -293,8 +293,8 @@ export default function NewOrgPage() {
           </div>
         </fieldset>
 
-        <fieldset className="rounded-lg border border-line bg-surface p-4">
-          <legend className="px-1 text-sm font-semibold text-text-muted">
+        <fieldset className="rounded-lg border border-border bg-surface p-4">
+          <legend className="px-1 text-sm font-semibold text-fg-muted">
             Ubicación
           </legend>
 
@@ -333,7 +333,7 @@ export default function NewOrgPage() {
             </div>
           </div>
 
-          <p className="mt-4 text-sm text-text-muted">
+          <p className="mt-4 text-sm text-fg-muted">
             Haz clic en el mapa para marcar el punto exacto donde opera
             (obligatorio).
           </p>
@@ -349,11 +349,11 @@ export default function NewOrgPage() {
             />
           </div>
           {form.lat !== null && form.lng !== null ? (
-            <p className="mt-1 text-xs text-text-muted">
+            <p className="mt-1 text-xs text-fg-muted">
               Punto marcado: {form.lat.toFixed(5)}, {form.lng.toFixed(5)}
             </p>
           ) : (
-            <p className="mt-1 text-xs text-rose-600 dark:text-rose-300">
+            <p className="mt-1 text-xs text-danger ">
               Aún no marcas el punto en el mapa.
             </p>
           )}
@@ -381,7 +381,7 @@ export default function NewOrgPage() {
           <button
             type="button"
             onClick={() => navigate('/red-de-ayudas')}
-            className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
+            className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
           >
             Cancelar
           </button>

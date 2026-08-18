@@ -73,7 +73,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.needs)}
             >
               <Popup>
-                <span className="text-xs font-medium text-text-muted">
+                <span className="text-xs font-medium text-fg-muted">
                   Pedido · {request.city.name}
                 </span>
                 <p className="font-semibold">{request.title}</p>
@@ -92,7 +92,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.offers)}
             >
               <Popup>
-                <span className="text-xs font-medium text-text-muted">
+                <span className="text-xs font-medium text-fg-muted">
                   Oferta · {offer.city.name}
                 </span>
                 <p className="font-semibold">{offer.title}</p>
@@ -111,7 +111,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.avisos)}
             >
               <Popup>
-                <span className="text-xs font-medium text-text-muted">
+                <span className="text-xs font-medium text-fg-muted">
                   Aviso · {aviso.city.name}
                 </span>
                 <p className="font-semibold">{aviso.title}</p>
@@ -130,7 +130,7 @@ export default function HomeMap({
               icon={divIcon(MARKER_COLORS.helpOrgs)}
             >
               <Popup>
-                <span className="text-xs font-medium text-text-muted">
+                <span className="text-xs font-medium text-fg-muted">
                   {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category} · {org.city.name}
                 </span>
                 <p className="font-semibold">{org.name}</p>

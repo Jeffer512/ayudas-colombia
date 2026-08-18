@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 export interface ReporterState {
   name: string
@@ -32,8 +32,8 @@ export default function ReporterSection({
   onPatch,
 }: ReporterSectionProps) {
   return (
-    <fieldset className="rounded-lg border border-line bg-surface p-4">
-      <legend className="px-1 text-sm font-semibold text-text-muted">
+    <fieldset className="rounded-lg border border-border bg-surface p-4">
+      <legend className="px-1 text-sm font-semibold text-fg-muted">
         ¿Quién reporta?
       </legend>
 
@@ -98,7 +98,7 @@ export default function ReporterSection({
         </div>
       </div>
 
-      <p className="mt-3 text-xs text-text-muted">
+      <p className="mt-3 text-xs text-fg-muted">
         {requireContact
           ? 'Deja al menos un medio de contacto: teléfono, WhatsApp o correo. '
           : ''}

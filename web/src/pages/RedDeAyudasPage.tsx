@@ -7,7 +7,7 @@ import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
 import type { HelpOrg, HelpOrgCategory } from '../lib/types'
 
 const selectClass =
-  'rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-text-muted focus:border-teal-500 dark:focus:border-teal-700 focus:outline-none'
+  'rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-fg-muted focus:border-teal-500 dark:focus:border-teal-700'
 
 const CATEGORIES: (HelpOrgCategory | '')[] = [
   '',
@@ -41,7 +41,7 @@ export default function RedDeAyudasPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Red de ayudas</h1>
-          <p className="mt-1 text-sm text-text-muted">
+          <p className="mt-1 text-sm text-fg-muted">
             Centros de acopio, albergues, grupos de voluntarios y apoyo
             psicológico que operan durante la emergencia.
           </p>
@@ -54,7 +54,7 @@ export default function RedDeAyudasPage() {
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface p-3 shadow-sm">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as HelpOrgCategory | '')}
@@ -81,7 +81,7 @@ export default function RedDeAyudasPage() {
             </option>
           ))}
         </select>
-        <span className="ml-auto text-sm text-text-muted">
+        <span className="ml-auto text-sm text-fg-muted">
           {orgsQuery.data ? (
             <>
               {orgsQuery.data.total} organización(es)
@@ -96,12 +96,12 @@ export default function RedDeAyudasPage() {
 
       <div className="mt-4">
         {orgsQuery.isPending && (
-          <p className="py-8 text-center text-text-muted" role="status">
+          <p className="py-8 text-center text-fg-muted" role="status">
             Cargando organizaciones…
           </p>
         )}
         {orgsQuery.isError && (
-          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-center text-red-700 dark:text-red-300">
+          <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
             <p className="font-medium">No pudimos cargar la red de ayudas</p>
           </div>
         )}
@@ -115,7 +115,7 @@ export default function RedDeAyudasPage() {
           </ul>
         )}
         {!orgsQuery.isPending && !orgsQuery.isError && orgs.length === 0 && (
-          <div className="rounded-lg border border-dashed border-line bg-surface p-8 text-center text-text-muted">
+          <div className="rounded-lg border border-dashed border-border bg-surface p-8 text-center text-fg-muted">
             <p className="font-medium">Todavía no hay organizaciones en esta red</p>
             <Link
               to="/nuevo-centro"

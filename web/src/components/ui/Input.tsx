@@ -1,10 +1,10 @@
 import type { InputHTMLAttributes, SelectHTMLAttributes } from 'react'
 
 const controlBase =
-  'h-10 w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle transition duration-fast focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/25'
+  'h-10 rounded-md border border-border-strong bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle transition duration-fast focus:border-primary focus:ring-2 focus:ring-ring/25'
 
 export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={`${controlBase} ${className}`.trim()} {...props} />
+  return <input className={`${controlBase} w-full ${className}`.trim()} {...props} />
 }
 
 export function Select({

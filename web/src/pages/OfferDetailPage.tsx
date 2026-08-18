@@ -15,7 +15,7 @@ import { formatDate } from '../lib/format'
 import type { StatusUpdate } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
 export default function OfferDetailPage() {
   const { id = '' } = useParams()
@@ -68,7 +68,7 @@ export default function OfferDetailPage() {
 
   if (isError || !offer) {
     return (
-      <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-center text-red-700 dark:text-red-300">
+      <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
         <p className="font-medium">No encontramos esta oferta</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -85,23 +85,23 @@ export default function OfferDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/" className="text-sm text-sky-700 hover:underline">
+      <Link to="/" className="text-sm text-primary hover:underline">
         ← Volver al mapa
       </Link>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <StatusBadge status={offer.status} meta={OFFER_STATUS_META} />
-        <span className="text-sm text-text-muted">
+        <span className="text-sm text-fg-muted">
           {typeLabel} · {offer.city.name}
         </span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-text-main">
+      <h1 className="mt-2 text-2xl font-bold tracking-tight text-fg">
         {offer.title}
       </h1>
 
       {offer.description && (
-        <p className="mt-3 whitespace-pre-line text-text-muted">
+        <p className="mt-3 whitespace-pre-line text-fg-muted">
           {offer.description}
         </p>
       )}
@@ -109,15 +109,15 @@ export default function OfferDetailPage() {
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {offer.transport && (
           <div>
-            <dt className="font-medium text-text-muted">Transporte</dt>
-            <dd className="text-text-main">
+            <dt className="font-medium text-fg-muted">Transporte</dt>
+            <dd className="text-fg">
               {TRANSPORT_LABELS[offer.transport]}
             </dd>
           </div>
         )}
         {offer.items.length > 0 && (
           <div>
-            <dt className="font-medium text-text-muted">Qué se ofrece</dt>
+            <dt className="font-medium text-fg-muted">Qué se ofrece</dt>
             <dd className="mt-1 flex flex-wrap gap-1.5">
               {offer.items.map((item) => (
                 <span
@@ -132,15 +132,15 @@ export default function OfferDetailPage() {
         )}
         {offer.zone && (
           <div>
-            <dt className="font-medium text-text-muted">Zona de entrega</dt>
-            <dd className="text-text-main">{offer.zone}</dd>
+            <dt className="font-medium text-fg-muted">Zona de entrega</dt>
+            <dd className="text-fg">{offer.zone}</dd>
           </div>
         )}
         {offer.volunteer && (
           <>
             {offer.volunteer.capabilities.length > 0 && (
               <div>
-                <dt className="font-medium text-text-muted">En qué ayuda</dt>
+                <dt className="font-medium text-fg-muted">En qué ayuda</dt>
                 <dd className="mt-1 flex flex-wrap gap-1.5">
                   {offer.volunteer.capabilities.map((capability) => (
                     <span
@@ -155,8 +155,8 @@ export default function OfferDetailPage() {
             )}
             {offer.volunteer.availability && (
               <div>
-                <dt className="font-medium text-text-muted">Disponibilidad</dt>
-                <dd className="text-text-main">{offer.volunteer.availability}</dd>
+                <dt className="font-medium text-fg-muted">Disponibilidad</dt>
+                <dd className="text-fg">{offer.volunteer.availability}</dd>
               </div>
             )}
           </>
@@ -165,27 +165,27 @@ export default function OfferDetailPage() {
           <>
             {offer.vehicle.vehicleType && (
               <div>
-                <dt className="font-medium text-text-muted">Vehículo</dt>
-                <dd className="text-text-main">{offer.vehicle.vehicleType}</dd>
+                <dt className="font-medium text-fg-muted">Vehículo</dt>
+                <dd className="text-fg">{offer.vehicle.vehicleType}</dd>
               </div>
             )}
             {offer.vehicle.capacity && (
               <div>
-                <dt className="font-medium text-text-muted">Capacidad</dt>
-                <dd className="text-text-main">{offer.vehicle.capacity}</dd>
+                <dt className="font-medium text-fg-muted">Capacidad</dt>
+                <dd className="text-fg">{offer.vehicle.capacity}</dd>
               </div>
             )}
           </>
         )}
         {offer.address && (
           <div>
-            <dt className="font-medium text-text-muted">Dirección</dt>
-            <dd className="text-text-main">{offer.address}</dd>
+            <dt className="font-medium text-fg-muted">Dirección</dt>
+            <dd className="text-fg">{offer.address}</dd>
           </div>
         )}
         <div>
-          <dt className="font-medium text-text-muted">Publicado</dt>
-          <dd className="text-text-main">{formatDate(offer.createdAt)}</dd>
+          <dt className="font-medium text-fg-muted">Publicado</dt>
+          <dd className="text-fg">{formatDate(offer.createdAt)}</dd>
         </div>
         <ReporterContact
           reporter={offer.reporter}
@@ -199,11 +199,11 @@ export default function OfferDetailPage() {
       </div>
 
       {inTransit && offer.claim && (
-        <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-4">
-          <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-300">
+        <div className="mt-4 rounded-lg border border-warning-muted  bg-warning-muted  p-4">
+          <h2 className="text-sm font-semibold text-warning ">
             Compromiso de entrega
           </h2>
-          <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+          <p className="mt-1 text-sm text-warning ">
             {offer.claim.claimerName
               ? `${offer.claim.claimerName} se comprometió a llevar esta oferta el ${formatDate(offer.claim.claimedAt)}.`
               : 'Alguien se comprometió a llevar esta oferta.'}{' '}
@@ -214,7 +214,7 @@ export default function OfferDetailPage() {
               {cancelClaimMutation.isError && (
                 <div
                   role="alert"
-                  className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+                  className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
                 >
                   {(cancelClaimMutation.error as Error).message}
                 </div>
@@ -222,7 +222,7 @@ export default function OfferDetailPage() {
               <button
                 onClick={() => cancelClaimMutation.mutate()}
                 disabled={cancelClaimMutation.isPending}
-                className="mt-3 inline-block rounded-md border border-amber-300 dark:border-amber-900 bg-surface px-4 py-2 text-sm font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 disabled:opacity-50"
+                className="mt-3 inline-block rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted disabled:opacity-50"
               >
                 {cancelClaimMutation.isPending
                   ? 'Cancelando…'
@@ -242,11 +242,11 @@ export default function OfferDetailPage() {
         </div>
       )}
 
-      <section className="mt-6 rounded-lg border border-line bg-surface p-4">
-        <h2 className="text-sm font-semibold text-text-muted">
+      <section className="mt-6 rounded-lg border border-border bg-surface p-4">
+        <h2 className="text-sm font-semibold text-fg-muted">
           Gestionar esta oferta
         </h2>
-        <p className="mt-1 text-sm text-text-muted">
+        <p className="mt-1 text-sm text-fg-muted">
           {offer.status === 'open' &&
             'Si la oferta ya no está disponible, ciérrala con tu código para que otros no te busquen en vano.'}
           {offer.status === 'in_transit' &&
@@ -260,7 +260,7 @@ export default function OfferDetailPage() {
         {mutation.isError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+            className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
           >
             {(mutation.error as Error).message}
           </div>
@@ -296,7 +296,7 @@ export default function OfferDetailPage() {
                     setMode('edit')
                   }
                 }}
-                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
               >
                 Editar oferta
               </button>
@@ -315,13 +315,13 @@ export default function OfferDetailPage() {
             {verifyMutation.isError && (
               <div
                 role="alert"
-                className="rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+                className="rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
               >
                 {(verifyMutation.error as Error).message}
               </div>
             )}
             <div>
-              <label htmlFor="offerEditResolveCode" className="text-sm font-medium text-text-muted">
+              <label htmlFor="offerEditResolveCode" className="text-sm font-medium text-fg-muted">
                 Código de cierre (4 dígitos)
               </label>
               <input
@@ -334,7 +334,7 @@ export default function OfferDetailPage() {
                 onChange={(e) => setResolveCode(e.target.value)}
                 className={`mt-1 ${inputClass}`}
               />
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-xs text-fg-muted">
                 Esta oferta no está asociada a tu cuenta. Con el código de cierre
                 que se entregó al publicarla podrás entrar a editarla.
               </p>
@@ -343,14 +343,14 @@ export default function OfferDetailPage() {
               <button
                 type="submit"
                 disabled={verifyMutation.isPending}
-                className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
               >
                 {verifyMutation.isPending ? 'Verificando…' : 'Entrar a editar'}
               </button>
               <button
                 type="button"
                 onClick={() => setMode(null)}
-                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
               >
                 Cancelar
               </button>
@@ -375,7 +375,7 @@ export default function OfferDetailPage() {
                   setCloseAs('open')
                   setMode('close')
                 }}
-                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
               >
                 Reabrir oferta
               </button>
@@ -399,7 +399,7 @@ export default function OfferDetailPage() {
           >
             {!canCloseWithoutCode && (
               <div>
-                <label htmlFor="offerResolveCode" className="text-sm font-medium text-text-muted">
+                <label htmlFor="offerResolveCode" className="text-sm font-medium text-fg-muted">
                   Código de cierre (4 dígitos)
                 </label>
                 <input
@@ -412,13 +412,13 @@ export default function OfferDetailPage() {
                   onChange={(e) => setResolveCode(e.target.value)}
                   className={`mt-1 ${inputClass}`}
                 />
-                <p className="mt-1 text-xs text-text-muted">
+                <p className="mt-1 text-xs text-fg-muted">
                   Se entregó al publicar la oferta. Solo tú puedes cerrarla o reabrirla.
                 </p>
               </div>
             )}
             <div>
-              <label htmlFor="note" className="text-sm font-medium text-text-muted">
+              <label htmlFor="note" className="text-sm font-medium text-fg-muted">
                 Nota (opcional)
               </label>
               <input
@@ -450,7 +450,7 @@ export default function OfferDetailPage() {
               <button
                 type="button"
                 onClick={() => setMode(null)}
-                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
               >
                 Cancelar
               </button>
@@ -464,7 +464,7 @@ export default function OfferDetailPage() {
               setCloseAs('open')
               setMode('close')
             }}
-            className="mt-3 rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+            className="mt-3 rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
           >
             Reabrir oferta
           </button>

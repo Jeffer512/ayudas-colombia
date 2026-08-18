@@ -38,7 +38,7 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
 
   if (me.data?.authenticated !== true) {
     return (
-      <p className="text-sm text-text-muted">
+      <p className="text-sm text-fg-muted">
         <Link to="/iniciar-sesion" className="underline">
           Inicia sesión
         </Link>{' '}
@@ -53,14 +53,14 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-sm text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-300"
+          className="text-sm text-danger  underline hover:text-danger dark:hover:text-danger"
         >
           Reportar
         </button>
       )}
 
       {open && mutation.isSuccess && (
-        <p className="rounded-md bg-red-100 dark:bg-red-950/40 p-3 text-sm text-red-800 dark:text-red-300">
+        <p className="rounded-md bg-danger-muted  p-3 text-sm text-danger ">
           Gracias, tu reporte fue enviado y será revisado.
         </p>
       )}
@@ -71,12 +71,12 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
             e.preventDefault()
             if (reason) mutation.mutate({ kind, targetId, reason, note: note.trim() || undefined })
           }}
-          className="mt-2 space-y-3 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4"
+          className="mt-2 space-y-3 rounded-lg border border-danger-muted  bg-danger-muted  p-4"
         >
-          <p className="text-sm font-semibold text-red-800 dark:text-red-300">
+          <p className="text-sm font-semibold text-danger ">
             ¿Por qué quieres reportar esta publicación?
           </p>
-          <p className="text-xs text-red-700 dark:text-red-300">
+          <p className="text-xs text-danger ">
             El equipo de moderación lo revisará. Los reportes se envían de forma
             anónima para los demás usuarios.
           </p>
@@ -84,7 +84,7 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
           <fieldset className="space-y-1.5">
             <legend className="sr-only">Motivo del reporte</legend>
             {REASONS.map((value) => (
-              <label key={value} className="flex items-center gap-2 text-sm text-red-900 dark:text-red-300">
+              <label key={value} className="flex items-center gap-2 text-sm text-danger ">
                 <input
                   type="radio"
                   name="reportReason"
@@ -99,7 +99,7 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
           </fieldset>
 
           <div>
-            <label htmlFor="reportNote" className="text-sm font-medium text-red-800 dark:text-red-300">
+            <label htmlFor="reportNote" className="text-sm font-medium text-danger ">
               Detalle (opcional)
             </label>
             <textarea
@@ -109,12 +109,12 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
               placeholder="Ej: el teléfono no contesta y tres personas reportan lo mismo"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="mt-1 w-full rounded-md border border-red-300 dark:border-red-900 bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-red-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-danger-muted  bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-danger"
             />
           </div>
 
           {mutation.isError && (
-            <div role="alert" className="rounded-md border border-red-300 dark:border-red-900 bg-red-100 dark:bg-red-950/40 p-3 text-sm text-red-800 dark:text-red-300">
+            <div role="alert" className="rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger ">
               {(mutation.error as Error).message}
             </div>
           )}
@@ -123,7 +123,7 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
             <button
               type="submit"
               disabled={!reason || mutation.isPending}
-              className="rounded-md bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50"
+              className="rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white hover:bg-danger-hover disabled:opacity-50"
             >
               {mutation.isPending ? 'Enviando…' : 'Enviar reporte'}
             </button>
@@ -134,7 +134,7 @@ export default function ReportButton({ kind, targetId }: ReportButtonProps) {
                 setNote('')
                 setReason(null)
               }}
-              className="rounded-md border border-red-300 dark:border-red-900 bg-surface px-4 py-2 text-sm text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40"
+              className="rounded-md border border-danger-muted  bg-surface px-4 py-2 text-sm text-danger  hover:bg-danger-muted"
             >
               Cancelar
             </button>

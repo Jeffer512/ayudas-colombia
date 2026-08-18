@@ -6,9 +6,9 @@ import { api } from '../api/client'
 import type { RegisterResult } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams()
@@ -32,15 +32,15 @@ export default function RegisterPage() {
     return (
       <div className="mx-auto max-w-md text-center">
         <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-text-main">
+          <h1 className="text-2xl font-bold tracking-tight text-fg">
             Revisa tu correo
           </h1>
-          <p className="mt-2 text-sm text-text-muted">
+          <p className="mt-2 text-sm text-fg-muted">
             Enviamos un enlace de verificación a <strong>{email}</strong>. Ábrelo
             para activar tu cuenta y luego inicia sesión.
           </p>
           {done.verificationUrl && (
-            <p className="mt-3 break-all rounded-md bg-surface p-2 text-xs text-sky-700">
+            <p className="mt-3 break-all rounded-md bg-surface p-2 text-xs text-primary">
               <span className="font-medium">Enlace de desarrollo:</span>{' '}
               {done.verificationUrl}
             </p>
@@ -48,7 +48,7 @@ export default function RegisterPage() {
           <div className="mt-6">
             <Link
               to={returnTo ? `/iniciar-sesion?returnTo=${returnTo}` : '/iniciar-sesion'}
-              className="inline-block rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
             >
               Ir a iniciar sesión
             </Link>
@@ -61,7 +61,7 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto max-w-md">
       <h1 className="text-2xl font-bold tracking-tight">Crear cuenta</h1>
-      <p className="mt-1 text-sm text-text-muted">
+      <p className="mt-1 text-sm text-fg-muted">
         Regístrate para participar en la Red de ayudas. Después de
         registrarte tendrás que verificar tu correo.
       </p>
@@ -69,7 +69,7 @@ export default function RegisterPage() {
       {mutation.isError && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+          className="mt-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
         >
           {(mutation.error as Error).message}
         </div>
@@ -122,17 +122,17 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="w-full rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
         >
           {mutation.isPending ? 'Registrando…' : 'Crear cuenta'}
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-text-muted">
+      <p className="mt-4 text-sm text-fg-muted">
         ¿Ya tienes cuenta?{' '}
         <Link
           to={returnTo ? `/iniciar-sesion?returnTo=${returnTo}` : '/iniciar-sesion'}
-          className="font-medium text-sky-700 hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           Inicia sesión
         </Link>

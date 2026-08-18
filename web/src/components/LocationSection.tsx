@@ -4,9 +4,9 @@ import type { City } from '../lib/types'
 import Map from './Map'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 interface LocationSectionProps {
   cities: City[]
@@ -38,8 +38,8 @@ export default function LocationSection({
 }: LocationSectionProps) {
   const cityLabel = cities.find((c) => c.code === cityCode)?.name ?? cityCode
   return (
-    <fieldset className="rounded-lg border border-line bg-surface p-4">
-      <legend className="px-1 text-sm font-semibold text-text-muted">
+    <fieldset className="rounded-lg border border-border bg-surface p-4">
+      <legend className="px-1 text-sm font-semibold text-fg-muted">
         Ubicación
       </legend>
 
@@ -86,12 +86,12 @@ export default function LocationSection({
             className={`mt-1 ${inputClass}`}
           />
           {addressHint && (
-            <p className="mt-1 text-xs text-text-muted">{addressHint}</p>
+            <p className="mt-1 text-xs text-fg-muted">{addressHint}</p>
           )}
         </div>
       </div>
 
-      <p className="mt-4 text-sm text-text-muted">
+      <p className="mt-4 text-sm text-fg-muted">
         Haz clic en el mapa para marcar el punto exacto (opcional).
       </p>
       <div className="mt-2">
@@ -104,7 +104,7 @@ export default function LocationSection({
         />
       </div>
       {lat !== null && lng !== null && (
-        <p className="mt-1 text-xs text-text-muted">
+        <p className="mt-1 text-xs text-fg-muted">
           Punto marcado: {lat.toFixed(5)}, {lng.toFixed(5)}
         </p>
       )}

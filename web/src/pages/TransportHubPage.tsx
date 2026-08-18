@@ -75,11 +75,11 @@ export default function TransportHubPage() {
 
   return (
     <div>
-      <div className="mb-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-4">
-        <h1 className="text-2xl font-bold tracking-tight text-amber-900 dark:text-amber-300">
+      <div className="mb-4 rounded-lg border border-warning-muted  bg-warning-muted  p-4">
+        <h1 className="text-2xl font-bold tracking-tight text-warning ">
           Centro de carga
         </h1>
-        <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+        <p className="mt-1 text-sm text-warning ">
           Suministros que alguien publicó y que necesitan transporte hasta las
           familias. Comprométete a llevarlos o publica tu disponibilidad de
           transporte para coordinar envíos.
@@ -103,14 +103,14 @@ export default function TransportHubPage() {
       {error && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+          className="mb-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
         >
           {error}
         </div>
       )}
 
       {loading && (
-        <p className="py-6 text-center text-sm text-text-muted" role="status">
+        <p className="py-6 text-center text-sm text-fg-muted" role="status">
           Cargando cargas disponibles…
         </p>
       )}
@@ -119,7 +119,7 @@ export default function TransportHubPage() {
         <section aria-labelledby="pendientes">
           <h2
             id="pendientes"
-            className="mb-2 text-lg font-semibold text-text-main"
+            className="mb-2 text-lg font-semibold text-fg"
           >
             Pendientes
           </h2>
@@ -130,16 +130,16 @@ export default function TransportHubPage() {
           >
             {available.map((offer) => (
               <li key={offer.id}>
-                <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <Link
                       to={`/oferta/${offer.id}`}
                       className="block"
                     >
-                      <p className="font-semibold text-text-main">{offer.title}</p>
+                      <p className="font-semibold text-fg">{offer.title}</p>
                     </Link>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                      <span className="inline-block rounded-full bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
+                      <span className="inline-block rounded-full bg-warning-muted  px-2 py-0.5 text-warning ">
                         {TRANSPORT_LABELS[offer.transport ?? 'needs_transport']}
                       </span>
                       <span>{offer.city.name}</span>
@@ -158,7 +158,7 @@ export default function TransportHubPage() {
                           </span>
                         ))}
                         {offer.zone && (
-                          <span className="text-xs text-text-muted">
+                          <span className="text-xs text-fg-muted">
                             Zona: {offer.zone}
                           </span>
                         )}
@@ -171,7 +171,7 @@ export default function TransportHubPage() {
                       <button
                         onClick={() => claimMutation.mutate(offer.id)}
                         disabled={claimMutation.isPending}
-                        className="shrink-0 rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
+                        className="shrink-0 rounded-md bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning disabled:opacity-50"
                       >
                         {claimMutation.isPending
                           ? 'Reservando…'
@@ -180,7 +180,7 @@ export default function TransportHubPage() {
                     ) : (
                       <Link
                         to="/iniciar-sesion"
-                        className="shrink-0 rounded-md border border-amber-300 dark:border-amber-900 bg-surface px-4 py-2 text-sm font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40"
+                        className="shrink-0 rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted"
                       >
                         Inicia sesión para llevarla
                       </Link>
@@ -196,28 +196,28 @@ export default function TransportHubPage() {
         <section aria-labelledby="comprometidas" className="mt-8">
           <h2
             id="comprometidas"
-            className="mb-2 text-lg font-semibold text-text-main"
+            className="mb-2 text-lg font-semibold text-fg"
           >
             Comprometidas
           </h2>
           {assigned.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-line bg-surface p-4 text-sm text-text-muted">
+            <p className="rounded-lg border border-dashed border-border bg-surface p-4 text-sm text-fg-muted">
               Aún no hay cargas con alguien comprometido a llevarlas.
             </p>
           ) : (
             <ul className="space-y-2">
               {assigned.map((offer) => (
                 <li key={offer.id}>
-                  <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <Link
                         to={`/oferta/${offer.id}`}
                         className="block"
                       >
-                        <p className="font-semibold text-text-main">{offer.title}</p>
+                        <p className="font-semibold text-fg">{offer.title}</p>
                       </Link>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                        <span className="inline-block rounded-full bg-amber-100 dark:bg-amber-950/40 px-2 py-0.5 text-amber-800 dark:text-amber-300">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
+                        <span className="inline-block rounded-full bg-warning-muted  px-2 py-0.5 text-warning ">
                           En camino
                         </span>
                         <span>{offer.city.name}</span>
@@ -245,7 +245,7 @@ export default function TransportHubPage() {
                       <button
                         onClick={() => cancelMutation.mutate(offer.id)}
                         disabled={cancelMutation.isPending}
-                        className="shrink-0 rounded-md border border-amber-300 dark:border-amber-900 bg-surface px-4 py-2 text-sm font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 disabled:opacity-50"
+                        className="shrink-0 rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted disabled:opacity-50"
                       >
                         {cancelMutation.isPending
                           ? 'Cancelando…'
@@ -264,11 +264,11 @@ export default function TransportHubPage() {
         <section aria-labelledby="transporte-disponible" className="mt-8">
           <h2
             id="transporte-disponible"
-            className="mb-2 text-lg font-semibold text-text-main"
+            className="mb-2 text-lg font-semibold text-fg"
           >
             Transporte disponible
           </h2>
-          <p className="mb-2 text-sm text-text-muted">
+          <p className="mb-2 text-sm text-fg-muted">
             Personas u organizaciones que ofrecen transporte para suministros.
             Contáctalas directamente desde su oferta.
           </p>
@@ -279,12 +279,12 @@ export default function TransportHubPage() {
           >
             {transportOffers.map((offer) => (
               <li key={offer.id}>
-                <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <Link to={`/oferta/${offer.id}`} className="block">
-                      <p className="font-semibold text-text-main">{offer.title}</p>
+                      <p className="font-semibold text-fg">{offer.title}</p>
                     </Link>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
                       <span className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">
                         {OFFER_TYPE_LABELS.transport_offered}
                       </span>
@@ -294,8 +294,8 @@ export default function TransportHubPage() {
                       ) : null}
                     </div>
                     {offer.vehicle && (
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                        <span className="inline-block rounded-full bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 text-sky-700 dark:text-sky-300">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
+                        <span className="inline-block rounded-full bg-primary-muted  px-2 py-0.5 text-primary ">
                           {offer.vehicle.vehicleType ?? 'Vehículo'}
                         </span>
                         {offer.vehicle.capacity && (

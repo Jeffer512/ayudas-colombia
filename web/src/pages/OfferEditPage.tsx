@@ -6,7 +6,7 @@ import OfferForm from '../components/OfferForm'
 import type { UpdateOffer } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
 export default function OfferEditPage() {
   const { id = '' } = useParams()
@@ -41,7 +41,7 @@ export default function OfferEditPage() {
 
   if (isError || !offer) {
     return (
-      <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-center text-red-700 dark:text-red-300">
+      <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
         <p className="font-medium">No encontramos esta oferta</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -60,14 +60,14 @@ export default function OfferEditPage() {
   if (blocked) {
     return (
       <div className="mx-auto max-w-3xl">
-        <Link to={`/oferta/${id}`} className="text-sm text-sky-700 hover:underline">
+        <Link to={`/oferta/${id}`} className="text-sm text-primary hover:underline">
           ← Volver a la oferta
         </Link>
-        <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-6 text-center">
-          <h1 className="text-xl font-bold text-amber-900 dark:text-amber-300">
+        <div className="mt-4 rounded-lg border border-warning-muted  bg-warning-muted  p-6 text-center">
+          <h1 className="text-xl font-bold text-warning ">
             No se puede editar esta oferta
           </h1>
-          <p className="mt-2 text-sm text-amber-800 dark:text-amber-300">{blocked}</p>
+          <p className="mt-2 text-sm text-warning ">{blocked}</p>
         </div>
       </div>
     )
@@ -76,12 +76,12 @@ export default function OfferEditPage() {
   if (!offer.isOwner && !verifiedCode) {
     return (
       <div className="mx-auto max-w-3xl">
-        <Link to={`/oferta/${id}`} className="text-sm text-sky-700 hover:underline">
+        <Link to={`/oferta/${id}`} className="text-sm text-primary hover:underline">
           ← Volver a la oferta
         </Link>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">Editar oferta</h1>
-        <div className="mt-4 rounded-lg border border-line bg-surface p-4">
-          <p className="text-sm text-text-muted">
+        <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+          <p className="text-sm text-fg-muted">
             Esta oferta no está asociada a tu cuenta. Para editarla necesitas el
             código de cierre que se entregó al publicarla.
           </p>
@@ -95,13 +95,13 @@ export default function OfferEditPage() {
             {gateError && (
               <div
                 role="alert"
-                className="rounded-md border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+                className="rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
               >
                 {gateError}
               </div>
             )}
             <div>
-              <label htmlFor="resolveCode" className="text-sm font-medium text-text-muted">
+              <label htmlFor="resolveCode" className="text-sm font-medium text-fg-muted">
                 Código de cierre (4 dígitos)
               </label>
               <input
@@ -119,14 +119,14 @@ export default function OfferEditPage() {
               <button
                 type="submit"
                 disabled={verifyMutation.isPending}
-                className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
               >
                 {verifyMutation.isPending ? 'Verificando…' : 'Verificar código'}
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/oferta/${id}`)}
-                className="rounded-md border border-line bg-surface px-4 py-2 text-sm text-text-muted hover:bg-page"
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
               >
                 Cancelar
               </button>
@@ -139,11 +139,11 @@ export default function OfferEditPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to={`/oferta/${id}`} className="text-sm text-sky-700 hover:underline">
+      <Link to={`/oferta/${id}`} className="text-sm text-primary hover:underline">
         ← Volver a la oferta
       </Link>
       <h1 className="mt-3 text-2xl font-bold tracking-tight">Editar oferta</h1>
-      <p className="mt-1 text-sm text-text-muted">
+      <p className="mt-1 text-sm text-fg-muted">
         Corrige los datos para que la ayuda llegue mejor.
       </p>
       <OfferForm

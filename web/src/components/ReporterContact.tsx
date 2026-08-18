@@ -26,19 +26,19 @@ export default function ReporterContact({
   return (
     <>
       <div>
-        <dt className="font-medium text-text-muted">{nameLabel}</dt>
-        <dd className="text-text-main">{name ?? reporter.name}</dd>
+        <dt className="font-medium text-fg-muted">{nameLabel}</dt>
+        <dd className="text-fg">{name ?? reporter.name}</dd>
       </div>
 
       {restricted ? (
-        <div className="rounded-md border border-line bg-page p-3">
-          <dt className="font-medium text-text-muted">Contacto</dt>
-          <dd className="mt-1 text-sm text-text-muted">
+        <div className="rounded-md border border-border bg-bg p-3">
+          <dt className="font-medium text-fg-muted">Contacto</dt>
+          <dd className="mt-1 text-sm text-fg-muted">
             Quien publicó ocultó su contacto. Inicia sesión para verlo.
           </dd>
           <Link
             to="/iniciar-sesion"
-            className="mt-1 inline-block text-sm font-medium text-sky-700 underline"
+            className="mt-1 inline-block text-sm font-medium text-primary underline"
           >
             Iniciar sesión
           </Link>
@@ -47,9 +47,9 @@ export default function ReporterContact({
         <>
           {hasPhone && (
             <div>
-              <dt className="font-medium text-text-muted">Teléfono</dt>
-              <dd className="text-text-main">
-                <a href={`tel:${reporter.phone}`} className="text-sky-700">
+              <dt className="font-medium text-fg-muted">Teléfono</dt>
+              <dd className="text-fg">
+                <a href={`tel:${reporter.phone}`} className="text-primary">
                   {reporter.phone}
                 </a>
               </dd>
@@ -58,14 +58,14 @@ export default function ReporterContact({
 
           {reporter.whatsapp && (
             <div>
-              <dt className="font-medium text-text-muted">WhatsApp</dt>
-              <dd className="text-text-main">
+              <dt className="font-medium text-fg-muted">WhatsApp</dt>
+              <dd className="text-fg">
                 {whatsappLink(reporter.whatsapp) ? (
                   <a
                     href={whatsappLink(reporter.whatsapp)!}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sky-700"
+                    className="text-primary"
                   >
                     {reporter.whatsapp}
                   </a>
@@ -77,7 +77,7 @@ export default function ReporterContact({
                       onClick={() =>
                         navigator.clipboard?.writeText(reporter.whatsapp ?? '')
                       }
-                      className="ml-2 text-xs text-sky-700 underline"
+                      className="ml-2 text-xs text-primary underline"
                     >
                       copiar
                     </button>
@@ -89,9 +89,9 @@ export default function ReporterContact({
 
           {hasEmail && (
             <div>
-              <dt className="font-medium text-text-muted">Correo</dt>
-              <dd className="text-text-main">
-                <a href={`mailto:${reporter.email}`} className="text-sky-700">
+              <dt className="font-medium text-fg-muted">Correo</dt>
+              <dd className="text-fg">
+                <a href={`mailto:${reporter.email}`} className="text-primary">
                   {reporter.email}
                 </a>
               </dd>

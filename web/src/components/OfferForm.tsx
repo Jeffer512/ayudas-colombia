@@ -29,9 +29,9 @@ import type {
 } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 interface LocationState {
   cityCode: string
@@ -262,15 +262,15 @@ export default function OfferForm({
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+          className="mt-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
         >
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <fieldset className="rounded-lg border border-line bg-surface p-4">
-          <legend className="px-1 text-sm font-semibold text-text-muted">
+        <fieldset className="rounded-lg border border-border bg-surface p-4">
+          <legend className="px-1 text-sm font-semibold text-fg-muted">
             ¿Qué ofreces?
           </legend>
 
@@ -301,7 +301,7 @@ export default function OfferForm({
               </select>
             )}
             {type === 'transport_offered' && (
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-xs text-fg-muted">
                 Estas ofertas aparecen en el centro de carga para coordinar el
                 envío de suministros.
               </p>
@@ -327,7 +327,7 @@ export default function OfferForm({
                 ))}
               </select>
               {transport === 'needs_transport' && (
-                <p className="mt-1 text-xs text-text-muted">
+                <p className="mt-1 text-xs text-fg-muted">
                   Estas ofertas aparecen en el centro de carga para que alguien
                   se comprometa a llevarlas.
                 </p>
@@ -386,7 +386,7 @@ export default function OfferForm({
                   value={vehicleType ? [vehicleType] : []}
                   onChange={(next) => setVehicleType(next[0] ?? '')}
                   single
-                  chipClassName="bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300"
+                  chipClassName="bg-primary-muted  text-primary "
                 />
               </div>
               <div className="mt-4">
@@ -490,7 +490,7 @@ export default function OfferForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
+            className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
           >
             Cancelar
           </button>
@@ -498,7 +498,7 @@ export default function OfferForm({
             type="submit"
             disabled={submitting}
             className={`rounded-md px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50 ${
-              editing ? 'bg-sky-700 hover:bg-sky-800' : 'bg-emerald-700'
+              editing ? 'bg-primary hover:bg-primary-hover' : 'bg-emerald-700'
             }`}
           >
             {submitting ? submittingLabel : submitLabel}

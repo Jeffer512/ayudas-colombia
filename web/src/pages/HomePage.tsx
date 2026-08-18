@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, RefreshCw, Truck } from 'lucide-react'
+import { AlertTriangle, ChevronDown, RefreshCw, Truck } from 'lucide-react'
 import { api } from '../api/client'
 import AvisoCard from '../components/AvisoCard'
 import AvisoFiltersUi from '../components/AvisoFilters'
@@ -62,27 +63,53 @@ function useDebounce<T>(value: T, delay = 300): T {
   return debounced
 }
 
-function SectionHeader({
+function Section({
   title,
   count,
   accent,
+  children,
 }: {
   title: string
   count: number | undefined
   accent: { color: string; dot: string }
+  children: ReactNode
 }) {
+  const [open, setOpen] = useState(true)
+  const panelId = useId()
   return (
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h2
-        className={`flex items-center gap-2 font-display text-xl font-bold ${accent.color}`}
+    <section className="mt-8">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="mb-3 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
-        <span className={`inline-block h-2.5 w-2.5 rounded-full ${accent.dot}`} />
-        {title}
-      </h2>
-      <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-sm font-medium text-fg-muted">
-        {count === undefined ? '…' : `${count} activo(s)`}
-      </span>
-    </div>
+        <h2
+          className={`flex items-center gap-2 font-display text-xl font-bold ${accent.color}`}
+        >
+          <span className={`inline-block h-2.5 w-2.5 rounded-full ${accent.dot}`} />
+          {title}
+        </h2>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-sm font-medium text-fg-muted">
+            {count === undefined ? '…' : `${count} activo(s)`}
+          </span>
+          <ChevronDown
+            size={18}
+            aria-hidden="true"
+            className={`text-fg-muted transition-transform duration-fast ${
+              open ? '' : '-rotate-90'
+            }`}
+          />
+        </span>
+      </button>
+      {open && (
+        <div id={panelId} className="space-y-2">
+          {children}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -141,33 +168,30 @@ function RequestsSection({ cities }: { cities: City[] }) {
   const requests: Request[] = data?.requests ?? []
 
   return (
-    <section className="mt-8" aria-labelledby="requests-title">
-      <SectionHeader
-        title="Pedidos de ayuda"
-        count={data?.total}
-        accent={SECTION_STYLES.needs}
-      />
-      <div className="space-y-2">
-        <RequestFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
-        {isError && (
-          <EntityError title="No pudimos cargar los pedidos" onRetry={() => refetch()} />
-        )}
-        {isPending && <ListSkeleton />}
-        {!isPending && !isError && (
-          <EntityList
-            empty={requests.length === 0}
-            emptyTitle="No hay pedidos con estos filtros"
-            emptyHint="Publica el primero o prueba cambiando los filtros."
-          >
-            {requests.map((request) => (
-              <li key={request.id}>
-                <RequestCard request={request} />
-              </li>
-            ))}
-          </EntityList>
-        )}
-      </div>
-    </section>
+    <Section
+      title="Pedidos de ayuda"
+      count={data?.total}
+      accent={SECTION_STYLES.needs}
+    >
+      <RequestFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
+      {isError && (
+        <EntityError title="No pudimos cargar los pedidos" onRetry={() => refetch()} />
+      )}
+      {isPending && <ListSkeleton />}
+      {!isPending && !isError && (
+        <EntityList
+          empty={requests.length === 0}
+          emptyTitle="No hay pedidos con estos filtros"
+          emptyHint="Publica el primero o prueba cambiando los filtros."
+        >
+          {requests.map((request) => (
+            <li key={request.id}>
+              <RequestCard request={request} />
+            </li>
+          ))}
+        </EntityList>
+      )}
+    </Section>
   )
 }
 
@@ -183,33 +207,30 @@ function OffersSection({ cities }: { cities: City[] }) {
   const offers: Offer[] = data?.offers ?? []
 
   return (
-    <section className="mt-8" aria-labelledby="offers-title">
-      <SectionHeader
-        title="Ofrecer ayuda"
-        count={data?.total}
-        accent={SECTION_STYLES.offers}
-      />
-      <div className="space-y-2">
-        <OfferFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
-        {isError && (
-          <EntityError title="No pudimos cargar las ofertas" onRetry={() => refetch()} />
-        )}
-        {isPending && <ListSkeleton />}
-        {!isPending && !isError && (
-          <EntityList
-            empty={offers.length === 0}
-            emptyTitle="No hay ofertas con estos filtros"
-            emptyHint="Ofrece ayuda para que otros la encuentren aquí."
-          >
-            {offers.map((offer) => (
-              <li key={offer.id}>
-                <OfferCard offer={offer} />
-              </li>
-            ))}
-          </EntityList>
-        )}
-      </div>
-    </section>
+    <Section
+      title="Ofrecer ayuda"
+      count={data?.total}
+      accent={SECTION_STYLES.offers}
+    >
+      <OfferFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
+      {isError && (
+        <EntityError title="No pudimos cargar las ofertas" onRetry={() => refetch()} />
+      )}
+      {isPending && <ListSkeleton />}
+      {!isPending && !isError && (
+        <EntityList
+          empty={offers.length === 0}
+          emptyTitle="No hay ofertas con estos filtros"
+          emptyHint="Ofrece ayuda para que otros la encuentren aquí."
+        >
+          {offers.map((offer) => (
+            <li key={offer.id}>
+              <OfferCard offer={offer} />
+            </li>
+          ))}
+        </EntityList>
+      )}
+    </Section>
   )
 }
 
@@ -225,33 +246,30 @@ function AvisosSection({ cities }: { cities: City[] }) {
   const avisos: Aviso[] = data?.avisos ?? []
 
   return (
-    <section className="mt-8" aria-labelledby="avisos-title">
-      <SectionHeader
-        title="Avisos"
-        count={data?.total}
-        accent={SECTION_STYLES.avisos}
-      />
-      <div className="space-y-2">
-        <AvisoFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
-        {isError && (
-          <EntityError title="No pudimos cargar los avisos" onRetry={() => refetch()} />
-        )}
-        {isPending && <ListSkeleton />}
-        {!isPending && !isError && (
-          <EntityList
-            empty={avisos.length === 0}
-            emptyTitle="No hay avisos con estos filtros"
-            emptyHint="Comparte información útil para la comunidad."
-          >
-            {avisos.map((aviso) => (
-              <li key={aviso.id}>
-                <AvisoCard aviso={aviso} />
-              </li>
-            ))}
-          </EntityList>
-        )}
-      </div>
-    </section>
+    <Section
+      title="Avisos"
+      count={data?.total}
+      accent={SECTION_STYLES.avisos}
+    >
+      <AvisoFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
+      {isError && (
+        <EntityError title="No pudimos cargar los avisos" onRetry={() => refetch()} />
+      )}
+      {isPending && <ListSkeleton />}
+      {!isPending && !isError && (
+        <EntityList
+          empty={avisos.length === 0}
+          emptyTitle="No hay avisos con estos filtros"
+          emptyHint="Comparte información útil para la comunidad."
+        >
+          {avisos.map((aviso) => (
+            <li key={aviso.id}>
+              <AvisoCard aviso={aviso} />
+            </li>
+          ))}
+        </EntityList>
+      )}
+    </Section>
   )
 }
 

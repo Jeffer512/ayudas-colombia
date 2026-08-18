@@ -18,9 +18,9 @@ import type {
 } from '../lib/types'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 interface LocationState {
   cityCode: string
@@ -133,11 +133,11 @@ export default function CreateAvisoPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="text-2xl font-bold tracking-tight">Avisos</h1>
-      <p className="mt-1 text-sm text-text-muted">
+      <p className="mt-1 text-sm text-fg-muted">
         Comparte información útil para la comunidad: daños, puntos de
         distribución, rutas, recomendaciones. No es un pedido ni una oferta.
       </p>
-      <p className="mt-2 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-300">
+      <p className="mt-2 rounded-lg border border-warning-muted  bg-warning-muted  p-3 text-sm text-warning ">
         Este espacio es de la comunidad. Si es una emergencia, llama a las
         autoridades:         123 Emergencias · 119 Bomberos · 125 Ambulancias / Emergencias Médicas.
       </p>
@@ -145,15 +145,15 @@ export default function CreateAvisoPage() {
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-300"
+          className="mt-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
         >
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <fieldset className="rounded-lg border border-line bg-surface p-4">
-          <legend className="px-1 text-sm font-semibold text-text-muted">
+        <fieldset className="rounded-lg border border-border bg-surface p-4">
+          <legend className="px-1 text-sm font-semibold text-fg-muted">
             ¿Qué quieres informar?
           </legend>
 
@@ -238,14 +238,14 @@ export default function CreateAvisoPage() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-page"
+            className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
           >
             {submitting ? 'Publicando…' : 'Publicar aviso'}
           </button>

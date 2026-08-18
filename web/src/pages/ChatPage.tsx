@@ -59,7 +59,7 @@ function MessageActions({ message, mine }: { message: CityMessage; mine: boolean
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={`absolute right-1 top-1 z-20 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 ${
-          mine ? 'text-white/80 hover:bg-white/10' : 'text-text-muted hover:bg-line'
+          mine ? 'text-white/80 hover:bg-white/10' : 'text-fg-muted hover:bg-line'
         }`}
       >
         <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
@@ -77,7 +77,7 @@ function MessageActions({ message, mine }: { message: CityMessage; mine: boolean
             className="fixed inset-0 z-10"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-8 z-20 w-80 rounded-lg border border-line bg-page p-3 shadow-lg">
+          <div className="absolute right-0 top-8 z-20 w-80 rounded-lg border border-border bg-bg p-3 shadow-lg">
             <ReportButton kind="message" targetId={message.id} />
           </div>
         </>
@@ -235,18 +235,18 @@ export default function ChatPage() {
         <h1 className="text-2xl font-bold tracking-tight">
           Chat de {selectedCity?.name ?? 'tu ciudad'}
         </h1>
-        <p className="mt-1 text-sm text-text-muted">
+        <p className="mt-1 text-sm text-fg-muted">
           Conversación pública de la comunidad en tiempo real. Los mensajes se
           eliminan después de 7 días.
         </p>
       </div>
 
       <label className="mb-4 block">
-        <span className="text-sm font-medium text-text-muted">Ciudad</span>
+        <span className="text-sm font-medium text-fg-muted">Ciudad</span>
         <select
           value={urlCity}
           onChange={(e) => setSearchParams({ city: e.target.value })}
-          className="mt-1 block w-full max-w-xs rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-text-main focus:border-sky-500 focus:outline-none"
+          className="mt-1 block w-full max-w-xs rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-fg focus:border-primary"
         >
           <option value="" disabled>
             Elegir ciudad
@@ -260,17 +260,17 @@ export default function ChatPage() {
       </label>
 
       {messagesQuery.isPending && (
-        <p className="py-8 text-center text-sm text-text-muted" role="status">
+        <p className="py-8 text-center text-sm text-fg-muted" role="status">
           Cargando mensajes…
         </p>
       )}
 
       {messagesQuery.isError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
+        <div className="rounded-lg border border-danger-muted bg-danger-muted p-4 text-center text-sm text-danger">
           <p>No pudimos cargar el chat</p>
           <button
             onClick={() => void messagesQuery.refetch()}
-            className="mt-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+            className="mt-2 rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-white hover:bg-danger"
           >
             Reintentar
           </button>
@@ -278,7 +278,7 @@ export default function ChatPage() {
       )}
 
       {!messagesQuery.isPending && !messagesQuery.isError && (
-        <div className="flex h-[65vh] flex-col overflow-hidden rounded-xl border border-line bg-surface">
+        <div className="flex h-[65vh] flex-col overflow-hidden rounded-xl border border-border bg-surface">
           <div
             ref={scrollRef}
             onScroll={() => {
@@ -294,7 +294,7 @@ export default function ChatPage() {
                 <button
                   type="button"
                   onClick={loadOlder}
-                  className="rounded-md border border-line bg-page px-3 py-1.5 text-sm text-text-muted hover:bg-surface"
+                  className="rounded-md border border-border bg-bg px-3 py-1.5 text-sm text-fg-muted hover:bg-surface"
                 >
                   Cargar anteriores
                 </button>
@@ -302,7 +302,7 @@ export default function ChatPage() {
             )}
 
             {orderedMessages.length === 0 ? (
-              <p className="py-10 text-center text-sm text-text-muted">
+              <p className="py-10 text-center text-sm text-fg-muted">
                 Aún no hay mensajes en este chat. ¡Escribe el primero!
               </p>
             ) : (
@@ -318,8 +318,8 @@ export default function ChatPage() {
                     <div
                       className={`group relative max-w-[80%] rounded-2xl px-3 py-2 ${
                         mine
-                          ? 'rounded-br-sm bg-sky-700 text-white'
-                          : 'rounded-bl-sm bg-page border border-line text-text-main'
+                          ? 'rounded-br-sm bg-primary text-white'
+                          : 'rounded-bl-sm bg-bg border border-border text-fg'
                       }`}
                     >
                       <div className="flex items-baseline justify-between gap-2 pr-5">
@@ -329,7 +329,7 @@ export default function ChatPage() {
                             <span className="ml-1 font-normal opacity-80">· tú</span>
                           )}
                         </span>
-                        <span className="text-[10px] text-text-muted">
+                        <span className="text-[10px] text-fg-muted">
                           {timeAgo(message.createdAt)}
                         </span>
                       </div>
@@ -354,7 +354,7 @@ export default function ChatPage() {
                 })
               }
             }}
-            className="border-t border-line bg-surface p-3"
+            className="border-t border-border bg-surface p-3"
           >
             <div className="flex items-center gap-2">
               <input
@@ -366,7 +366,7 @@ export default function ChatPage() {
                   setName(e.target.value)
                 }}
                 placeholder="Nombre"
-                className="w-32 rounded-md border border-line bg-page px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none"
+                className="w-32 rounded-md border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary"
               />
               <textarea
                 aria-label="Mensaje"
@@ -375,19 +375,19 @@ export default function ChatPage() {
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Escribe un mensaje…"
-                className="flex-1 resize-none rounded-md border border-line bg-page px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none"
+                className="flex-1 resize-none rounded-md border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary"
               />
-              <span className="text-xs text-text-muted">{body.length}/280</span>
+              <span className="text-xs text-fg-muted">{body.length}/280</span>
               <button
                 type="submit"
                 disabled={!body.trim() || !name.trim() || createMessage.isPending}
-                className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
               >
                 {createMessage.isPending ? 'Enviando…' : 'Enviar'}
               </button>
             </div>
             {errorMessage && (
-              <p role="alert" className="mt-2 text-sm text-red-700">
+              <p role="alert" className="mt-2 text-sm text-danger">
                 {errorMessage}
               </p>
             )}

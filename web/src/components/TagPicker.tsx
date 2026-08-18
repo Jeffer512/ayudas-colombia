@@ -3,9 +3,9 @@ import { useState } from 'react'
 const CUSTOM = '__otro__'
 
 const inputClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-sky-500 focus:outline-none'
+  'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
 
-const labelClass = 'text-sm font-medium text-text-muted'
+const labelClass = 'text-sm font-medium text-fg-muted'
 
 type Editing = 'append' | { index: number }
 
@@ -32,7 +32,7 @@ export default function TagPicker({
   otroLabel = 'Otro…',
   max = 10,
   single = false,
-  chipClassName = 'bg-page dark:bg-white/10 text-text-main',
+  chipClassName = 'bg-bg dark:bg-white/10 text-fg',
 }: TagPickerProps) {
   const [editing, setEditing] = useState<Editing>('append')
   const [composing, setComposing] = useState(false)
@@ -144,7 +144,7 @@ export default function TagPicker({
               className={inputClass}
             />
             {duplicate && (
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-xs text-fg-muted">
                 Ya agregaste esta opción.
               </p>
             )}
