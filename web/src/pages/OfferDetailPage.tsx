@@ -6,6 +6,7 @@ import Map from '../components/Map'
 import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
+import Button from '../components/ui/Button'
 import {
   FAR_AWAY_DESTINATION_LABEL,
   OFFER_STATUS_META,
@@ -69,7 +70,7 @@ export default function OfferDetailPage() {
 
   if (isError || !offer) {
     return (
-      <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
+      <div className="rounded-lg border border-danger-muted bg-danger-muted p-6 text-center text-danger">
         <p className="font-medium">No encontramos esta oferta</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -123,7 +124,7 @@ export default function OfferDetailPage() {
               {offer.items.map((item) => (
                 <span
                   key={item}
-                  className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
+                  className="inline-block rounded-full bg-accent-muted px-2 py-0.5 text-xs text-accent-hover"
                 >
                   {item}
                 </span>
@@ -178,7 +179,7 @@ export default function OfferDetailPage() {
                   {offer.volunteer.capabilities.map((capability) => (
                     <span
                       key={capability}
-                      className="inline-block rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 text-xs text-indigo-700 dark:text-indigo-300"
+                      className="inline-block rounded-full bg-surface-2 px-2 py-0.5 text-xs text-fg-muted"
                     >
                       {capability}
                     </span>
@@ -232,18 +233,18 @@ export default function OfferDetailPage() {
       </div>
 
       {inTransit && offer.claim && (
-        <div className="mt-4 rounded-lg border border-warning-muted  bg-warning-muted  p-4">
-          <h2 className="text-sm font-semibold text-warning ">
+        <div className="mt-4 rounded-lg border border-warning-muted bg-warning-muted p-4">
+          <h2 className="text-sm font-semibold text-warning">
             Compromiso de entrega
           </h2>
-          <p className="mt-1 text-sm text-warning ">
+          <p className="mt-1 text-sm text-warning">
             {offer.claim.claimerName
               ? `${offer.claim.claimerName} se comprometió a llevar esta oferta el ${formatDate(offer.claim.claimedAt)}.`
               : 'Alguien se comprometió a llevar esta oferta.'}{' '}
             Coordina con esa persona y confirma la entrega cuando esté hecha.
           </p>
           {offer.isOwner && (offer.claim.phone || offer.claim.whatsapp) && (
-            <p className="mt-1 text-sm font-medium text-warning ">
+            <p className="mt-1 text-sm font-medium text-warning">
               Contacto: {offer.claim.phone || ''}
               {offer.claim.phone && offer.claim.whatsapp ? ' · ' : ''}
               {offer.claim.whatsapp || ''}
@@ -254,20 +255,21 @@ export default function OfferDetailPage() {
               {cancelClaimMutation.isError && (
                 <div
                   role="alert"
-                  className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+className="mt-3 rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
                 >
                   {(cancelClaimMutation.error as Error).message}
                 </div>
               )}
-              <button
+              <Button
                 onClick={() => cancelClaimMutation.mutate()}
                 disabled={cancelClaimMutation.isPending}
-                className="mt-3 inline-block rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted disabled:opacity-50"
+                variant="outline"
+                className="mt-3 border-warning-muted text-warning hover:bg-warning-muted"
               >
                 {cancelClaimMutation.isPending
                   ? 'Cancelando…'
                   : 'Cancelar compromiso'}
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -300,7 +302,7 @@ export default function OfferDetailPage() {
         {mutation.isError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+            className="mt-3 rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
           >
             {(mutation.error as Error).message}
           </div>
@@ -308,26 +310,25 @@ export default function OfferDetailPage() {
 
         {!mode && canClose && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
+            <Button
               onClick={() => {
                 setCloseAs('fulfilled')
                 setMode('close')
               }}
-              className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
             >
               Marcarla como entregada
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => {
                 setCloseAs('unavailable')
                 setMode('close')
               }}
-              className="rounded-md bg-gray-700 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+              variant="secondary"
             >
               Ya no está disponible
-            </button>
+            </Button>
             {!offer.claim && (
-              <button
+              <Button
                 onClick={() => {
                   if (offer.isOwner) {
                     navigate(`/oferta/${offer.id}/editar`)
@@ -336,10 +337,10 @@ export default function OfferDetailPage() {
                     setMode('edit')
                   }
                 }}
-                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
+                variant="outline"
               >
                 Editar oferta
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -355,7 +356,7 @@ export default function OfferDetailPage() {
             {verifyMutation.isError && (
               <div
                 role="alert"
-                className="rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+                className="rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
               >
                 {(verifyMutation.error as Error).message}
               </div>
@@ -380,45 +381,39 @@ export default function OfferDetailPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
                 type="submit"
                 disabled={verifyMutation.isPending}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
               >
                 {verifyMutation.isPending ? 'Verificando…' : 'Entrar a editar'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
-              >
+              </Button>
+              <Button type="button" onClick={() => setMode(null)} variant="outline">
                 Cancelar
-              </button>
+              </Button>
             </div>
           </form>
         )}
 
         {!mode && inTransit && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
+            <Button
               onClick={() => {
                 setCloseAs('fulfilled')
                 setMode('close')
               }}
-              className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
             >
               Confirmar entrega
-            </button>
+            </Button>
             {!offer.claim?.mine && (
-              <button
+              <Button
                 onClick={() => {
                   setCloseAs('open')
                   setMode('close')
                 }}
-                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
+                variant="outline"
               >
                 Reabrir oferta
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -476,38 +471,34 @@ export default function OfferDetailPage() {
               />
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
                 type="submit"
                 disabled={mutation.isPending}
-                className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
               >
                 {closeAs === 'fulfilled'
                   ? 'Confirmar entrega'
                   : closeAs === 'unavailable'
                     ? 'Confirmar cierre'
                     : 'Confirmar reapertura'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
-              >
+              </Button>
+              <Button type="button" onClick={() => setMode(null)} variant="outline">
                 Cancelar
-              </button>
+              </Button>
             </div>
           </form>
         )}
 
         {canReopen && (
-          <button
+          <Button
             onClick={() => {
               setCloseAs('open')
               setMode('close')
             }}
-            className="mt-3 rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
+            variant="outline"
+            className="mt-3"
           >
             Reabrir oferta
-          </button>
+          </Button>
         )}
       </section>
     </div>

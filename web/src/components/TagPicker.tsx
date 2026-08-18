@@ -32,7 +32,7 @@ export default function TagPicker({
   otroLabel = 'Otro…',
   max = 10,
   single = false,
-  chipClassName = 'bg-bg dark:bg-white/10 text-fg',
+  chipClassName = 'bg-surface-2 text-fg',
 }: TagPickerProps) {
   const [editing, setEditing] = useState<Editing>('append')
   const [composing, setComposing] = useState(false)
@@ -160,7 +160,7 @@ export default function TagPicker({
             setComposing(false)
             setCustom('')
           }}
-          className="mt-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:underline"
+          className="mt-1.5 text-xs font-semibold text-accent-hover hover:underline"
         >
           Añadir otro/a
         </button>

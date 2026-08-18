@@ -37,7 +37,7 @@ export default function HelpOrgDetailPage() {
 
   if (orgQuery.isError || !org) {
     return (
-      <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
+      <div className="rounded-lg border border-danger-muted bg-danger-muted p-6 text-center text-danger">
         <p className="font-medium">No encontramos esta organización</p>
         <Link to="/red-de-ayudas" className="mt-2 inline-block text-sm underline">
           Volver a la red de ayudas
@@ -48,17 +48,17 @@ export default function HelpOrgDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/red-de-ayudas" className="text-sm text-teal-700 dark:text-teal-300 hover:underline">
+      <Link to="/red-de-ayudas" className="text-sm text-org-hover hover:underline">
         ← Volver a la red de ayudas
       </Link>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <StatusBadge status={org.status} meta={HELP_ORG_STATUS_META} />
-        <span className="inline-block rounded-full bg-teal-100 dark:bg-teal-950/40 px-2 py-0.5 text-xs font-medium text-teal-800 dark:text-teal-300">
+        <span className="inline-block rounded-full bg-org-muted px-2 py-0.5 text-xs font-medium text-org-hover">
           {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category}
         </span>
         {org.managed && (
-          <span className="inline-block rounded-full bg-primary-muted  px-2 py-0.5 text-xs font-medium text-primary ">
+          <span className="inline-block rounded-full bg-primary-muted px-2 py-0.5 text-xs font-medium text-primary">
             {HELP_ORG_MANAGED_LABEL}
           </span>
         )}
@@ -111,7 +111,7 @@ export default function HelpOrgDetailPage() {
           <div>
             <dt className="font-medium text-fg-muted">Teléfono</dt>
             <dd className="text-fg">
-              <a href={`tel:${org.contactPhone}`} className="text-teal-700 dark:text-teal-300">
+              <a href={`tel:${org.contactPhone}`} className="text-org-hover">
                 {org.contactPhone}
               </a>
             </dd>

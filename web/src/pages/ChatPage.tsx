@@ -59,7 +59,7 @@ function MessageActions({ message, mine }: { message: CityMessage; mine: boolean
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={`absolute right-1 top-1 z-20 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 ${
-          mine ? 'text-white/80 hover:bg-white/10' : 'text-fg-muted hover:bg-line'
+          mine ? 'text-white/80 hover:bg-white/10' : 'text-fg-muted hover:bg-border'
         }`}
       >
         <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">

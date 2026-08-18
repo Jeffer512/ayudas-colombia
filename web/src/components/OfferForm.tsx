@@ -299,7 +299,7 @@ export default function OfferForm({
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+          className="mt-4 rounded-lg border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
         >
           {error}
         </div>
@@ -421,7 +421,7 @@ export default function OfferForm({
                 options={SUPPLIES_ITEM_OPTIONS}
                 value={items}
                 onChange={setItems}
-                chipClassName="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+                chipClassName="bg-accent-muted text-accent-hover"
               />
             </div>
           )}
@@ -435,7 +435,7 @@ export default function OfferForm({
                   options={VOLUNTEER_CAPABILITY_OPTIONS}
                   value={capabilities}
                   onChange={setCapabilities}
-                  chipClassName="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300"
+                  chipClassName="bg-surface-2 text-fg-muted"
                 />
               </div>
               <div className="mt-4">

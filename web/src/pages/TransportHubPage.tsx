@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import EntityList from '../components/EntityList'
+import Button, { buttonVariants } from '../components/ui/Button'
 import { formatDate } from '../lib/format'
 import {
   FAR_AWAY_DESTINATION_LABEL,
@@ -17,7 +18,7 @@ function DestinationChip({ offer }: { offer: Offer }) {
     return (
       <Link
         to={`/pedido/${dest.request.id}`}
-        className="inline-block max-w-full truncate rounded-full bg-primary-muted  px-2 py-0.5 text-primary  hover:underline"
+        className="inline-block max-w-full truncate rounded-full bg-primary-muted px-2 py-0.5 text-primary hover:underline"
         title={dest.request.title}
       >
         Para el pedido: {dest.request.title}
@@ -26,7 +27,7 @@ function DestinationChip({ offer }: { offer: Offer }) {
   }
   if (dest.type === 'acopio' || dest.type === 'org') {
     return (
-      <span className="inline-block rounded-full bg-primary-muted  px-2 py-0.5 text-primary ">
+      <span className="inline-block rounded-full bg-primary-muted px-2 py-0.5 text-primary">
         Destino: {dest.org.name}
       </span>
     )
@@ -116,25 +117,22 @@ export default function TransportHubPage() {
 
   return (
     <div>
-      <div className="mb-4 rounded-lg border border-warning-muted  bg-warning-muted  p-4">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-warning ">
+      <div className="mb-4 rounded-lg border border-warning-muted bg-warning-muted p-4">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-warning">
           Centro de carga
         </h1>
-        <p className="mt-1 text-sm text-warning ">
+        <p className="mt-1 text-sm text-warning">
           Suministros que alguien publicó y que necesitan transporte hasta las
           familias. Comprométete a llevarlos o publica tu disponibilidad de
           transporte para coordinar envíos.
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
-          <Link
-            to="/ofrecer-ayuda"
-            className="inline-block rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
-          >
+          <Link to="/ofrecer-ayuda" className={buttonVariants({ variant: 'primary' })}>
             Publicar suministros que necesitan transporte
           </Link>
           <Link
             to="/ofrecer-ayuda?tipo=transport_offered"
-            className="inline-block rounded-md border border-emerald-700 bg-surface px-4 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+            className={buttonVariants({ variant: 'outline' })}
           >
             Publicar transporte disponible
           </Link>
@@ -144,7 +142,7 @@ export default function TransportHubPage() {
       {error && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+          className="mb-4 rounded-lg border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
         >
           {error}
         </div>
@@ -180,7 +178,7 @@ export default function TransportHubPage() {
                       <p className="font-semibold text-fg">{offer.title}</p>
                     </Link>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
-                      <span className="inline-block rounded-full bg-warning-muted  px-2 py-0.5 text-warning ">
+                      <span className="inline-block rounded-full bg-warning-muted px-2 py-0.5 text-warning">
                         {TRANSPORT_LABELS[offer.transport ?? 'needs_transport']}
                       </span>
                       <DestinationChip offer={offer} />
@@ -194,7 +192,7 @@ export default function TransportHubPage() {
                         {offer.items.slice(0, 5).map((item) => (
                           <span
                             key={item}
-                            className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
+                            className="inline-block rounded-full bg-accent-muted px-2 py-0.5 text-xs text-accent-hover"
                           >
                             {item}
                           </span>
@@ -266,26 +264,26 @@ export default function TransportHubPage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <button
+                            <Button
                               type="submit"
                               disabled={claimMutation.isPending}
-                              className="rounded-md bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning disabled:opacity-50"
                             >
                               {claimMutation.isPending
                                 ? 'Reservando…'
                                 : 'Confirmar compromiso'}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
                               onClick={() => setClaimPrompt(null)}
-                              className="rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted"
+                              variant="outline"
+                              className="border-warning-muted text-warning hover:bg-warning-muted"
                             >
                               Cancelar
-                            </button>
+                            </Button>
                           </div>
                         </form>
                       ) : (
-                        <button
+                        <Button
                           onClick={() =>
                             setClaimPrompt({
                               id: offer.id,
@@ -293,15 +291,18 @@ export default function TransportHubPage() {
                               whatsapp: '',
                             })
                           }
-                          className="shrink-0 rounded-md bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning"
+                          className="shrink-0"
                         >
                           Me comprometo a llevarla
-                        </button>
+                        </Button>
                       )
                     ) : (
                       <Link
                         to="/iniciar-sesion"
-                        className="shrink-0 rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted"
+                        className={buttonVariants({
+                          variant: 'outline',
+                          className: 'shrink-0 border-warning-muted text-warning hover:bg-warning-muted',
+                        })}
                       >
                         Inicia sesión para llevarla
                       </Link>
@@ -338,7 +339,7 @@ export default function TransportHubPage() {
                         <p className="font-semibold text-fg">{offer.title}</p>
                       </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
-                        <span className="inline-block rounded-full bg-warning-muted  px-2 py-0.5 text-warning ">
+                        <span className="inline-block rounded-full bg-warning-muted px-2 py-0.5 text-warning">
                           En camino
                         </span>
                         <DestinationChip offer={offer} />
@@ -353,26 +354,27 @@ export default function TransportHubPage() {
                       {offer.items.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {offer.items.slice(0, 5).map((item) => (
-                            <span
-                              key={item}
-                              className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
-                            >
-                              {item}
-                            </span>
+<span
+                            key={item}
+                            className="inline-block rounded-full bg-accent-muted px-2 py-0.5 text-xs text-accent-hover"
+                          >
+                            {item}
+                          </span>
                           ))}
                         </div>
                       )}
                     </div>
                     {offer.claim?.mine && loggedIn && (
-                      <button
+                      <Button
                         onClick={() => cancelMutation.mutate(offer.id)}
                         disabled={cancelMutation.isPending}
-                        className="shrink-0 rounded-md border border-warning-muted  bg-surface px-4 py-2 text-sm font-semibold text-warning  hover:bg-warning-muted disabled:opacity-50"
+                        variant="outline"
+                        className="shrink-0 border-warning-muted text-warning hover:bg-warning-muted"
                       >
                         {cancelMutation.isPending
                           ? 'Cancelando…'
                           : 'Cancelar compromiso'}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </li>
@@ -407,7 +409,7 @@ export default function TransportHubPage() {
                       <p className="font-semibold text-fg">{offer.title}</p>
                     </Link>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
-                      <span className="inline-block rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">
+                      <span className="inline-block rounded-full bg-accent-muted px-2 py-0.5 text-accent-hover">
                         {OFFER_TYPE_LABELS.transport_offered}
                       </span>
                       <span>{offer.city.name}</span>
@@ -417,7 +419,7 @@ export default function TransportHubPage() {
                     </div>
                     {offer.vehicle && (
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-fg-muted">
-                        <span className="inline-block rounded-full bg-primary-muted  px-2 py-0.5 text-primary ">
+<span className="inline-block rounded-full bg-primary-muted px-2 py-0.5 text-primary">
                           {offer.vehicle.vehicleType ?? 'Vehículo'}
                         </span>
                         {offer.vehicle.capacity && (

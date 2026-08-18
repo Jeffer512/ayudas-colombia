@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import HelpOrgCard from '../components/HelpOrgCard'
+import { buttonVariants } from '../components/ui/Button'
 import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
 import type { HelpOrg, HelpOrgCategory } from '../lib/types'
 
 const selectClass =
-  'rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-fg-muted focus:border-teal-500 dark:focus:border-teal-700'
+  'rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-fg-muted focus:border-org'
 
 const CATEGORIES: (HelpOrgCategory | '')[] = [
   '',
@@ -46,10 +47,7 @@ export default function RedDeAyudasPage() {
             psicológico que operan durante la emergencia.
           </p>
         </div>
-        <Link
-          to="/nuevo-centro"
-          className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-        >
+        <Link to="/nuevo-centro" className={buttonVariants({ variant: 'org' })}>
           Publicar una organización
         </Link>
       </div>
@@ -101,7 +99,7 @@ export default function RedDeAyudasPage() {
           </p>
         )}
         {orgsQuery.isError && (
-          <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
+          <div className="rounded-lg border border-danger-muted bg-danger-muted p-6 text-center text-danger">
             <p className="font-medium">No pudimos cargar la red de ayudas</p>
           </div>
         )}
@@ -119,7 +117,7 @@ export default function RedDeAyudasPage() {
             <p className="font-medium">Todavía no hay organizaciones en esta red</p>
             <Link
               to="/nuevo-centro"
-              className="mt-2 inline-block text-sm font-medium text-teal-700 dark:text-teal-300 hover:underline"
+              className="mt-2 inline-block text-sm font-medium text-org-hover hover:underline"
             >
               Publicar la primera
             </Link>

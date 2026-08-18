@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import Button, { buttonVariants } from './ui/Button'
 
 interface SuccessScreenProps {
   title: string
@@ -21,7 +22,7 @@ export default function SuccessScreen({
 }: SuccessScreenProps) {
   return (
     <div className="mx-auto max-w-2xl text-center">
-      <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-8">
+      <div className="rounded-lg border border-accent-muted bg-accent-muted p-8">
         <h1 className="font-display text-2xl font-bold tracking-tight text-fg">
           {title}
         </h1>
@@ -30,7 +31,7 @@ export default function SuccessScreen({
         {code !== undefined && (
           <>
             <p
-              className="mx-auto mt-4 inline-block rounded-lg bg-surface px-6 py-3 font-mono text-3xl font-bold tracking-widest text-green-800 dark:text-green-300 shadow-sm"
+              className="mx-auto mt-4 inline-block rounded-lg bg-surface px-6 py-3 font-mono text-3xl font-bold tracking-widest text-accent-hover shadow-sm"
               aria-label="Código de cierre"
             >
               {code}
@@ -42,18 +43,12 @@ export default function SuccessScreen({
         )}
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link
-            to={detailHref}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
-          >
+          <Link to={detailHref} className={buttonVariants({ variant: 'primary' })}>
             {detailLabel}
           </Link>
-          <button
-            onClick={onReset}
-            className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
-          >
+          <Button onClick={onReset} variant="outline">
             Publicar otro
-          </button>
+          </Button>
         </div>
       </div>
     </div>

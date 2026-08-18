@@ -340,7 +340,7 @@ export default function HomePage() {
     { key: 'needs', label: 'Necesito ayuda', dot: 'bg-danger', checked: showNeeds },
     { key: 'offers', label: 'Ofrecer', dot: 'bg-accent', checked: showOffers },
     { key: 'avisos', label: 'Avisos', dot: 'bg-primary', checked: showAvisos },
-    { key: 'helpOrgs', label: 'Red de ayudas', dot: 'bg-[var(--marker-helpOrgs)]', checked: showOrgs },
+    { key: 'helpOrgs', label: 'Red de ayudas', dot: 'bg-marker-helpOrgs', checked: showOrgs },
   ]
 
   const setToggle = (key: string, checked: boolean) => {

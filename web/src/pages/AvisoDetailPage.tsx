@@ -5,6 +5,7 @@ import Map from '../components/Map'
 import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
+import Button from '../components/ui/Button'
 import {
   AVISO_STATUS_META,
   AVISO_TYPE_LABELS,
@@ -37,7 +38,7 @@ export default function AvisoDetailPage() {
 
   if (isError || !aviso) {
     return (
-      <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
+      <div className="rounded-lg border border-danger-muted bg-danger-muted p-6 text-center text-danger">
         <p className="font-medium">No encontramos este aviso</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -131,7 +132,7 @@ export default function AvisoDetailPage() {
         {mutation.isError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+            className="mt-3 rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
           >
             {(mutation.error as Error).message}
           </div>
@@ -140,25 +141,25 @@ export default function AvisoDetailPage() {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {aviso.status === 'open' ? (
             <>
-              <button
+              <Button
                 onClick={() => mutation.mutate()}
                 disabled={mutation.isPending}
-                className="rounded-md bg-gray-700 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+                variant="secondary"
               >
                 Marcarlo como desactualizado
-              </button>
+              </Button>
               <span className="text-xs text-fg-muted">
                 {aviso.marks} de {MARK_THRESHOLD} marcas
               </span>
             </>
           ) : (
-            <button
+            <Button
               onClick={() => mutation.mutate()}
               disabled={mutation.isPending}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+              variant="primary"
             >
               Aún vigente
-            </button>
+            </Button>
           )}
         </div>
       </section>
