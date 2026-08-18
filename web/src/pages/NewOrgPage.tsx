@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Map from '../components/Map'
+import Button, { buttonVariants } from '../components/ui/Button'
 import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
 import { cityCenter, defaultCity } from '../lib/geo'
 import { isValidPhone } from '../lib/phone'
@@ -126,7 +127,7 @@ export default function NewOrgPage() {
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+          className="mt-4 rounded-lg border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
         >
           {error}
         </div>
@@ -142,20 +143,12 @@ export default function NewOrgPage() {
             inventario desde tu cuenta.
           </p>
           <div className="mt-4 flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => setWorksIn(true)}
-              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-            >
+            <Button type="button" onClick={() => setWorksIn(true)} variant="org">
               Sí, trabajo aquí
-            </button>
-            <button
-              type="button"
-              onClick={() => setWorksIn(false)}
-              className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
-            >
+            </Button>
+            <Button type="button" onClick={() => setWorksIn(false)} variant="outline">
               No, solo la publico
-            </button>
+            </Button>
           </div>
         </div>
       ) : worksIn === true && meQuery.isPending ? (
@@ -174,7 +167,7 @@ export default function NewOrgPage() {
           <div className="mt-4 flex justify-center gap-3">
             <Link
               to="/iniciar-sesion?returnTo=/nuevo-centro"
-              className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
+              className={buttonVariants({ variant: 'outline' })}
             >
               Iniciar sesión
             </Link>
@@ -378,20 +371,12 @@ export default function NewOrgPage() {
         </fieldset>
 
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/red-de-ayudas')}
-            className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-fg-muted hover:bg-bg"
-          >
+          <Button type="button" onClick={() => navigate('/red-de-ayudas')} variant="outline">
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
-          >
+          </Button>
+          <Button type="submit" disabled={submitting} variant="org">
             {submitting ? 'Publicando…' : 'Publicar organización'}
-          </button>
+          </Button>
         </div>
       </form>
       )}

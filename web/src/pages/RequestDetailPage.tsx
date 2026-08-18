@@ -6,6 +6,7 @@ import Map from '../components/Map'
 import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
+import Button from '../components/ui/Button'
 import {
   HELPER_STATUS_LABELS,
   REQUEST_STATUS_META,
@@ -84,7 +85,7 @@ export default function RequestDetailPage() {
 
   if (isError || !request) {
     return (
-      <div className="rounded-lg border border-danger-muted  bg-danger-muted  p-6 text-center text-danger ">
+      <div className="rounded-lg border border-danger-muted bg-danger-muted p-6 text-center text-danger">
         <p className="font-medium">No encontramos este pedido</p>
         <Link to="/" className="mt-2 inline-block text-sm underline">
           Volver al mapa
@@ -163,7 +164,7 @@ export default function RequestDetailPage() {
               {request.items.map((item) => (
                 <span
                   key={item}
-                  className="inline-block rounded-full bg-danger-muted  px-2 py-0.5 text-xs text-danger "
+                  className="inline-block rounded-full bg-danger-muted px-2 py-0.5 text-xs text-danger"
                 >
                   {item}
                 </span>
@@ -217,7 +218,7 @@ export default function RequestDetailPage() {
         {mutation.isError && (
           <div
             role="alert"
-            className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+            className="mt-3 rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
           >
             {(mutation.error as Error).message}
           </div>
@@ -225,14 +226,11 @@ export default function RequestDetailPage() {
 
         {!mode && canBeMarkedActive && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              onClick={() => setMode('resolve')}
-              className="rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
-            >
+            <Button onClick={() => setMode('resolve')}>
               Marcarlo como resuelto
-            </button>
+            </Button>
             {request.helpers === 0 && (
-              <button
+              <Button
                 onClick={() => {
                   if (request.isOwner) {
                     navigate(`/pedido/${request.id}/editar`)
@@ -241,10 +239,10 @@ export default function RequestDetailPage() {
                     setMode('edit')
                   }
                 }}
-                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
+                variant="outline"
               >
                 Editar pedido
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -260,7 +258,7 @@ export default function RequestDetailPage() {
             {verifyMutation.isError && (
               <div
                 role="alert"
-                className="rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+                className="rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
               >
                 {(verifyMutation.error as Error).message}
               </div>
@@ -285,20 +283,15 @@ export default function RequestDetailPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
                 type="submit"
                 disabled={verifyMutation.isPending}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
               >
                 {verifyMutation.isPending ? 'Verificando…' : 'Entrar a editar'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
-              >
+              </Button>
+              <Button type="button" onClick={() => setMode(null)} variant="outline">
                 Cancelar
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -361,43 +354,39 @@ export default function RequestDetailPage() {
               />
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
                 type="submit"
                 disabled={mutation.isPending}
-                className="rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
               >
                 {mode === 'reopen' ? 'Confirmar reapertura' : 'Confirmar resolución'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
-              >
+              </Button>
+              <Button type="button" onClick={() => setMode(null)} variant="outline">
                 Cancelar
-              </button>
+              </Button>
             </div>
           </form>
         )}
 
         {canReopen && !mode && (
-          <button
+          <Button
             onClick={() => setMode('reopen')}
             disabled={mutation.isPending}
-            className="mt-3 rounded-md border border-border bg-surface px-4 py-2 text-sm text-fg-muted hover:bg-bg"
+            variant="outline"
+            className="mt-3"
           >
             Reabrir pedido
-          </button>
+          </Button>
         )}
       </section>
 
       {canBeMarkedActive && (
-        <section className="mt-6 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40 p-4">
-          <h2 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+        <section className="mt-6 rounded-lg border border-accent-muted bg-accent-muted p-4">
+          <h2 className="text-sm font-semibold text-accent-hover">
             {request.helpers === 1
               ? '1 persona está ayudando'
               : `${request.helpers} personas están ayudando`}
           </h2>
-          <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-300">
+          <p className="mt-1 text-sm text-accent-hover">
             {request.isOwner
               ? 'Tú creaste este pedido. Los demás pueden registrarse aquí para ayudarte.'
               : helped
@@ -412,7 +401,7 @@ export default function RequestDetailPage() {
           {!request.isOwner && (helpError || helpMutation.isError) && (
             <div
               role="alert"
-              className="mt-3 rounded-md border border-danger-muted  bg-danger-muted  p-3 text-sm text-danger "
+className="mt-3 rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
             >
               {helpError ?? (helpMutation.error as Error).message}
             </div>
@@ -420,19 +409,19 @@ export default function RequestDetailPage() {
 
           {!request.isOwner &&
             (helped ? (
-              <p className="mt-3 inline-block rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
+              <p className="mt-3 inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent">
                 Ya estás ayudando en este pedido
               </p>
             ) : !helpMode ? (
-              <button
+              <Button
                 onClick={() => {
                   setHelpError(null)
                   setHelpMode(true)
                 }}
-                className="mt-3 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                className="mt-3"
               >
                 Voy a ayudar
-              </button>
+              </Button>
             ) : (
               <form
                 onSubmit={(e) => {
@@ -476,7 +465,7 @@ export default function RequestDetailPage() {
                 <div>
                   <label
                     htmlFor="helperName"
-                    className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                    className="text-sm font-medium text-accent-hover"
                   >
                     Tu nombre{' '}
                     {helperTransport === 'needs_transport' ? '' : '(opcional)'}
@@ -486,13 +475,13 @@ export default function RequestDetailPage() {
                     placeholder="Tu nombre"
                     value={helperName}
                     onChange={(e) => setHelperName(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
+                    className={`mt-1 ${inputClass}`}
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="helperNote"
-                    className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                    className="text-sm font-medium text-accent-hover"
                   >
                     ¿Qué vas a aportar? (opcional)
                   </label>
@@ -501,7 +490,7 @@ export default function RequestDetailPage() {
                     placeholder="Ej: llevo agua y una carpa"
                     value={helperNote}
                     onChange={(e) => setHelperNote(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
+                    className={`mt-1 ${inputClass}`}
                   />
                 </div>
 
@@ -509,7 +498,7 @@ export default function RequestDetailPage() {
                   <div>
                     <label
                       htmlFor="helperTransport"
-                      className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                      className="text-sm font-medium text-accent-hover"
                     >
                       ¿Puedes transportar los suministros?
                     </label>
@@ -519,7 +508,7 @@ export default function RequestDetailPage() {
                       onChange={(e) =>
                         setHelperTransport(e.target.value as TransportOption)
                       }
-                      className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg focus:border-emerald-600"
+                      className={`mt-1 ${inputClass}`}
                     >
                       <option value="">Selecciona una opción…</option>
                       {TRANSPORT_OPTIONS.map((option) => (
@@ -529,13 +518,13 @@ export default function RequestDetailPage() {
                       ))}
                     </select>
                     {helperTransport === 'can_transport' && (
-                      <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                      <p className="mt-1 text-xs text-accent-hover">
                         Llévalos hasta donde los necesitan; no hace falta dejar
                         contacto.
                       </p>
                     )}
                     {helperTransport === 'needs_transport' && (
-                      <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                      <p className="mt-1 text-xs text-accent-hover">
                         Publicaremos una carga en el centro de carga para que
                         alguien lleve los suministros hasta el pedido.
                       </p>
@@ -548,7 +537,7 @@ export default function RequestDetailPage() {
                     <div>
                       <label
                         htmlFor="helperPhone"
-                        className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                        className="text-sm font-medium text-accent-hover"
                       >
                         Teléfono
                       </label>
@@ -558,13 +547,13 @@ export default function RequestDetailPage() {
                         placeholder="Ej: 311 555 0000"
                         value={helperPhone}
                         onChange={(e) => setHelperPhone(e.target.value)}
-                        className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
+                        className={`mt-1 ${inputClass}`}
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="helperWhatsapp"
-                        className="text-sm font-medium text-emerald-800 dark:text-emerald-300"
+                        className="text-sm font-medium text-accent-hover"
                       >
                         WhatsApp
                       </label>
@@ -573,10 +562,10 @@ export default function RequestDetailPage() {
                         placeholder="Ej: 311 555 0000 o @tu.usuario"
                         value={helperWhatsapp}
                         onChange={(e) => setHelperWhatsapp(e.target.value)}
-                        className="mt-1 w-full rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-emerald-600"
+                        className={`mt-1 ${inputClass}`}
                       />
                     </div>
-                    <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                    <p className="text-xs text-accent-hover">
                       {requesterPicksUp
                         ? 'Deja al menos un contacto para coordinar la recogida.'
                         : 'Deja al menos un contacto para coordinar la entrega de los suministros.'}
@@ -585,23 +574,22 @@ export default function RequestDetailPage() {
                 )}
 
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     type="submit"
                     disabled={helpMutation.isPending}
-                    className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                   >
                     Confirmar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => {
                       setHelpMode(false)
                       setHelpError(null)
                     }}
-                    className="rounded-md border border-emerald-300 dark:border-emerald-900 bg-surface px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/40"
+                    variant="outline"
                   >
                     Cancelar
-                  </button>
+                  </Button>
                 </div>
               </form>
             ))}
@@ -611,30 +599,30 @@ export default function RequestDetailPage() {
               {request.helperList.map((helper, index) => (
                 <li key={index} className="rounded-md bg-surface p-3 text-sm">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <p className="font-medium text-emerald-900 dark:text-emerald-300">
+                    <p className="font-medium text-fg">
                       {helper.name ?? 'Alguien'}
                     </p>
-                    <span className="font-normal text-emerald-600">
+                    <span className="font-normal text-fg-muted">
                       {formatDate(helper.createdAt)}
                     </span>
                     {helper.transport && (
-                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 text-xs text-emerald-800 dark:text-emerald-300">
+                      <span className="rounded-full bg-accent-muted px-2 py-0.5 text-xs text-accent-hover">
                         {TRANSPORT_LABELS[helper.transport]}
                       </span>
                     )}
                     {request.isOwner && helper.status && (
-                      <span className="text-xs text-emerald-700 dark:text-emerald-300">
+                      <span className="text-xs text-accent-hover">
                         {HELPER_STATUS_LABELS[helper.status] ?? helper.status}
                       </span>
                     )}
                   </div>
                   {helper.note && (
-                    <p className="mt-0.5 text-emerald-800 dark:text-emerald-300">
+                    <p className="mt-0.5 text-fg-muted">
                       {helper.note}
                     </p>
                   )}
                   {request.isOwner && (helper.phone || helper.whatsapp) && (
-                    <p className="mt-0.5 text-xs text-emerald-800 dark:text-emerald-300">
+                    <p className="mt-0.5 text-xs text-fg-muted">
                       Contacto: {helper.phone || ''}
                       {helper.phone && helper.whatsapp ? ' · ' : ''}
                       {helper.whatsapp || ''}
