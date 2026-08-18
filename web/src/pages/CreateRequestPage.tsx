@@ -36,7 +36,7 @@ export default function CreateRequestPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold tracking-tight">Pedir ayuda</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight">Pedir ayuda</h1>
       <p className="mt-1 text-sm text-fg-muted">
         Cuéntanos qué necesitas. Así, vecinos, organizaciones y centros de
         acopio lo verán en el mapa y podrán coordinar la ayuda hacia tu zona.

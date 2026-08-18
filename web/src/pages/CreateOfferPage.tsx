@@ -36,7 +36,7 @@ export default function CreateOfferPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold tracking-tight">Ofrecer ayuda</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight">Ofrecer ayuda</h1>
       <p className="mt-1 text-sm text-fg-muted">
         Diles a los demás qué puedes ofrecer. Cuando alguien se contacte y ya
         no esté disponible, ciérralo con tu código desde la oferta.

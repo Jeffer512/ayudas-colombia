@@ -232,7 +232,7 @@ export default function ChatPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="font-display text-2xl font-bold tracking-tight">
           Chat de {selectedCity?.name ?? 'tu ciudad'}
         </h1>
         <p className="mt-1 text-sm text-fg-muted">

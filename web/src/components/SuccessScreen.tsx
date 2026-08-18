@@ -22,7 +22,7 @@ export default function SuccessScreen({
   return (
     <div className="mx-auto max-w-2xl text-center">
       <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40 p-8">
-        <h1 className="text-2xl font-bold tracking-tight text-fg">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-fg">
           {title}
         </h1>
         <p className="mt-2 text-fg-muted">{intro}</p>
