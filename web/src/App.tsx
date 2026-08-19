@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
+import AdminPage from './pages/AdminPage'
 import CreateAvisoPage from './pages/CreateAvisoPage'
 import CreateOfferPage from './pages/CreateOfferPage'
 import CreateRequestPage from './pages/CreateRequestPage'
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="/restablecer-contrasena" element={<ResetPasswordPage />} />
             <Route path="/mi-organizacion" element={<MyOrgPage />} />
           </Route>
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

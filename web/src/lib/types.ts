@@ -521,3 +521,10 @@ export type NewOrgRequest = {
   lng?: number
   cityCode: string
 }
+
+export type AnalyticsResponse = {
+  daily: { date: string; visitors: number }[]
+  today: number
+  last7: number
+  last30: number
+}

@@ -1,4 +1,5 @@
 import type {
+  AnalyticsResponse,
   City,
   CityMessage,
   CityMessageFilters,
@@ -54,9 +55,16 @@ export class ApiError extends Error {
 }
 
 async function http<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> | undefined),
+  }
+  const id = visitorId()
+  if (id) headers['X-Visitor-Id'] = id
+
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers,
   })
 
   if (!res.ok) {
@@ -87,6 +95,17 @@ function buildQuery(filters: object): string {
 function markerId(): string | undefined {
   if (typeof window === 'undefined') return undefined
   const KEY = 'ayudas_marker_id'
+  let id = window.localStorage.getItem(KEY)
+  if (!id) {
+    id = crypto.randomUUID()
+    window.localStorage.setItem(KEY, id)
+  }
+  return id
+}
+
+function visitorId(): string | undefined {
+  if (typeof window === 'undefined') return undefined
+  const KEY = 'ayudas_visitor_id'
   let id = window.localStorage.getItem(KEY)
   if (!id) {
     id = crypto.randomUUID()
@@ -336,5 +355,11 @@ export const api = {
     pendingOrgId: string | null
   }> {
     return http('/auth/me')
+  },
+
+  adminAnalytics(token: string): Promise<AnalyticsResponse> {
+    return http('/admin/analytics', {
+      headers: { 'x-admin-token': token },
+    })
   },
 }
