@@ -3,17 +3,7 @@ import { Link } from 'react-router-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { HELP_ORG_CATEGORY_LABELS, MARKER_COLORS } from '../lib/constants'
 import type { Aviso, HelpOrg, Offer, Request } from '../lib/types'
-import { L } from './leaflet'
-
-function divIcon(color: string) {
-  return L.divIcon({
-    className: '',
-    html: `<div class="map-marker" style="background-color:${color}"></div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-    popupAnchor: [0, -10],
-  })
-}
+import { dotIcon, orgMarkerIcon } from './mapMarkers'
 
 function MapFollower({ center }: { center: { lat: number; lng: number } }) {
   const map = useMap()
@@ -70,7 +60,7 @@ export default function HomeMap({
             <Marker
               key={`request-${request.id}`}
               position={[request.lat, request.lng]}
-              icon={divIcon(MARKER_COLORS.needs)}
+              icon={dotIcon(MARKER_COLORS.needs)}
             >
               <Popup>
                 <span className="text-xs font-medium text-fg-muted">
@@ -89,7 +79,7 @@ export default function HomeMap({
             <Marker
               key={`offer-${offer.id}`}
               position={[offer.lat, offer.lng]}
-              icon={divIcon(MARKER_COLORS.offers)}
+              icon={dotIcon(MARKER_COLORS.offers)}
             >
               <Popup>
                 <span className="text-xs font-medium text-fg-muted">
@@ -108,7 +98,7 @@ export default function HomeMap({
             <Marker
               key={`aviso-${aviso.id}`}
               position={[aviso.lat, aviso.lng]}
-              icon={divIcon(MARKER_COLORS.avisos)}
+              icon={dotIcon(MARKER_COLORS.avisos)}
             >
               <Popup>
                 <span className="text-xs font-medium text-fg-muted">
@@ -127,7 +117,7 @@ export default function HomeMap({
             <Marker
               key={`org-${org.id}`}
               position={[org.lat, org.lng]}
-              icon={divIcon(MARKER_COLORS.helpOrgs)}
+              icon={orgMarkerIcon(MARKER_COLORS.helpOrgs, org.category)}
             >
               <Popup>
                 <span className="text-xs font-medium text-fg-muted">
