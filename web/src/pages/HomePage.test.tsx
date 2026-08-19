@@ -374,7 +374,7 @@ describe('HomePage', () => {
       screen.getByRole('checkbox', { name: 'Mostrar Necesito ayuda' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('checkbox', { name: 'Mostrar Ofrecer' }),
+      screen.getByRole('checkbox', { name: 'Mostrar Ofrezo ayuda' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('checkbox', { name: 'Mostrar Avisos' }),
