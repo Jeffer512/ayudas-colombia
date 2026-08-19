@@ -7,6 +7,7 @@ function requireSecret(
   name: string,
   value: string | undefined,
   disallowed: string[],
+  minLength = 0,
 ): string {
   if (!value || disallowed.includes(value)) {
     if (isProduction) {
@@ -15,6 +16,11 @@ function requireSecret(
       )
     }
     return disallowed[0] ?? value ?? ''
+  }
+  if (isProduction && minLength > 0 && value.length < minLength) {
+    throw new Error(
+      `${name} debe tener al menos ${minLength} caracteres. Genera uno con: openssl rand -hex 32`,
+    )
   }
   return value
 }
@@ -41,6 +47,7 @@ export const env = {
     'ADMIN_TOKEN',
     process.env.ADMIN_TOKEN,
     ['cambia-este-token'],
+    32,
   ),
   corsOrigin: process.env.CORS_ORIGIN ?? '',
   smtpUrl: process.env.SMTP_URL ?? '',
