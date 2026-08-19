@@ -7,16 +7,16 @@ import ReportButton from '../components/ReportButton'
 import ReporterContact from '../components/ReporterContact'
 import StatusBadge from '../components/StatusBadge'
 import Button from '../components/ui/Button'
+import HelpRequestForm from '../components/HelpRequestForm'
 import {
   HELPER_STATUS_LABELS,
   REQUEST_STATUS_META,
   REQUEST_TYPE_LABELS,
   TRANSPORT_LABELS,
-  TRANSPORT_OPTIONS,
   URGENCY_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
-import type { NewHelpRequest, StatusUpdate, TransportOption } from '../lib/types'
+import type { StatusUpdate } from '../lib/types'
 
 const inputClass =
   'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:border-primary'
@@ -30,14 +30,6 @@ export default function RequestDetailPage() {
   const [mode, setMode] = useState<ActionMode>(null)
   const [note, setNote] = useState('')
   const [resolveCode, setResolveCode] = useState('')
-  const [helpMode, setHelpMode] = useState(false)
-  const [helpError, setHelpError] = useState<string | null>(null)
-  const [helperName, setHelperName] = useState('')
-  const [helperNote, setHelperNote] = useState('')
-  const [helperTransport, setHelperTransport] = useState<TransportOption | ''>('')
-  const [helperPhone, setHelperPhone] = useState('')
-  const [helperWhatsapp, setHelperWhatsapp] = useState('')
-  const [iHelped, setIHelped] = useState(false)
 
   const { data: request, isPending, isError } = useQuery({
     queryKey: ['request', id],
@@ -52,21 +44,6 @@ export default function RequestDetailPage() {
       setMode(null)
       setNote('')
       setResolveCode('')
-    },
-  })
-
-  const helpMutation = useMutation({
-    mutationFn: (body: NewHelpRequest) => api.helpRequest(id, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['request', id] })
-      queryClient.invalidateQueries({ queryKey: ['requests'] })
-      setHelpMode(false)
-      setHelperName('')
-      setHelperNote('')
-      setHelperTransport('')
-      setHelperPhone('')
-      setHelperWhatsapp('')
-      setIHelped(true)
     },
   })
 
@@ -101,11 +78,6 @@ export default function RequestDetailPage() {
   const typeLabel = REQUEST_TYPE_LABELS[request.type] ?? request.type
   const canBeMarkedActive = request.status === 'open'
   const canReopen = request.status !== 'open'
-  const isSupplies = request.type === 'supplies_request'
-  const requesterPicksUp = isSupplies && request.transport === 'can_transport'
-  const asksTransport = isSupplies && !requesterPicksUp
-  const helpedByLinkedOffer = request.linkedOfferPresent === true
-  const helped = iHelped || helpedByLinkedOffer
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -386,213 +358,7 @@ export default function RequestDetailPage() {
               ? '1 persona está ayudando'
               : `${request.helpers} personas están ayudando`}
           </h2>
-          <p className="mt-1 text-sm text-accent-hover">
-            {request.isOwner
-              ? 'Tú creaste este pedido. Los demás pueden registrarse aquí para ayudarte.'
-              : helped
-                ? 'Gracias por ayudar. Tu apoyo a este pedido ya quedó registrado.'
-                : !isSupplies
-                  ? 'Registra que puedes ayudar para que los demás coordinen sus esfuerzos.'
-                  : requesterPicksUp
-                    ? 'Si puedes ayudar, registra tu apoyo y deja un contacto para coordinar la recogida.'
-                    : 'Si puedes ayudar, indica si puedes llevar los suministros hasta donde se necesitan.'}
-          </p>
-
-          {!request.isOwner && (helpError || helpMutation.isError) && (
-            <div
-              role="alert"
-className="mt-3 rounded-md border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
-            >
-              {helpError ?? (helpMutation.error as Error).message}
-            </div>
-          )}
-
-          {!request.isOwner &&
-            (helped ? (
-              <p className="mt-3 inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent">
-                Ya estás ayudando en este pedido
-              </p>
-            ) : !helpMode ? (
-              <Button
-                onClick={() => {
-                  setHelpError(null)
-                  setHelpMode(true)
-                }}
-                className="mt-3"
-              >
-                Voy a ayudar
-              </Button>
-            ) : (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  const phone = helperPhone.trim()
-                  const whatsapp = helperWhatsapp.trim()
-                  setHelpError(null)
-                  if (asksTransport && !helperTransport) {
-                    setHelpError('Indica si puedes transportar los suministros')
-                    return
-                  }
-                  if (
-                    (requesterPicksUp || helperTransport === 'needs_transport') &&
-                    !phone &&
-                    !whatsapp
-                  ) {
-                    setHelpError(
-                      requesterPicksUp
-                        ? 'Deja tu teléfono o WhatsApp para coordinar la recogida'
-                        : 'Deja tu teléfono o WhatsApp para coordinar la entrega',
-                    )
-                    return
-                  }
-                  if (helperTransport === 'needs_transport' && !helperName.trim()) {
-                    setHelpError('Escribe tu nombre para coordinar la entrega')
-                    return
-                  }
-                  helpMutation.mutate({
-                    markerId: api.markerId(),
-                    name: helperName.trim() || undefined,
-                    note: helperNote.trim() || undefined,
-                    ...(asksTransport && helperTransport
-                      ? { transport: helperTransport }
-                      : {}),
-                    ...(phone ? { phone } : {}),
-                    ...(whatsapp ? { whatsapp } : {}),
-                  })
-                }}
-                className="mt-3 space-y-3"
-              >
-                <div>
-                  <label
-                    htmlFor="helperName"
-                    className="text-sm font-medium text-accent-hover"
-                  >
-                    Tu nombre{' '}
-                    {helperTransport === 'needs_transport' ? '' : '(opcional)'}
-                  </label>
-                  <input
-                    id="helperName"
-                    placeholder="Tu nombre"
-                    value={helperName}
-                    onChange={(e) => setHelperName(e.target.value)}
-                    className={`mt-1 ${inputClass}`}
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="helperNote"
-                    className="text-sm font-medium text-accent-hover"
-                  >
-                    ¿Qué vas a aportar? (opcional)
-                  </label>
-                  <input
-                    id="helperNote"
-                    placeholder="Ej: llevo agua y una carpa"
-                    value={helperNote}
-                    onChange={(e) => setHelperNote(e.target.value)}
-                    className={`mt-1 ${inputClass}`}
-                  />
-                </div>
-
-                {asksTransport && (
-                  <div>
-                    <label
-                      htmlFor="helperTransport"
-                      className="text-sm font-medium text-accent-hover"
-                    >
-                      ¿Puedes transportar los suministros?
-                    </label>
-                    <select
-                      id="helperTransport"
-                      value={helperTransport}
-                      onChange={(e) =>
-                        setHelperTransport(e.target.value as TransportOption)
-                      }
-                      className={`mt-1 ${inputClass}`}
-                    >
-                      <option value="">Selecciona una opción…</option>
-                      {TRANSPORT_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {TRANSPORT_LABELS[option]}
-                        </option>
-                      ))}
-                    </select>
-                    {helperTransport === 'can_transport' && (
-                      <p className="mt-1 text-xs text-accent-hover">
-                        Llévalos hasta donde los necesitan; no hace falta dejar
-                        contacto.
-                      </p>
-                    )}
-                    {helperTransport === 'needs_transport' && (
-                      <p className="mt-1 text-xs text-accent-hover">
-                        Publicaremos una carga en el centro de carga para que
-                        alguien lleve los suministros hasta el pedido.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {(requesterPicksUp || helperTransport === 'needs_transport') && (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="helperPhone"
-                        className="text-sm font-medium text-accent-hover"
-                      >
-                        Teléfono
-                      </label>
-                      <input
-                        id="helperPhone"
-                        inputMode="tel"
-                        placeholder="Ej: 311 555 0000"
-                        value={helperPhone}
-                        onChange={(e) => setHelperPhone(e.target.value)}
-                        className={`mt-1 ${inputClass}`}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="helperWhatsapp"
-                        className="text-sm font-medium text-accent-hover"
-                      >
-                        WhatsApp
-                      </label>
-                      <input
-                        id="helperWhatsapp"
-                        placeholder="Ej: 311 555 0000 o @tu.usuario"
-                        value={helperWhatsapp}
-                        onChange={(e) => setHelperWhatsapp(e.target.value)}
-                        className={`mt-1 ${inputClass}`}
-                      />
-                    </div>
-                    <p className="text-xs text-accent-hover">
-                      {requesterPicksUp
-                        ? 'Deja al menos un contacto para coordinar la recogida.'
-                        : 'Deja al menos un contacto para coordinar la entrega de los suministros.'}
-                    </p>
-                  </>
-                )}
-
-                <div className="flex gap-2">
-                  <Button
-                    type="submit"
-                    disabled={helpMutation.isPending}
-                  >
-                    Confirmar
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      setHelpMode(false)
-                      setHelpError(null)
-                    }}
-                    variant="outline"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            ))}
+          <HelpRequestForm request={request} className="mt-1" />
 
           {request.helperList && request.helperList.length > 0 && (
             <ul className="mt-4 space-y-2">

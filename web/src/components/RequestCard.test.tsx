@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import type { Request } from '../lib/types'
@@ -26,6 +28,19 @@ function makeRequest(overrides: Partial<Request> = {}): Request {
     updatedAt: '2026-08-15T00:00:00.000Z',
     ...overrides,
   }
+}
+
+function renderCard(request: Request) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <RequestCard request={request} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 describe('RequestCard', () => {
@@ -56,5 +71,53 @@ describe('RequestCard', () => {
     )
     expect(screen.getByText('Agua')).toBeInTheDocument()
     expect(screen.getByText('Comida')).toBeInTheDocument()
+  })
+
+  it('muestra el botón de ayuda en pedidos abiertos', () => {
+    renderCard(makeRequest())
+    expect(
+      screen.getByRole('button', { name: 'Voy a ayudar' }),
+    ).toBeInTheDocument()
+  })
+
+  it('oculta el botón de ayuda a quien creó el pedido', () => {
+    renderCard(makeRequest({ isOwner: true }))
+    expect(
+      screen.queryByRole('button', { name: 'Voy a ayudar' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('oculta el botón de ayuda en pedidos cerrados', () => {
+    renderCard(makeRequest({ status: 'resolved' }))
+    expect(
+      screen.queryByRole('button', { name: 'Voy a ayudar' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('abre el formulario de ayuda en un modal y lo cierra con Escape', async () => {
+    const user = userEvent.setup()
+    renderCard(makeRequest())
+
+    await user.click(screen.getByRole('button', { name: 'Voy a ayudar' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Voy a ayudar' })
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(
+      screen.getByRole('button', { name: 'Confirmar' }),
+    ).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('cierra el formulario con el botón Cerrar del modal', async () => {
+    const user = userEvent.setup()
+    renderCard(makeRequest())
+
+    await user.click(screen.getByRole('button', { name: 'Voy a ayudar' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
