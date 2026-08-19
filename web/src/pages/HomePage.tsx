@@ -67,43 +67,48 @@ function Section({
   title,
   count,
   accent,
+  action,
   children,
 }: {
   title: string
   count: number | undefined
   accent: { color: string; dot: string }
+  action?: ReactNode
   children: ReactNode
 }) {
   const [open, setOpen] = useState(true)
   const panelId = useId()
   return (
     <section className="mt-8">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        aria-controls={panelId}
-        className="mb-3 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-      >
-        <h2
-          className={`flex items-center gap-2 font-display text-xl font-bold ${accent.color}`}
+      <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          className="flex flex-1 cursor-pointer items-center justify-between gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
         >
-          <span className={`inline-block h-2.5 w-2.5 rounded-full ${accent.dot}`} />
-          {title}
-        </h2>
-        <span className="flex shrink-0 items-center gap-2">
-          <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-sm font-medium text-fg-muted">
-            {count === undefined ? '…' : `${count} activo(s)`}
+          <h2
+            className={`flex items-center gap-2 font-display text-xl font-bold ${accent.color}`}
+          >
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${accent.dot}`} />
+            {title}
+          </h2>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-sm font-medium text-fg-muted">
+              {count === undefined ? '…' : `${count} activo(s)`}
+            </span>
+            <ChevronDown
+              size={18}
+              aria-hidden="true"
+              className={`text-fg-muted transition-transform duration-fast ${
+                open ? '' : '-rotate-90'
+              }`}
+            />
           </span>
-          <ChevronDown
-            size={18}
-            aria-hidden="true"
-            className={`text-fg-muted transition-transform duration-fast ${
-              open ? '' : '-rotate-90'
-            }`}
-          />
-        </span>
-      </button>
+        </button>
+        {action}
+      </header>
       {open && (
         <div id={panelId} className="space-y-2">
           {children}
@@ -172,6 +177,11 @@ function RequestsSection({ cities }: { cities: City[] }) {
       title="Pedidos de ayuda"
       count={data?.total}
       accent={SECTION_STYLES.needs}
+      action={
+        <Link to="/pedir-ayuda" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+          + Publicar pedido
+        </Link>
+      }
     >
       <RequestFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
       {isError && (
@@ -183,6 +193,11 @@ function RequestsSection({ cities }: { cities: City[] }) {
           empty={requests.length === 0}
           emptyTitle="No hay pedidos con estos filtros"
           emptyHint="Publica el primero o prueba cambiando los filtros."
+          emptyAction={
+            <Link to="/pedir-ayuda" className={buttonVariants({ variant: 'primary', size: 'sm' })}>
+              Publicar el primero
+            </Link>
+          }
         >
           {requests.map((request) => (
             <li key={request.id}>
@@ -211,6 +226,11 @@ function OffersSection({ cities }: { cities: City[] }) {
       title="Ofrecer ayuda"
       count={data?.total}
       accent={SECTION_STYLES.offers}
+      action={
+        <Link to="/ofrecer-ayuda" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+          + Publicar oferta
+        </Link>
+      }
     >
       <OfferFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
       {isError && (
@@ -222,6 +242,11 @@ function OffersSection({ cities }: { cities: City[] }) {
           empty={offers.length === 0}
           emptyTitle="No hay ofertas con estos filtros"
           emptyHint="Ofrece ayuda para que otros la encuentren aquí."
+          emptyAction={
+            <Link to="/ofrecer-ayuda" className={buttonVariants({ variant: 'primary', size: 'sm' })}>
+              Publica tu oferta
+            </Link>
+          }
         >
           {offers.map((offer) => (
             <li key={offer.id}>
@@ -250,6 +275,11 @@ function AvisosSection({ cities }: { cities: City[] }) {
       title="Avisos"
       count={data?.total}
       accent={SECTION_STYLES.avisos}
+      action={
+        <Link to="/informar" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+          + Publicar aviso
+        </Link>
+      }
     >
       <AvisoFiltersUi value={filters} cities={cities} onChange={setFilters} count={data?.total} />
       {isError && (
@@ -261,6 +291,11 @@ function AvisosSection({ cities }: { cities: City[] }) {
           empty={avisos.length === 0}
           emptyTitle="No hay avisos con estos filtros"
           emptyHint="Comparte información útil para la comunidad."
+          emptyAction={
+            <Link to="/informar" className={buttonVariants({ variant: 'primary', size: 'sm' })}>
+              Publicar un aviso
+            </Link>
+          }
         >
           {avisos.map((aviso) => (
             <li key={aviso.id}>

@@ -270,6 +270,38 @@ describe('HomePage', () => {
     ).toBeInTheDocument()
   })
 
+  it('muestra los enlaces de publicación en las secciones', async () => {
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    expect((await screen.findAllByText('1 activo(s)')).length).toBe(3)
+    const publishRequest = screen.getByRole('link', { name: '+ Publicar pedido' })
+    const publishOffer = screen.getByRole('link', { name: '+ Publicar oferta' })
+    const publishAviso = screen.getByRole('link', { name: '+ Publicar aviso' })
+    expect(publishRequest).toHaveAttribute('href', '/pedir-ayuda')
+    expect(publishOffer).toHaveAttribute('href', '/ofrecer-ayuda')
+    expect(publishAviso).toHaveAttribute('href', '/informar')
+  })
+
+  it('muestra el CTA de publicación en el estado vacío de pedidos', async () => {
+    mockedRequests.mockResolvedValue({ requests: [], total: 0, limit: 50, offset: 0 })
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    expect(
+      await screen.findByText('No hay pedidos con estos filtros'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Publicar el primero' })).toHaveAttribute(
+      'href',
+      '/pedir-ayuda',
+    )
+  })
+
   it('muestra error y botón para reintentar en pedidos', async () => {
     mockedRequests.mockRejectedValue(new Error('boom'))
     mockedOffers.mockResolvedValue(offersResponse)

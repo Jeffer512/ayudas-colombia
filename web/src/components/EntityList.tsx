@@ -7,6 +7,7 @@ interface EntityListProps {
   empty: boolean
   emptyTitle: string
   emptyHint: string
+  emptyAction?: ReactNode
 }
 
 export default function EntityList({
@@ -14,9 +15,17 @@ export default function EntityList({
   empty,
   emptyTitle,
   emptyHint,
+  emptyAction,
 }: EntityListProps) {
   if (empty) {
-    return <EmptyState icon={<Inbox size={22} aria-hidden="true" />} title={emptyTitle} hint={emptyHint} />
+    return (
+      <EmptyState
+        icon={<Inbox size={22} aria-hidden="true" />}
+        title={emptyTitle}
+        hint={emptyHint}
+        action={emptyAction}
+      />
+    )
   }
   return <ul className="flex flex-col gap-3">{children}</ul>
 }
