@@ -32,6 +32,20 @@ const STALE_REQUEST_MS = 3 * 24 * 60 * 60 * 1000
 const AUTO_CLOSE_NOTE = 'Cerrada automáticamente por inactividad'
 const CLOSED_STATES = ['resolved', 'duplicate', 'invalid']
 
+const URGENCY_RANK: Record<string, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+}
+
+function byUrgencyThenNewest(a: Request, b: Request): number {
+  const rankA = URGENCY_RANK[a.urgency] ?? 4
+  const rankB = URGENCY_RANK[b.urgency] ?? 4
+  if (rankA !== rankB) return rankA - rankB
+  return b.createdAt.getTime() - a.createdAt.getTime()
+}
+
 function generateResolveCode(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
@@ -136,12 +150,10 @@ export async function listRequests(filters: RequestFilters, viewer?: Viewer) {
   const limit = filters.limit ?? 50
   const offset = filters.offset ?? 0
 
-  const [requests, total, helperGroups] = await prisma.$transaction([
+  const [allRequests, total, helperGroups] = await prisma.$transaction([
     prisma.request.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
       include: { city: true, reporter: true, org: true },
     }),
     prisma.request.count({ where }),
@@ -150,6 +162,9 @@ export async function listRequests(filters: RequestFilters, viewer?: Viewer) {
       _count: { _all: true },
     }),
   ])
+
+  const sorted = [...allRequests].sort(byUrgencyThenNewest)
+  const requests = sorted.slice(offset, offset + limit)
 
   const helpersById = new Map<string, number>()
   for (const group of helperGroups) {

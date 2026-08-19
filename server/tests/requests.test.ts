@@ -59,6 +59,28 @@ describe('GET /api/requests', () => {
     expect(first.resolveCode).toBeUndefined()
   })
 
+  it('ordena críticos primero y luego por fecha de publicación', async () => {
+    const lowNew = await createRequest({ urgency: 'low', title: 'Reciente baja urgencia' })
+    const criticalOld = await createRequest({
+      urgency: 'critical',
+      title: 'Antiguo crítico',
+      createdAt: new Date(Date.now() - 3600_000),
+    })
+    const highOld = await createRequest({
+      urgency: 'high',
+      title: 'Antiguo alta',
+      createdAt: new Date(Date.now() - 7200_000),
+    })
+
+    const res = await request(app).get('/api/requests')
+    expect(res.status).toBe(200)
+    expect(res.body.requests.map((r: { id: string }) => r.id)).toEqual([
+      criticalOld.id,
+      highOld.id,
+      lowNew.id,
+    ])
+  })
+
   it('filtra por tipo, estado y ciudad', async () => {
     await createRequest({ type: 'volunteers_request' })
     const missing = await createRequest({ type: 'missing_person' })
