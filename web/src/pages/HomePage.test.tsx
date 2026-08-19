@@ -415,4 +415,92 @@ describe('HomePage', () => {
       screen.getByRole('heading', { name: 'Ayuda en Pereira' }),
     ).toBeInTheDocument()
   })
+
+  it('muestra la sección de organizaciones con sus tarjetas', async () => {
+    mockedHelpOrgs.mockResolvedValue({
+      helpOrgs: [
+        {
+          id: 'org-1',
+          type: 'ciudadano',
+          category: 'acopio',
+          name: 'Centro de acopio del barrio',
+          description: 'Recibimos agua y alimentos.',
+          address: null,
+          lat: 4.8,
+          lng: -75.69,
+          city: { code: 'pereira', name: 'Pereira' },
+          contactName: null,
+          contactPhone: null,
+          hours: null,
+          accepts: null,
+          status: 'open',
+          managed: false,
+          items: [],
+          createdAt: '2026-08-10T00:00:00.000Z',
+          updatedAt: '2026-08-10T00:00:00.000Z',
+        },
+      ],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    })
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Centro de acopio del barrio' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /ver todas/i })).toHaveAttribute(
+      'href',
+      '/red-de-ayudas',
+    )
+    expect(screen.getAllByText('1 activo(s)')).toHaveLength(4)
+  })
+
+  it('filtra las organizaciones por categoría', async () => {
+    mockedHelpOrgs.mockResolvedValue({ helpOrgs: [], total: 0, limit: 50, offset: 0 })
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+    const user = userEvent.setup()
+
+    renderHomePage()
+
+    await user.selectOptions(
+      await screen.findByLabelText('Filtrar por categoría'),
+      'acopio',
+    )
+
+    await waitFor(() =>
+      expect(mockedHelpOrgs).toHaveBeenLastCalledWith({
+        status: 'open',
+        category: 'acopio',
+      }),
+    )
+  })
+
+  it('filtra las organizaciones por la ciudad seleccionada en el mapa', async () => {
+    mockedCities.mockResolvedValue({
+      cities: [
+        { id: 1, code: 'pereira', name: 'Pereira', department: 'Risaralda', centerLat: 4.8133, centerLng: -75.6961 },
+        { id: 2, code: 'armenia', name: 'Armenia', department: 'Quindío', centerLat: 4.5339, centerLng: -75.6811 },
+      ],
+    })
+    window.localStorage.setItem('ayudas_map_city', 'armenia')
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    await waitFor(() =>
+      expect(mockedHelpOrgs).toHaveBeenCalledWith({
+        status: 'open',
+        city: 'armenia',
+      }),
+    )
+  })
 })

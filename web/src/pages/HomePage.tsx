@@ -2,22 +2,26 @@ import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ChevronDown, RefreshCw, Truck } from 'lucide-react'
+import { AlertTriangle, ChevronDown, Inbox, RefreshCw, Truck } from 'lucide-react'
 import { api } from '../api/client'
 import AvisoCard from '../components/AvisoCard'
 import AvisoFiltersUi from '../components/AvisoFilters'
 import EntityList from '../components/EntityList'
+import HelpOrgCard from '../components/HelpOrgCard'
 import HomeMap from '../components/HomeMap'
 import OfferCard from '../components/OfferCard'
 import OfferFiltersUi from '../components/OfferFilters'
 import RequestCard from '../components/RequestCard'
 import RequestFiltersUi from '../components/RequestFilters'
 import { buttonVariants } from '../components/ui/Button'
+import EmptyState from '../components/ui/EmptyState'
 import Skeleton from '../components/ui/Skeleton'
 import { Select } from '../components/ui/Input'
+import { HELP_ORG_CATEGORY_LABELS } from '../lib/constants'
 import { defaultCity, getPosition, nearestCity } from '../lib/geo'
 import type {
   HelpOrg,
+  HelpOrgCategory,
   Aviso,
   AvisoFilters,
   City,
@@ -52,7 +56,20 @@ const SECTION_STYLES: Record<string, { color: string; dot: string }> = {
   needs: { color: 'text-danger', dot: 'bg-danger' },
   offers: { color: 'text-accent-hover', dot: 'bg-accent' },
   avisos: { color: 'text-primary', dot: 'bg-primary' },
+  orgs: { color: 'text-org', dot: 'bg-org' },
 }
+
+const orgSelectClass =
+  'rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-fg-muted focus:border-org'
+
+const ORG_CATEGORIES: (HelpOrgCategory | '')[] = [
+  '',
+  'acopio',
+  'psicologia',
+  'voluntarios',
+  'albergue',
+  'other',
+]
 
 function useDebounce<T>(value: T, delay = 300): T {
   const [debounced, setDebounced] = useState(value)
@@ -308,6 +325,103 @@ function AvisosSection({ cities }: { cities: City[] }) {
   )
 }
 
+function OrganizationsSection({
+  orgs,
+  total,
+  isPending,
+  isError,
+  onRetry,
+  cities,
+  city,
+  onCityChange,
+  category,
+  onCategoryChange,
+}: {
+  orgs: HelpOrg[]
+  total: number | undefined
+  isPending: boolean
+  isError: boolean
+  onRetry: () => void
+  cities: City[]
+  city: string
+  onCityChange: (code: string) => void
+  category: HelpOrgCategory | ''
+  onCategoryChange: (category: HelpOrgCategory | '') => void
+}) {
+  return (
+    <Section
+      title="Red de ayudas"
+      count={total}
+      accent={SECTION_STYLES.orgs}
+      action={
+        <Link
+          to="/red-de-ayudas"
+          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+        >
+          Ver todas →
+        </Link>
+      }
+    >
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface p-3">
+        <select
+          value={category}
+          onChange={(e) => onCategoryChange(e.target.value as HelpOrgCategory | '')}
+          aria-label="Filtrar por categoría"
+          className={orgSelectClass}
+        >
+          <option value="">Todas las categorías</option>
+          {ORG_CATEGORIES.filter(Boolean).map((c) => (
+            <option key={c} value={c}>
+              {HELP_ORG_CATEGORY_LABELS[c as HelpOrgCategory]}
+            </option>
+          ))}
+        </select>
+        <select
+          value={city}
+          onChange={(e) => onCityChange(e.target.value)}
+          aria-label="Filtrar por ciudad"
+          className={orgSelectClass}
+        >
+          <option value="">Todas las ciudades</option>
+          {cities.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {isError && (
+        <EntityError title="No pudimos cargar las organizaciones" onRetry={onRetry} />
+      )}
+      {isPending && <ListSkeleton />}
+      {!isPending && !isError &&
+        (orgs.length === 0 ? (
+          <EmptyState
+            icon={<Inbox size={22} aria-hidden="true" />}
+            title="No hay organizaciones abiertas en esta ciudad"
+            hint="Revisa la red completa o cambia los filtros."
+            action={
+              <Link
+                to="/red-de-ayudas"
+                className={buttonVariants({ variant: 'outline', size: 'sm' })}
+              >
+                Ver todas las organizaciones
+              </Link>
+            }
+          />
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {orgs.map((org) => (
+              <li key={org.id}>
+                <HelpOrgCard org={org} />
+              </li>
+            ))}
+          </ul>
+        ))}
+    </Section>
+  )
+}
+
 export default function HomePage() {
   const [showNeeds, setShowNeeds] = useState(true)
   const [showOffers, setShowOffers] = useState(true)
@@ -316,6 +430,8 @@ export default function HomePage() {
 
   const [mapCityCode, setMapCityCodeState] = useState<string>(() => readStoredMapCity())
   const mapCityLocked = useRef(false)
+  const [orgCity, setOrgCity] = useState<string>(() => readStoredMapCity())
+  const [orgCategory, setOrgCategory] = useState<HelpOrgCategory | ''>('')
 
   const setMapCity = (code: string) => {
     mapCityLocked.current = true
@@ -338,8 +454,16 @@ export default function HomePage() {
     queryFn: () => api.avisos({ status: 'active' }),
   })
   const orgsQuery = useQuery({
-    queryKey: ['help-orgs', { status: 'open' }],
-    queryFn: () => api.helpOrgs({ status: 'open' }),
+    queryKey: [
+      'help-orgs',
+      { status: 'open', city: orgCity || undefined, category: orgCategory || undefined },
+    ],
+    queryFn: () =>
+      api.helpOrgs({
+        status: 'open',
+        ...(orgCity ? { city: orgCity } : {}),
+        ...(orgCategory ? { category: orgCategory } : {}),
+      }),
   })
 
   const cities: City[] = citiesQuery.data?.cities ?? []
@@ -465,6 +589,18 @@ export default function HomePage() {
       <RequestsSection cities={cities} />
       <OffersSection cities={cities} />
       <AvisosSection cities={cities} />
+      <OrganizationsSection
+        orgs={orgs}
+        total={orgsQuery.data?.total}
+        isPending={orgsQuery.isPending}
+        isError={orgsQuery.isError}
+        onRetry={() => orgsQuery.refetch()}
+        cities={cities}
+        city={orgCity}
+        onCityChange={setOrgCity}
+        category={orgCategory}
+        onCategoryChange={setOrgCategory}
+      />
     </div>
   )
 }
