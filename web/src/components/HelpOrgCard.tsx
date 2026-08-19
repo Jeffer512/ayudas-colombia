@@ -4,12 +4,10 @@ import {
   HELP_ORG_CATEGORY_LABELS,
   HELP_ORG_MANAGED_LABEL,
   HELP_ORG_TYPE_LABELS,
-  HELP_ORG_STATUS_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
 import type { HelpOrg } from '../lib/types'
 import OrgInventory from './OrgInventory'
-import StatusBadge from './StatusBadge'
 
 export default function HelpOrgCard({ org }: { org: HelpOrg }) {
   return (
@@ -18,7 +16,6 @@ export default function HelpOrgCard({ org }: { org: HelpOrg }) {
       className="block rounded-lg border border-border bg-surface p-4 transition duration-fast hover:border-strong hover:shadow-sm"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge status={org.status} meta={HELP_ORG_STATUS_META} />
         <span className="inline-block rounded-full bg-primary-muted px-2 py-0.5 text-xs font-medium text-primary">
           {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category}
         </span>

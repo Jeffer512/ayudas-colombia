@@ -4,12 +4,10 @@ import { api } from '../api/client'
 import Map from '../components/Map'
 import ReportButton from '../components/ReportButton'
 import RequestCard from '../components/RequestCard'
-import StatusBadge from '../components/StatusBadge'
 import {
   HELP_ORG_CATEGORY_LABELS,
   HELP_ORG_MANAGED_LABEL,
   HELP_ORG_TYPE_LABELS,
-  HELP_ORG_STATUS_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
 import OrgInventory from '../components/OrgInventory'
@@ -53,7 +51,6 @@ export default function HelpOrgDetailPage() {
       </Link>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <StatusBadge status={org.status} meta={HELP_ORG_STATUS_META} />
         <span className="inline-block rounded-full bg-org-muted px-2 py-0.5 text-xs font-medium text-org-hover">
           {HELP_ORG_CATEGORY_LABELS[org.category] ?? org.category}
         </span>

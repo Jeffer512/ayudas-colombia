@@ -119,11 +119,6 @@ export const HELP_ORG_CATEGORY_LABELS: Record<string, string> = {
   other: 'Otra ayuda',
 }
 
-export const HELP_ORG_STATUS_META: Record<string, { label: string; badgeClass: string }> = {
-  open: { label: 'Abierto', badgeClass: 'bg-accent-muted text-accent-hover' },
-  closed: { label: 'Cerrado', badgeClass: 'bg-surface-2 text-fg-muted' },
-}
-
 export const HELP_ORG_ITEM_KIND_LABELS: Record<HelpOrgItemKind, string> = {
   available: 'Tenemos disponible',
   needed: 'Necesitamos',

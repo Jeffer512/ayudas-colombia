@@ -247,7 +247,7 @@ function OffersSection({ cities }: { cities: City[] }) {
 
   return (
     <Section
-      title="Ofrecer ayuda"
+      title="Ofertas de ayuda"
       count={data?.total}
       accent={SECTION_STYLES.offers}
       action={
@@ -504,7 +504,7 @@ export default function HomePage() {
 
   const toggles: { key: string; label: string; dot: string; checked: boolean }[] = [
     { key: 'needs', label: 'Necesito ayuda', dot: 'bg-danger', checked: showNeeds },
-    { key: 'offers', label: 'Ofrecer', dot: 'bg-accent', checked: showOffers },
+    { key: 'offers', label: 'Ofrezo ayuda', dot: 'bg-accent', checked: showOffers },
     { key: 'avisos', label: 'Avisos', dot: 'bg-primary', checked: showAvisos },
     { key: 'helpOrgs', label: 'Red de ayudas', dot: 'bg-marker-helpOrgs', checked: showOrgs },
   ]

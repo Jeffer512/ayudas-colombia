@@ -180,7 +180,7 @@ export default function RequestDetailPage() {
         </h2>
         <p className="mt-1 text-sm text-fg-muted">
           {request.status === 'open' &&
-            'Si puedes apoyar esta situación, dilo para que quienes esperan ayuda sepan que ya hay gente en camino.'}
+             'Si esta situación ya se resolvió, márcala como resuelto. Si necesitas corregir la información, puedes editar el pedido.'}
           {request.status === 'resolved' &&
             'Este pedido fue resuelto. Si sigue pendiente, reábrelo.'}
           {(request.status === 'duplicate' || request.status === 'invalid') &&
