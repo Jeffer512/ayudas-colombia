@@ -354,3 +354,13 @@ model CityMessage {
   @@index([cityCode, status, createdAt])
   @@map("city_messages")
 }
+
+model Visit {
+  id        String   @id @default(uuid())
+  visitorId String   @map("visitor_id")
+  ip        String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([visitorId, createdAt])
+  @@map("visits")
+}

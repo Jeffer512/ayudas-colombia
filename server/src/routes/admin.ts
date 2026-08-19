@@ -2,6 +2,7 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
 import { OFFER_STATUSES, REQUEST_STATUSES } from '../constants.js'
+import { prisma } from '../db.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { requireAdmin } from '../middleware/requireAdmin.js'
 import { setAvisoStatus } from '../services/avisos.js'
@@ -85,5 +86,39 @@ adminRouter.delete(
   '/city-messages/:id',
   asyncHandler(async (req, res) => {
     res.json(await hideCityMessage(String(req.params.id)))
+  }),
+)
+
+adminRouter.get(
+  '/analytics',
+  asyncHandler(async (_req, res) => {
+    const since30 = new Date()
+    since30.setUTCDate(since30.getUTCDate() - 29)
+    since30.setUTCHours(0, 0, 0, 0)
+
+    const rows = await prisma.$queryRaw<{ day: Date; visitors: bigint }[]>`
+      SELECT date_trunc('day', created_at) AS day, COUNT(DISTINCT visitor_id) AS visitors
+      FROM visits
+      WHERE created_at >= ${since30}
+      GROUP BY date_trunc('day', created_at)
+      ORDER BY day ASC
+    `
+
+    const daily = rows.map((row) => ({
+      date: new Date(row.day).toISOString().slice(0, 10),
+      visitors: Number(row.visitors),
+    }))
+
+    const sumLast = (days: number) =>
+      daily.slice(-days).reduce((acc, d) => acc + d.visitors, 0)
+
+    const today = new Date().toISOString().slice(0, 10)
+
+    res.json({
+      daily,
+      today: daily.at(-1)?.date === today ? daily.at(-1)!.visitors : 0,
+      last7: sumLast(7),
+      last30: sumLast(30),
+    })
   }),
 )

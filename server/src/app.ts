@@ -6,6 +6,7 @@ import express from 'express'
 import helmet from 'helmet'
 import { env } from './config.js'
 import { notFound, errorHandler } from './middleware/error.js'
+import { trackVisit } from './middleware/trackVisit.js'
 import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
 import { avisosRouter } from './routes/avisos.js'
@@ -58,6 +59,7 @@ export function createApp() {
     }),
   )
   app.use(express.json({ limit: '10mb' }))
+  app.use(trackVisit)
 
   const servesWeb = env.production && fs.existsSync(WEB_DIST)
   if (servesWeb) {
