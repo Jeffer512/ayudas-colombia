@@ -380,4 +380,24 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
       ),
     )
   })
+
+  it('preselecciona el tipo cuando llega con ?tipo= de un acceso rápido', async () => {
+    mockedCreate.mockResolvedValue({
+      id: 'new-6',
+      resolveCode: '1111',
+    } as unknown as CreatedRequest)
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/pedir-ayuda?tipo=shelter_request']}>
+          <CreateRequestPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const typeSelect = await screen.findByLabelText('Tipo')
+    expect(typeSelect).toHaveValue('shelter_request')
+  })
 })

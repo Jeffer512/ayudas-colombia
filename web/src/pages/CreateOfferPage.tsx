@@ -1,16 +1,21 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import OfferForm from '../components/OfferForm'
 import SuccessScreen from '../components/SuccessScreen'
-import type { CreatedOffer, NewOffer } from '../lib/types'
+import { OFFER_TYPE_LABELS } from '../lib/constants'
+import type { CreatedOffer, NewOffer, OfferType } from '../lib/types'
 
 export default function CreateOfferPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [created, setCreated] = useState<CreatedOffer | null>(null)
   const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
   const isAuthenticated = meQuery.data?.authenticated === true
+  const tipo = searchParams.get('tipo')
+  const presetType =
+    tipo && tipo in OFFER_TYPE_LABELS ? (tipo as OfferType) : undefined
 
   if (created) {
     return (
@@ -43,6 +48,7 @@ export default function CreateOfferPage() {
       </p>
       <OfferForm
         mode="create"
+        initialType={presetType}
         submitLabel="Publicar oferta"
         submittingLabel="Publicando…"
         onSubmit={(body) => api.createOffer(body as NewOffer).then(setCreated)}

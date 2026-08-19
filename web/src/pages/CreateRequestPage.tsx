@@ -1,16 +1,21 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import RequestForm from '../components/RequestForm'
 import SuccessScreen from '../components/SuccessScreen'
-import type { CreatedRequest, NewRequest } from '../lib/types'
+import { REQUEST_TYPE_LABELS } from '../lib/constants'
+import type { CreatedRequest, NewRequest, RequestType } from '../lib/types'
 
 export default function CreateRequestPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [created, setCreated] = useState<CreatedRequest | null>(null)
   const meQuery = useQuery({ queryKey: ['me'], queryFn: api.me, retry: false })
   const isAuthenticated = meQuery.data?.authenticated === true
+  const tipo = searchParams.get('tipo')
+  const presetType =
+    tipo && tipo in REQUEST_TYPE_LABELS ? (tipo as RequestType) : undefined
 
   if (created) {
     return (
@@ -43,6 +48,7 @@ export default function CreateRequestPage() {
       </p>
       <RequestForm
         mode="create"
+        initialType={presetType}
         submitLabel="Publicar pedido"
         submittingLabel="Publicando…"
         onSubmit={(body) => api.createRequest(body as NewRequest).then(setCreated)}

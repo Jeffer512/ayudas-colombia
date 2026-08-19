@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'org'
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'org' | 'accent'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const base =
@@ -13,6 +13,7 @@ const variantClass: Record<ButtonVariant, string> = {
   ghost: 'text-fg-muted hover:bg-surface-2 hover:text-fg',
   danger: 'bg-danger text-on-danger hover:bg-danger-hover',
   org: 'bg-org text-on-org hover:bg-org-hover',
+  accent: 'bg-accent text-on-accent hover:bg-accent-hover',
 }
 
 const sizeClass: Record<ButtonSize, string> = {

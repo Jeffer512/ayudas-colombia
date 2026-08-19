@@ -150,6 +150,16 @@ describe('CreateOfferPage', () => {
     expect(body).not.toHaveProperty('audience')
   })
 
+  it('preselecciona un tipo distinto al de transporte con ?tipo=', async () => {
+    renderPage('/ofrecer-ayuda?tipo=volunteers_offered')
+
+    const typeSelect = await screen.findByLabelText('Tipo')
+    expect(typeSelect).toHaveValue('volunteers_offered')
+    expect(
+      Array.from(typeSelect.querySelectorAll('option')).map((o) => o.textContent),
+    ).not.toContain('Ofrezco transporte')
+  })
+
   it('publica una oferta de voluntariado', async () => {
     mockedCreate.mockResolvedValue({
       id: 'new-1',

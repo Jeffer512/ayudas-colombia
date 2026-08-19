@@ -205,7 +205,7 @@ describe('HomePage', () => {
     renderHomePage()
 
     expect(screen.getByText('Pedidos de ayuda')).toBeInTheDocument()
-    expect(screen.getByText('Ofrecer ayuda')).toBeInTheDocument()
+    expect(screen.getAllByText('Ofrecer ayuda').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Avisos').length).toBeGreaterThan(0)
 
     expect(
@@ -284,6 +284,51 @@ describe('HomePage', () => {
     expect(publishRequest).toHaveAttribute('href', '/pedir-ayuda')
     expect(publishOffer).toHaveAttribute('href', '/ofrecer-ayuda')
     expect(publishAviso).toHaveAttribute('href', '/informar')
+  })
+
+  it('muestra los accesos rápidos del encabezado', async () => {
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    await screen.findByRole('heading', { name: 'Ayuda en Pereira' })
+    expect(screen.getByRole('link', { name: 'Necesito ayuda' })).toHaveAttribute(
+      'href',
+      '/pedir-ayuda',
+    )
+    expect(screen.getByRole('link', { name: 'Ofrecer ayuda' })).toHaveAttribute(
+      'href',
+      '/ofrecer-ayuda',
+    )
+    expect(screen.getByRole('link', { name: 'Transportar' })).toHaveAttribute(
+      'href',
+      '/transporte',
+    )
+    expect(screen.getByRole('link', { name: 'Publicar una organización' })).toHaveAttribute(
+      'href',
+      '/nuevo-centro',
+    )
+  })
+
+  it('muestra los accesos directos del encabezado', async () => {
+    mockedRequests.mockResolvedValue(requestsResponse)
+    mockedOffers.mockResolvedValue(offersResponse)
+    mockedAvisos.mockResolvedValue(avisosResponse)
+
+    renderHomePage()
+
+    await screen.findByRole('heading', { name: 'Ayuda en Pereira' })
+    const chips: [string, string][] = [
+      ['Donar suministros', '/ofrecer-ayuda?tipo=supplies_offered'],
+      ['Ser voluntario', '/ofrecer-ayuda?tipo=volunteers_offered'],
+      ['Pedir suministros', '/pedir-ayuda?tipo=supplies_request'],
+      ['Ver red de ayudas', '/red-de-ayudas'],
+    ]
+    for (const [label, href] of chips) {
+      expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', href)
+    }
   })
 
   it('muestra el CTA de publicación en el estado vacío de pedidos', async () => {

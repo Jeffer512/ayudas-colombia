@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, SetStateAction } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import AudienceSection from './AudienceSection'
 import ContactVisibilitySection from './ContactVisibilitySection'
@@ -51,6 +50,7 @@ interface ReporterState {
 interface OfferFormProps {
   mode: 'create' | 'edit'
   initial?: Offer
+  initialType?: OfferType
   submitLabel: string
   submittingLabel?: string
   onSubmit: (body: NewOffer | UpdateOffer) => Promise<void>
@@ -74,17 +74,16 @@ function offerTypeChoices(includeTransport: boolean) {
 export default function OfferForm({
   mode,
   initial,
+  initialType: presetType,
   submitLabel,
   submittingLabel = 'Guardando…',
   onSubmit,
   onCancel,
 }: OfferFormProps) {
   const editing = mode === 'edit'
-  const [searchParams] = useSearchParams()
-  const transportEntry =
-    !editing && searchParams.get('tipo') === 'transport_offered'
+  const presetTransport = !editing && presetType === 'transport_offered'
   const [type, setType] = useState<OfferType | ''>(
-    editing ? initial!.type : transportEntry ? 'transport_offered' : '',
+    editing ? initial!.type : (presetType ?? ''),
   )
   const [transport, setTransport] = useState<TransportOption | ''>(
     editing ? (initial!.transport ?? '') : '',
@@ -330,7 +329,7 @@ export default function OfferForm({
                 <option value="" disabled>
                   Selecciona un tipo…
                 </option>
-                {offerTypeChoices(transportEntry).map(([code, label]) => (
+                {offerTypeChoices(presetTransport).map(([code, label]) => (
                   <option key={code} value={code}>
                     {label}
                   </option>

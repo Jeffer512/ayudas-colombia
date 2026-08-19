@@ -2,7 +2,14 @@ import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ChevronDown, Inbox, RefreshCw, Truck } from 'lucide-react'
+import {
+  AlertTriangle,
+  Building2,
+  ChevronDown,
+  Inbox,
+  RefreshCw,
+  Truck,
+} from 'lucide-react'
 import { api } from '../api/client'
 import AvisoCard from '../components/AvisoCard'
 import AvisoFiltersUi from '../components/AvisoFilters'
@@ -521,13 +528,52 @@ export default function HomePage() {
               Mapa de la ayuda: pedidos, ofertas, avisos y organizaciones de la Red de ayudas.
             </p>
           </div>
-          <Link
-            to="/transporte"
-            className={buttonVariants({ variant: 'primary', size: 'lg' })}
-          >
-            <Truck size={18} aria-hidden="true" />
-            Llevar suministros (centro de carga)
-          </Link>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Link
+                to="/pedir-ayuda"
+                className={buttonVariants({ variant: 'danger', size: 'lg' })}
+              >
+                Necesito ayuda
+              </Link>
+              <Link
+                to="/ofrecer-ayuda"
+                className={buttonVariants({ variant: 'accent', size: 'lg' })}
+              >
+                Ofrecer ayuda
+              </Link>
+              <Link
+                to="/transporte"
+                className={buttonVariants({ variant: 'outline', size: 'lg' })}
+              >
+                <Truck size={18} aria-hidden="true" />
+                Transportar
+              </Link>
+              <Link
+                to="/nuevo-centro"
+                className={buttonVariants({ variant: 'outline', size: 'lg' })}
+              >
+                <Building2 size={18} aria-hidden="true" />
+                Publicar una organización
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { to: '/ofrecer-ayuda?tipo=supplies_offered', label: 'Donar suministros' },
+                { to: '/ofrecer-ayuda?tipo=volunteers_offered', label: 'Ser voluntario' },
+                { to: '/pedir-ayuda?tipo=supplies_request', label: 'Pedir suministros' },
+                { to: '/red-de-ayudas', label: 'Ver red de ayudas' },
+              ].map((chip) => (
+                <Link
+                  key={chip.to}
+                  to={chip.to}
+                  className="rounded-full border border-border bg-surface px-3 py-1.5 text-sm text-fg-muted transition duration-fast hover:bg-surface-2 hover:text-fg"
+                >
+                  {chip.label}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">

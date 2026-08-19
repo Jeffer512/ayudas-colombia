@@ -51,6 +51,7 @@ interface ReporterState {
 interface RequestFormProps {
   mode: 'create' | 'edit'
   initial?: Request
+  initialType?: RequestType
   submitLabel: string
   submittingLabel?: string
   onSubmit: (body: NewRequest | UpdateRequest) => Promise<void>
@@ -68,14 +69,16 @@ const initialReporter: ReporterState = {
 export default function RequestForm({
   mode,
   initial,
+  initialType: presetType,
   submitLabel,
   submittingLabel = 'Guardando…',
   onSubmit,
   onCancel,
 }: RequestFormProps) {
   const editing = mode === 'edit'
-  const initialType = editing ? (initial!.type as RequestType) : ''
-  const [type, setType] = useState<RequestType | ''>(initialType)
+  const [type, setType] = useState<RequestType | ''>(
+    editing ? (initial!.type as RequestType) : (presetType ?? ''),
+  )
   const [urgency, setUrgency] = useState<Urgency>(
     editing ? initial!.urgency : 'medium',
   )
