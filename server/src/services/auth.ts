@@ -14,6 +14,7 @@ import {
   VERIFY_TOKEN_TTL_MS,
 } from '../lib/verification.js'
 import type {
+  ChangePasswordInput,
   DeleteAccountInput,
   ForgotPasswordInput,
   LoginInput,
@@ -256,6 +257,34 @@ export async function deleteAccount(userId: string, input: DeleteAccountInput) {
   }
 
   await prisma.user.delete({ where: { id: userId } })
+  return { ok: true }
+}
+
+export async function changePassword(userId: string, input: ChangePasswordInput) {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new ApiError(404, 'Cuenta no encontrada')
+  }
+
+  const ok = await bcrypt.compare(input.currentPassword, user.passwordHash)
+  if (!ok) {
+    throw new ApiError(401, 'Contraseña incorrecta', 'invalid_password')
+  }
+
+  const same = await bcrypt.compare(input.newPassword, user.passwordHash)
+  if (same) {
+    throw new ApiError(400, 'La nueva contraseña debe ser diferente a la actual')
+  }
+
+  const passwordHash = await bcrypt.hash(input.newPassword, ROUNDS)
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash,
+      resetTokenHash: null,
+      resetTokenExpiresAt: null,
+    },
+  })
   return { ok: true }
 }
 

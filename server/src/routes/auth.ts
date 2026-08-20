@@ -9,6 +9,7 @@ import {
 import { setSessionCookie } from '../lib/cookies.js'
 import { SESSION_COOKIE } from '../lib/jwt.js'
 import {
+  changePassword,
   deleteAccount,
   getSessionUser,
   loginUser,
@@ -20,6 +21,7 @@ import {
   verifyEmail,
 } from '../services/auth.js'
 import {
+  changePasswordSchema,
   deleteAccountSchema,
   forgotPasswordSchema,
   loginSchema,
@@ -73,6 +75,14 @@ const accountUpdateLimiter = rateLimit({
 })
 
 const accountDeleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: env.production ? 5 : 10_000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes, intenta más tarde' },
+})
+
+const passwordChangeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
@@ -159,6 +169,16 @@ authRouter.delete(
     await deleteAccount(req.session!.sub, input)
     res.clearCookie(SESSION_COOKIE, { path: '/' })
     res.json({ ok: true })
+  }),
+)
+
+authRouter.patch(
+  '/password',
+  passwordChangeLimiter,
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const input = changePasswordSchema.parse(req.body)
+    res.json(await changePassword(req.session!.sub, input))
   }),
 )
 

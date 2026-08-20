@@ -55,6 +55,13 @@ export const updateAccountSchema = z
 
 export type UpdateAccountInput = z.infer<typeof updateAccountSchema>
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(100),
+  newPassword: z.string().min(8).max(100),
+})
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+
 export const deleteAccountSchema = z.object({
   password: z.string().min(1).max(100),
 })

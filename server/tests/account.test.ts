@@ -227,3 +227,61 @@ describe('GET /api/auth/me', () => {
     expect(me.body.emailVerified).toBe(true)
   })
 })
+
+describe('PATCH /api/auth/password', () => {
+  it('cambia la contraseña y la anterior deja de servir', async () => {
+    const agent = await authenticatedAgent()
+
+    const res = await agent
+      .patch('/api/auth/password')
+      .send({ currentPassword: 'contrasena-segura', newPassword: 'nueva-contrasena' })
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+
+    const oldLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'cuenta@fundacion.org', password: 'contrasena-segura' })
+    expect(oldLogin.status).toBe(401)
+
+    const newLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'cuenta@fundacion.org', password: 'nueva-contrasena' })
+    expect(newLogin.status).toBe(200)
+  })
+
+  it('rechaza una contraseña actual incorrecta', async () => {
+    const agent = await authenticatedAgent()
+
+    const res = await agent
+      .patch('/api/auth/password')
+      .send({ currentPassword: 'incorrecta', newPassword: 'nueva-contrasena' })
+    expect(res.status).toBe(401)
+    expect(res.body.code).toBe('invalid_password')
+  })
+
+  it('rechaza una contraseña nueva igual a la actual', async () => {
+    const agent = await authenticatedAgent()
+
+    const res = await agent
+      .patch('/api/auth/password')
+      .send({ currentPassword: 'contrasena-segura', newPassword: 'contrasena-segura' })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('La nueva contraseña debe ser diferente a la actual')
+  })
+
+  it('rechaza una contraseña nueva corta', async () => {
+    const agent = await authenticatedAgent()
+
+    const res = await agent
+      .patch('/api/auth/password')
+      .send({ currentPassword: 'contrasena-segura', newPassword: 'corta' })
+    expect(res.status).toBe(400)
+  })
+
+  it('exige autenticación', async () => {
+    const res = await request(app)
+      .patch('/api/auth/password')
+      .send({ currentPassword: 'contrasena-segura', newPassword: 'nueva-contrasena' })
+    expect(res.status).toBe(401)
+  })
+})
