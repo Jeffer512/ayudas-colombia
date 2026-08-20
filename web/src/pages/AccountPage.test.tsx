@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -12,12 +12,14 @@ vi.mock('../api/client', () => ({
     me: vi.fn(),
     updateAccount: vi.fn(),
     deleteAccount: vi.fn(),
+    changePassword: vi.fn(),
   },
 }))
 
 const mockedMe = vi.mocked(api.me)
 const mockedUpdateAccount = vi.mocked(api.updateAccount)
 const mockedDeleteAccount = vi.mocked(api.deleteAccount)
+const mockedChangePassword = vi.mocked(api.changePassword)
 
 const loggedIn: MeResponse = {
   authenticated: true,
@@ -53,6 +55,7 @@ beforeEach(() => {
   mockedMe.mockReset()
   mockedUpdateAccount.mockReset()
   mockedDeleteAccount.mockReset()
+  mockedChangePassword.mockReset()
 })
 
 describe('AccountPage', () => {
@@ -112,11 +115,18 @@ describe('AccountPage', () => {
     renderPage()
 
     await screen.findByLabelText('Nombre')
-    await user.clear(screen.getByLabelText('Correo'))
-    await user.type(screen.getByLabelText('Correo'), 'nuevo@correo.org')
+    const profileForm = within(
+      screen.getByRole('form', { name: 'Actualizar perfil' }),
+    )
+    await user.clear(profileForm.getByLabelText('Correo'))
+    await user.type(profileForm.getByLabelText('Correo'), 'nuevo@correo.org')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
-    expect(await screen.findByLabelText('Contraseña actual')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('form', { name: 'Actualizar perfil' })).getByLabelText(
+        'Contraseña actual',
+      ),
+    ).toBeInTheDocument()
     expect(mockedUpdateAccount).not.toHaveBeenCalled()
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Escribe tu contraseña actual para cambiar el correo',
@@ -135,9 +145,15 @@ describe('AccountPage', () => {
     renderPage()
 
     await screen.findByLabelText('Nombre')
-    await user.clear(screen.getByLabelText('Correo'))
-    await user.type(screen.getByLabelText('Correo'), 'nuevo@correo.org')
-    await user.type(screen.getByLabelText('Contraseña actual'), 'contrasena-segura')
+    const profileForm = within(
+      screen.getByRole('form', { name: 'Actualizar perfil' }),
+    )
+    await user.clear(profileForm.getByLabelText('Correo'))
+    await user.type(profileForm.getByLabelText('Correo'), 'nuevo@correo.org')
+    await user.type(
+      profileForm.getByLabelText('Contraseña actual'),
+      'contrasena-segura',
+    )
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     expect(await screen.findByRole('status')).toHaveTextContent(
@@ -159,9 +175,15 @@ describe('AccountPage', () => {
     renderPage()
 
     await screen.findByLabelText('Nombre')
-    await user.clear(screen.getByLabelText('Correo'))
-    await user.type(screen.getByLabelText('Correo'), 'nuevo@correo.org')
-    await user.type(screen.getByLabelText('Contraseña actual'), 'incorrecta')
+    const profileForm = within(
+      screen.getByRole('form', { name: 'Actualizar perfil' }),
+    )
+    await user.clear(profileForm.getByLabelText('Correo'))
+    await user.type(profileForm.getByLabelText('Correo'), 'nuevo@correo.org')
+    await user.type(
+      profileForm.getByLabelText('Contraseña actual'),
+      'incorrecta',
+    )
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -192,8 +214,11 @@ describe('AccountPage', () => {
       await screen.findByRole('heading', { name: '¿Eliminar tu cuenta?' }),
     ).toBeInTheDocument()
 
+    const deleteForm = within(
+      screen.getByRole('form', { name: 'Confirmar eliminación de cuenta' }),
+    )
     await user.type(
-      screen.getByLabelText('Contraseña actual'),
+      deleteForm.getByLabelText('Contraseña actual'),
       'contrasena-segura',
     )
     await user.click(screen.getByRole('button', { name: 'Eliminar mi cuenta' }))
@@ -217,8 +242,11 @@ describe('AccountPage', () => {
     await user.click(screen.getByRole('button', { name: 'Eliminar cuenta' }))
     await screen.findByRole('heading', { name: '¿Eliminar tu cuenta?' })
 
+    const deleteForm = within(
+      screen.getByRole('form', { name: 'Confirmar eliminación de cuenta' }),
+    )
     await user.type(
-      screen.getByLabelText('Contraseña actual'),
+      deleteForm.getByLabelText('Contraseña actual'),
       'incorrecta',
     )
     await user.click(screen.getByRole('button', { name: 'Eliminar mi cuenta' }))
@@ -230,5 +258,82 @@ describe('AccountPage', () => {
     expect(
       screen.getByRole('heading', { name: '¿Eliminar tu cuenta?' }),
     ).toBeInTheDocument()
+  })
+
+  it('cambia la contraseña y confirma con un mensaje', async () => {
+    mockedMe.mockResolvedValue(loggedIn)
+    mockedChangePassword.mockResolvedValue({ ok: true })
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByLabelText('Contraseña actual')
+    await user.type(screen.getByLabelText('Contraseña actual'), 'contrasena-segura')
+    await user.type(
+      screen.getByLabelText('Nueva contraseña (mínimo 8 caracteres)'),
+      'nueva-contrasena',
+    )
+    await user.type(
+      screen.getByLabelText('Repetir nueva contraseña'),
+      'nueva-contrasena',
+    )
+    await user.click(screen.getByRole('button', { name: 'Cambiar contraseña' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Contraseña actualizada',
+    )
+    expect(mockedChangePassword).toHaveBeenCalledWith({
+      currentPassword: 'contrasena-segura',
+      newPassword: 'nueva-contrasena',
+    })
+  })
+
+  it('rechaza cuando la confirmación de la contraseña no coincide', async () => {
+    mockedMe.mockResolvedValue(loggedIn)
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByLabelText('Contraseña actual')
+    await user.type(screen.getByLabelText('Contraseña actual'), 'contrasena-segura')
+    await user.type(
+      screen.getByLabelText('Nueva contraseña (mínimo 8 caracteres)'),
+      'nueva-contrasena',
+    )
+    await user.type(
+      screen.getByLabelText('Repetir nueva contraseña'),
+      'otra-contrasena',
+    )
+    await user.click(screen.getByRole('button', { name: 'Cambiar contraseña' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Las contraseñas no coinciden',
+    )
+    expect(mockedChangePassword).not.toHaveBeenCalled()
+  })
+
+  it('muestra el error del servidor al cambiar la contraseña', async () => {
+    mockedMe.mockResolvedValue(loggedIn)
+    mockedChangePassword.mockRejectedValue(new Error('Contraseña incorrecta'))
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByLabelText('Contraseña actual')
+    await user.type(screen.getByLabelText('Contraseña actual'), 'incorrecta')
+    await user.type(
+      screen.getByLabelText('Nueva contraseña (mínimo 8 caracteres)'),
+      'nueva-contrasena',
+    )
+    await user.type(
+      screen.getByLabelText('Repetir nueva contraseña'),
+      'nueva-contrasena',
+    )
+    await user.click(screen.getByRole('button', { name: 'Cambiar contraseña' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Contraseña incorrecta',
+    )
+    expect(mockedChangePassword).toHaveBeenCalledWith({
+      currentPassword: 'incorrecta',
+      newPassword: 'nueva-contrasena',
+    })
   })
 })

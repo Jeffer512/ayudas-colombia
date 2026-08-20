@@ -371,6 +371,16 @@ export const api = {
     })
   },
 
+  changePassword(body: {
+    currentPassword: string
+    newPassword: string
+  }): Promise<{ ok: boolean }> {
+    return http('/auth/password', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
   adminAnalytics(token: string): Promise<AnalyticsResponse> {
     return http('/admin/analytics', {
       headers: { 'x-admin-token': token },

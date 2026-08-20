@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Trash2 } from 'lucide-react'
+import { KeyRound, Trash2 } from 'lucide-react'
 import { api } from '../api/client'
 import type { UpdateAccountResult } from '../lib/types'
 import Button from '../components/ui/Button'
@@ -21,6 +21,11 @@ export default function AccountPage() {
   const [lastResult, setLastResult] = useState<UpdateAccountResult | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletePassword, setDeletePassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordSaved, setPasswordSaved] = useState(false)
   const hydrated = useRef(false)
 
   const me = useQuery({
@@ -72,6 +77,28 @@ export default function AccountPage() {
       navigate('/')
     },
   })
+
+  const passwordChange = useMutation({
+    mutationFn: () =>
+      api.changePassword({ currentPassword, newPassword }),
+    onSuccess: () => {
+      setCurrentPassword('')
+      setNewPassword('')
+      setNewPasswordConfirm('')
+      setPasswordSaved(true)
+    },
+  })
+
+  function handlePasswordSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPasswordSaved(false)
+    if (newPassword !== newPasswordConfirm) {
+      setPasswordError('Las contraseñas no coinciden')
+      return
+    }
+    setPasswordError(null)
+    passwordChange.mutate()
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -163,7 +190,7 @@ export default function AccountPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} aria-label="Actualizar perfil" className="mt-6 space-y-4">
           <Field label="Nombre" htmlFor="name">
             <Input
               id="name"
@@ -199,6 +226,74 @@ export default function AccountPage() {
 
           <Button type="submit" size="lg" disabled={update.isPending}>
             {update.isPending ? 'Guardando…' : 'Guardar cambios'}
+          </Button>
+        </form>
+      </div>
+
+      <div className="rounded-lg border border-border bg-surface p-6 sm:p-8">
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-fg">
+          <KeyRound size={20} aria-hidden="true" />
+          Cambiar contraseña
+        </h2>
+        <p className="mt-1 text-sm text-fg-muted">
+          Usa una contraseña de al menos 8 caracteres y diferente a la actual.
+        </p>
+
+        {passwordSaved && (
+          <div
+            role="status"
+            className="mt-4 rounded-lg border border-accent-muted bg-accent-muted p-3 text-sm text-accent-hover"
+          >
+            Contraseña actualizada.
+          </div>
+        )}
+
+        {(passwordError || passwordChange.isError) && (
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-danger-muted bg-danger-muted p-3 text-sm text-danger"
+          >
+            {passwordError ?? (passwordChange.error as Error).message}
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordSubmit} aria-label="Cambiar contraseña" className="mt-6 space-y-4">
+          <Field label="Contraseña actual" htmlFor="currentPasswordChange">
+            <Input
+              id="currentPasswordChange"
+              type="password"
+              required
+              minLength={1}
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </Field>
+          <Field label="Nueva contraseña (mínimo 8 caracteres)" htmlFor="newPassword">
+            <Input
+              id="newPassword"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </Field>
+          <Field label="Repetir nueva contraseña" htmlFor="newPasswordConfirm">
+            <Input
+              id="newPasswordConfirm"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={newPasswordConfirm}
+              onChange={(e) => setNewPasswordConfirm(e.target.value)}
+            />
+          </Field>
+
+          <Button type="submit" size="lg" disabled={passwordChange.isPending}>
+            {passwordChange.isPending ? 'Actualizando…' : 'Cambiar contraseña'}
           </Button>
         </form>
       </div>
@@ -244,6 +339,7 @@ export default function AccountPage() {
                 e.preventDefault()
                 remove.mutate()
               }}
+              aria-label="Confirmar eliminación de cuenta"
               className="space-y-4"
             >
               <Field label="Contraseña actual" htmlFor="deletePassword">
