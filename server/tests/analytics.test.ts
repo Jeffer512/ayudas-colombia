@@ -2,6 +2,7 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { prisma } from '../src/db.js'
+import { colombiaDayKey } from '../src/lib/colombiaTime.js'
 
 const app = createApp()
 const ADMIN_TOKEN = 'test-admin-token'
@@ -73,5 +74,63 @@ describe('GET /api/admin/analytics', () => {
     expect(res.body.last30).toBe(3)
     expect(res.body.daily.at(-1).visitors).toBe(2)
     expect(res.body.daily.at(-2).visitors).toBe(1)
+  })
+
+  it('no duplica a un mismo visitante dentro de los rangos de 7 y 30 días', async () => {
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    await prisma.visit.createMany({
+      data: [
+        { visitorId: 'recurrente', createdAt: today },
+        { visitorId: 'recurrente', createdAt: yesterday },
+      ],
+    })
+
+    const res = await request(app)
+      .get('/api/admin/analytics')
+      .set('x-admin-token', ADMIN_TOKEN)
+
+    expect(res.status).toBe(200)
+    expect(res.body.daily).toHaveLength(2)
+    expect(res.body.daily.every((d: { visitors: number }) => d.visitors === 1)).toBe(true)
+    expect(res.body.last7).toBe(1)
+    expect(res.body.last30).toBe(1)
+  })
+
+  it('agrupa las visitas por el día en Colombia', async () => {
+    const seedUtc = new Date()
+    seedUtc.setUTCHours(2, 0, 0, 0)
+    await prisma.visit.create({ data: { visitorId: 'frontera', createdAt: seedUtc } })
+
+    const res = await request(app)
+      .get('/api/admin/analytics')
+      .set('x-admin-token', ADMIN_TOKEN)
+
+    const utcDate = seedUtc.toISOString().slice(0, 10)
+    const colombiaDate = colombiaDayKey(new Date(seedUtc.getTime() - 5 * 3600_000))
+    const dailyDates = res.body.daily.map((d: { date: string }) => d.date)
+
+    expect(dailyDates).toContain(colombiaDate)
+    expect(dailyDates).not.toContain(utcDate)
+    expect(
+      res.body.daily.find((d: { date: string }) => d.date === colombiaDate).visitors,
+    ).toBe(1)
+  })
+
+  it('excluye las visitas anteriores a los 30 días', async () => {
+    const old = new Date(Date.now() - 32 * 86_400_000)
+    await prisma.visit.create({ data: { visitorId: 'viejo', createdAt: old } })
+
+    const res = await request(app)
+      .get('/api/admin/analytics')
+      .set('x-admin-token', ADMIN_TOKEN)
+
+    expect(res.status).toBe(200)
+    expect(res.body.daily).toHaveLength(0)
+    expect(res.body.today).toBe(0)
+    expect(res.body.last7).toBe(0)
+    expect(res.body.last30).toBe(0)
   })
 })

@@ -356,10 +356,10 @@ model CityMessage {
 }
 
 model Visit {
-  id        String   @id @default(uuid())
-  visitorId String   @map("visitor_id")
+  id        String            @id @default(uuid())
+  visitorId String            @map("visitor_id")
   ip        String?
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@index([visitorId, createdAt])
   @@map("visits")

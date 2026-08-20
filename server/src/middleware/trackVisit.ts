@@ -1,16 +1,13 @@
 import type { NextFunction, Request, Response } from 'express'
 import { prisma } from '../db.js'
+import { colombiaDayKey, colombiaNow } from '../lib/colombiaTime.js'
 
 const VISITOR_HEADER = 'x-visitor-id'
 
 const seenByDay = new Map<string, Set<string>>()
 
-function dayKey(date: Date): string {
-  return date.toISOString().slice(0, 10)
-}
-
 function record(visitorId: string, ip: string | undefined) {
-  const day = dayKey(new Date())
+  const day = colombiaDayKey(colombiaNow())
   let seen = seenByDay.get(day)
   if (!seen) {
     seen = new Set()

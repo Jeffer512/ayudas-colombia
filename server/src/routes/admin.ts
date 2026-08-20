@@ -10,6 +10,7 @@ import { hideCityMessage } from '../services/cityMessages.js'
 import { updateOfferStatus } from '../services/offers.js'
 import { listReports, reviewReport } from '../services/reports.js'
 import { updateRequestStatus } from '../services/requests.js'
+import { colombiaDayKey, colombiaNow } from '../lib/colombiaTime.js'
 import { reportFiltersSchema } from '../validators/report.js'
 
 const statusSchema = z.object({
@@ -92,15 +93,12 @@ adminRouter.delete(
 adminRouter.get(
   '/analytics',
   asyncHandler(async (_req, res) => {
-    const since30 = new Date()
-    since30.setUTCDate(since30.getUTCDate() - 29)
-    since30.setUTCHours(0, 0, 0, 0)
-
     const rows = await prisma.$queryRaw<{ day: Date; visitors: bigint }[]>`
-      SELECT date_trunc('day', created_at) AS day, COUNT(DISTINCT visitor_id) AS visitors
+      SELECT (created_at AT TIME ZONE 'America/Bogota')::date AS day,
+        COUNT(DISTINCT visitor_id) AS visitors
       FROM visits
-      WHERE created_at >= ${since30}
-      GROUP BY date_trunc('day', created_at)
+      WHERE created_at >= (date_trunc('day', now() AT TIME ZONE 'America/Bogota') - interval '29 days') AT TIME ZONE 'America/Bogota'
+      GROUP BY (created_at AT TIME ZONE 'America/Bogota')::date
       ORDER BY day ASC
     `
 
@@ -109,16 +107,26 @@ adminRouter.get(
       visitors: Number(row.visitors),
     }))
 
-    const sumLast = (days: number) =>
-      daily.slice(-days).reduce((acc, d) => acc + d.visitors, 0)
+    const [ranges] = await prisma.$queryRaw<
+      { last7: bigint; last30: bigint }[]
+    >`
+      SELECT
+        COUNT(DISTINCT visitor_id) FILTER (
+          WHERE created_at >= (date_trunc('day', now() AT TIME ZONE 'America/Bogota') - interval '6 days') AT TIME ZONE 'America/Bogota'
+        ) AS last7,
+        COUNT(DISTINCT visitor_id) FILTER (
+          WHERE created_at >= (date_trunc('day', now() AT TIME ZONE 'America/Bogota') - interval '29 days') AT TIME ZONE 'America/Bogota'
+        ) AS last30
+      FROM visits
+    `
 
-    const today = new Date().toISOString().slice(0, 10)
+    const todayKey = colombiaDayKey(colombiaNow())
 
     res.json({
       daily,
-      today: daily.at(-1)?.date === today ? daily.at(-1)!.visitors : 0,
-      last7: sumLast(7),
-      last30: sumLast(30),
+      today: daily.at(-1)?.date === todayKey ? daily.at(-1)!.visitors : 0,
+      last7: Number(ranges?.last7 ?? 0),
+      last30: Number(ranges?.last30 ?? 0),
     })
   }),
 )
