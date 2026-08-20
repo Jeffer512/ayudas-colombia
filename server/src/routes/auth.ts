@@ -2,24 +2,31 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { env } from '../config.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
-import { currentSession } from '../middleware/requireSession.js'
+import {
+  currentSession,
+  requireSession,
+} from '../middleware/requireSession.js'
 import { setSessionCookie } from '../lib/cookies.js'
 import { SESSION_COOKIE } from '../lib/jwt.js'
 import {
+  deleteAccount,
   getSessionUser,
   loginUser,
   registerUser,
   requestPasswordReset,
   resendVerification,
   resetPassword,
+  updateAccount,
   verifyEmail,
 } from '../services/auth.js'
 import {
+  deleteAccountSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resendVerificationSchema,
   resetPasswordSchema,
+  updateAccountSchema,
   verifyEmailSchema,
 } from '../validators/auth.js'
 
@@ -50,6 +57,22 @@ const forgotPasswordLimiter = rateLimit({
 })
 
 const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: env.production ? 5 : 10_000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes, intenta más tarde' },
+})
+
+const accountUpdateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: env.production ? 10 : 10_000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes, intenta más tarde' },
+})
+
+const accountDeleteLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
@@ -117,6 +140,28 @@ authRouter.post(
   }),
 )
 
+authRouter.patch(
+  '/account',
+  accountUpdateLimiter,
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const input = updateAccountSchema.parse(req.body)
+    res.json(await updateAccount(req.session!.sub, input))
+  }),
+)
+
+authRouter.delete(
+  '/account',
+  accountDeleteLimiter,
+  requireSession,
+  asyncHandler(async (req, res) => {
+    const input = deleteAccountSchema.parse(req.body)
+    await deleteAccount(req.session!.sub, input)
+    res.clearCookie(SESSION_COOKIE, { path: '/' })
+    res.json({ ok: true })
+  }),
+)
+
 authRouter.post('/logout', (_req, res) => {
   res.clearCookie(SESSION_COOKIE, { path: '/' })
   res.json({ ok: true })
@@ -141,6 +186,7 @@ authRouter.get(
       name: sessionUser.name,
       email: sessionUser.email,
       staff: sessionUser.staff,
+      emailVerified: sessionUser.emailVerified,
       pendingOrgId: sessionUser.pendingOrgId,
     })
   }),

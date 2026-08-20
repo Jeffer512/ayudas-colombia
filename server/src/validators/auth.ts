@@ -39,3 +39,24 @@ export const resetPasswordSchema = z.object({
 })
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
+
+export const updateAccountSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120).optional(),
+    email: z.string().trim().toLowerCase().email().optional(),
+    password: z.string().min(1).max(100).optional(),
+  })
+  .refine((value) => value.name !== undefined || value.email !== undefined, {
+    message: 'Debes indicar un nombre o un correo',
+  })
+  .refine((value) => value.email === undefined || value.password !== undefined, {
+    message: 'Escribe tu contraseña actual para cambiar el correo',
+  })
+
+export type UpdateAccountInput = z.infer<typeof updateAccountSchema>
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1).max(100),
+})
+
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>

@@ -14,11 +14,13 @@ import {
   VERIFY_TOKEN_TTL_MS,
 } from '../lib/verification.js'
 import type {
+  DeleteAccountInput,
   ForgotPasswordInput,
   LoginInput,
   RegisterInput,
   ResendVerificationInput,
   ResetPasswordInput,
+  UpdateAccountInput,
   VerifyEmailInput,
 } from '../validators/auth.js'
 
@@ -179,9 +181,82 @@ export async function getSessionUser(userId: string) {
     email: user.email,
     name: user.name,
     staff: activeMembership ? serializeStaff(activeMembership) : null,
+    emailVerified: user.emailVerifiedAt !== null,
     pendingOrgId:
       user.memberships.find((m) => m.status === 'pending')?.orgId ?? null,
   }
+}
+
+export async function updateAccount(userId: string, input: UpdateAccountInput) {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new ApiError(404, 'Cuenta no encontrada')
+  }
+
+  if (input.email && input.email !== user.email) {
+    const existing = await prisma.user.findUnique({
+      where: { email: input.email },
+    })
+    if (existing) {
+      throw new ApiError(409, 'Ya existe una cuenta con este correo')
+    }
+    const ok = await bcrypt.compare(input.password!, user.passwordHash)
+    if (!ok) {
+      throw new ApiError(401, 'Contraseña incorrecta', 'invalid_password')
+    }
+
+    const verifyToken = generateVerifyToken()
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: input.name ?? user.name,
+        email: input.email,
+        emailVerifiedAt: null,
+        verifyTokenHash: hashVerifyToken(verifyToken),
+        verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
+      },
+    })
+
+    await sendVerificationEmail({
+      to: input.email,
+      name: input.name ?? user.name,
+      token: verifyToken,
+    })
+
+    return {
+      name: input.name ?? user.name,
+      email: input.email,
+      emailChanged: true,
+      verificationUrl: env.production ? null : buildVerificationUrl(verifyToken),
+    }
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: input.name ? { name: input.name } : {},
+  })
+
+  return {
+    name: updated.name,
+    email: updated.email,
+    emailChanged: false,
+    verificationUrl: null,
+  }
+}
+
+export async function deleteAccount(userId: string, input: DeleteAccountInput) {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new ApiError(404, 'Cuenta no encontrada')
+  }
+
+  const ok = await bcrypt.compare(input.password, user.passwordHash)
+  if (!ok) {
+    throw new ApiError(401, 'Contraseña incorrecta', 'invalid_password')
+  }
+
+  await prisma.user.delete({ where: { id: userId } })
+  return { ok: true }
 }
 
 export async function requestPasswordReset(input: ForgotPasswordInput) {
