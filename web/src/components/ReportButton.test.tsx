@@ -25,6 +25,7 @@ function renderButton(authenticated: boolean) {
     name: authenticated ? 'Usuario Prueba' : null,
     email: authenticated ? 'usuario@example.com' : null,
     staff: null,
+    emailVerified: authenticated,
     pendingOrgId: null,
   })
   return render(

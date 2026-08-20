@@ -28,12 +28,14 @@ import type {
   Offer,
   OfferFilters,
   OfferListResponse,
+  MeResponse,
   RegisterResult,
   Request,
   RequestFilters,
   RequestListResponse,
   Staff,
   StatusUpdate,
+  UpdateAccountResult,
   UpdateOffer,
   UpdateOrgProfile,
   UpdateRequest,
@@ -347,14 +349,26 @@ export const api = {
     return http('/auth/logout', { method: 'POST' })
   },
 
-  me(): Promise<{
-    authenticated: boolean
-    name: string | null
-    email: string | null
-    staff: Staff | null
-    pendingOrgId: string | null
-  }> {
+  me(): Promise<MeResponse> {
     return http('/auth/me')
+  },
+
+  updateAccount(body: {
+    name?: string
+    email?: string
+    password?: string
+  }): Promise<UpdateAccountResult> {
+    return http('/auth/account', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
+  deleteAccount(password: string): Promise<{ ok: boolean }> {
+    return http('/auth/account', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    })
   },
 
   adminAnalytics(token: string): Promise<AnalyticsResponse> {

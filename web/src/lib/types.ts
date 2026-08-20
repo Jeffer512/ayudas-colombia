@@ -510,6 +510,22 @@ export interface RegisterResult {
   verificationUrl?: string | null
 }
 
+export interface MeResponse {
+  authenticated: boolean
+  name: string | null
+  email: string | null
+  staff: Staff | null
+  emailVerified: boolean
+  pendingOrgId: string | null
+}
+
+export interface UpdateAccountResult {
+  name: string
+  email: string
+  emailChanged: boolean
+  verificationUrl: string | null
+}
+
 export type NewOrgRequest = {
   type: RequestType
   urgency?: Urgency

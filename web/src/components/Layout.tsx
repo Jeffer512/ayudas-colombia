@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { HeartHandshake, LogIn, LogOut, Menu, UserPlus, X } from 'lucide-react'
+import { HeartHandshake, LogIn, LogOut, Menu, Settings, UserPlus, X } from 'lucide-react'
 import { api } from '../api/client'
 import Button, { buttonVariants } from './ui/Button'
 
@@ -62,6 +62,8 @@ export default function Layout() {
         name: null,
         email: null,
         staff: null,
+        emailVerified: false,
+        pendingOrgId: null,
       })
     },
   })
@@ -128,6 +130,13 @@ export default function Layout() {
                 <span className="hidden px-2 text-sm text-fg-muted md:inline">
                   {me.data?.name ? `Hola, ${me.data.name}` : 'Hola'}
                 </span>
+                <Link
+                  to="/cuenta"
+                  className={`${buttonVariants({ variant: 'ghost', size: 'sm' })}`}
+                >
+                  <Settings size={16} aria-hidden="true" />
+                  <span className="hidden sm:inline">Mi cuenta</span>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -204,6 +213,14 @@ export default function Layout() {
             </NavLink>
             {authenticated ? (
               <div className="mt-4 space-y-1 border-t border-border pt-4">
+                <NavLink
+                  to="/cuenta"
+                  onClick={() => setMenuOpen(false)}
+                  className={navLinkClass}
+                >
+                  <Settings size={18} aria-hidden="true" />
+                  Mi cuenta
+                </NavLink>
                 <Button
                   variant="ghost"
                   size="md"

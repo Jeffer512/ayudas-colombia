@@ -93,6 +93,7 @@ describe('RequestDetailPage', () => {
       name: null,
       email: null,
       staff: null,
+      emailVerified: false,
       pendingOrgId: null,
     })
   })

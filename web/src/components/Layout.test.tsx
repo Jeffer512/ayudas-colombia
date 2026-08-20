@@ -41,6 +41,7 @@ describe('Layout', () => {
       name: null,
       email: null,
       staff: null,
+      emailVerified: false,
       pendingOrgId: null,
     })
     renderLayout()
@@ -60,12 +61,17 @@ describe('Layout', () => {
       name: 'Camila',
       email: 'camila@correo.co',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
     renderLayout()
 
     expect(await screen.findByText('Hola, Camila')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Salir' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Mi cuenta' })).toHaveAttribute(
+      'href',
+      '/cuenta',
+    )
     expect(
       screen.queryByRole('link', { name: 'Iniciar sesión' }),
     ).not.toBeInTheDocument()
@@ -77,6 +83,7 @@ describe('Layout', () => {
       name: 'Camila',
       email: 'camila@correo.co',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
     mockedLogout.mockResolvedValue({ ok: true })

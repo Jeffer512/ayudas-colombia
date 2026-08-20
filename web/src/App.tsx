@@ -22,6 +22,7 @@ import OfferEditPage from './pages/OfferEditPage'
 import RequestDetailPage from './pages/RequestDetailPage'
 import RequestEditPage from './pages/RequestEditPage'
 import TransportHubPage from './pages/TransportHubPage'
+import AccountPage from './pages/AccountPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
             <Route path="/restablecer-contrasena" element={<ResetPasswordPage />} />
             <Route path="/mi-organizacion" element={<MyOrgPage />} />
+            <Route path="/cuenta" element={<AccountPage />} />
           </Route>
           <Route path="/admin" element={<AdminPage />} />
         </Routes>

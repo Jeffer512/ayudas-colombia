@@ -55,6 +55,7 @@ describe('CreateRequestPage', () => {
       name: null,
       email: null,
       staff: null,
+      emailVerified: false,
       pendingOrgId: null,
     })
     mockedCities.mockResolvedValue({
@@ -119,6 +120,7 @@ describe('CreateRequestPage', () => {
       name: 'María',
       email: 'maria@correo.com',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
     mockedCreate.mockResolvedValue({

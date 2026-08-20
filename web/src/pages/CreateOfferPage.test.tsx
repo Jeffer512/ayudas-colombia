@@ -50,6 +50,7 @@ describe('CreateOfferPage', () => {
       name: null,
       email: null,
       staff: null,
+      emailVerified: false,
       pendingOrgId: null,
     })
     mockedOrg.mockResolvedValue({
@@ -205,6 +206,7 @@ describe('CreateOfferPage', () => {
       name: 'Laura',
       email: 'laura@correo.com',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
     mockedCreate.mockResolvedValue({

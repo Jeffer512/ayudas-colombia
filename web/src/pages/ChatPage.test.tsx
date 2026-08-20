@@ -98,6 +98,7 @@ beforeEach(() => {
     name: null,
     email: null,
     staff: null,
+    emailVerified: false,
     pendingOrgId: null,
   })
   FakeEventSource.instances = []
@@ -339,6 +340,7 @@ describe('ChatPage', () => {
       name: 'Usuario Prueba',
       email: 'usuario@example.com',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
     mockedCreateReport.mockResolvedValue({ ok: true })

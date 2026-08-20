@@ -123,6 +123,7 @@ beforeEach(() => {
     name: staff.name,
     email: staff.email,
     staff,
+    emailVerified: true,
     pendingOrgId: null,
   })
   mockedHelpOrg.mockResolvedValue(org)
@@ -214,6 +215,7 @@ describe('MyOrgPage — datos de la organización', () => {
       name: staff.name,
       email: staff.email,
       staff: { ...staff, role: 'member' },
+      emailVerified: true,
       pendingOrgId: null,
     })
 
@@ -355,6 +357,7 @@ describe('MyOrgPage — sin organización vinculada', () => {
       name: null,
       email: null,
       staff: null,
+      emailVerified: false,
       pendingOrgId: null,
     })
 
@@ -374,6 +377,7 @@ describe('MyOrgPage — sin organización vinculada', () => {
       name: 'Ciudadana',
       email: 'ciudadana@correo.org',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
 
@@ -393,6 +397,7 @@ describe('MyOrgPage — sin organización vinculada', () => {
       name: 'Ciudadana',
       email: 'ciudadana@correo.org',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
     mockedJoinOrg.mockResolvedValue({
@@ -423,6 +428,7 @@ describe('MyOrgPage — sin organización vinculada', () => {
       name: 'Ciudadana',
       email: 'ciudadana@correo.org',
       staff: null,
+      emailVerified: true,
       pendingOrgId: 'o1',
     })
 

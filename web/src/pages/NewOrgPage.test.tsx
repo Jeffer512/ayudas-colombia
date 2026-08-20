@@ -71,6 +71,7 @@ beforeEach(() => {
     name: null,
     email: null,
     staff: null,
+    emailVerified: false,
     pendingOrgId: null,
   })
   mockedCreate.mockResolvedValue({
@@ -162,6 +163,7 @@ describe('NewOrgPage', () => {
       name: 'Camila',
       email: 'camila@correo.org',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
 
@@ -211,6 +213,7 @@ describe('NewOrgPage', () => {
       name: 'Camila',
       email: 'camila@correo.org',
       staff: null,
+      emailVerified: true,
       pendingOrgId: null,
     })
     mockedCreate.mockRejectedValue(
