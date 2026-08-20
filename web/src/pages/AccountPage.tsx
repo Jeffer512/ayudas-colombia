@@ -43,12 +43,13 @@ export default function AccountPage() {
 
   const update = useMutation({
     mutationFn: () => {
-      const emailChanged = email.trim().toLowerCase() !== originalEmail
-      return api.updateAccount({
-        name: name.trim(),
-        email: email.trim(),
-        ...(emailChanged ? { password } : {}),
-      })
+      const body: { name?: string; email?: string; password?: string } = {}
+      if (name.trim() !== me.data?.name) body.name = name.trim()
+      if (email.trim().toLowerCase() !== originalEmail) {
+        body.email = email.trim()
+        body.password = password
+      }
+      return api.updateAccount(body)
     },
     onSuccess: (result) => {
       setLastResult(result)

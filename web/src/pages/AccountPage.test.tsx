@@ -103,7 +103,6 @@ describe('AccountPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Cambios guardados')
     expect(mockedUpdateAccount).toHaveBeenCalledWith({
       name: 'Nuevo Nombre',
-      email: 'gerente@correo.org',
     })
   })
 
@@ -148,7 +147,6 @@ describe('AccountPage', () => {
       screen.getByText('http://localhost:5173/verificar-correo?token=abc'),
     ).toBeInTheDocument()
     expect(mockedUpdateAccount).toHaveBeenCalledWith({
-      name: 'Gerente Prueba',
       email: 'nuevo@correo.org',
       password: 'contrasena-segura',
     })
