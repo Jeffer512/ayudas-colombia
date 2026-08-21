@@ -50,6 +50,14 @@ const resendLimiter = rateLimit({
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
+const verifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: env.production ? 10 : 10_000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos, intenta más tarde' },
+})
+
 const forgotPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: env.production ? 5 : 10_000,
@@ -102,6 +110,7 @@ authRouter.post(
 
 authRouter.post(
   '/verify-email',
+  verifyLimiter,
   asyncHandler(async (req, res) => {
     const input = verifyEmailSchema.parse(req.body)
     res.json(await verifyEmail(input))

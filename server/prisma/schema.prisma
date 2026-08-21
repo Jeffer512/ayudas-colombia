@@ -13,7 +13,9 @@ model User {
   name                 String
   passwordHash         String           @map("password_hash")
   emailVerifiedAt      DateTime?        @map("email_verified_at")
-verifyTokenHash      String?        @map("verify_token_hash")
+  verifyTokenHash      String?        @map("verify_token_hash")
+  verifyCodeHash       String?        @map("verify_code_hash")
+  verifyCodeAttempts   Int             @default(0) @map("verify_code_attempts")
   verifyTokenExpiresAt DateTime?        @map("verify_token_expires_at")
   resetTokenHash       String?        @map("reset_token_hash")
   resetTokenExpiresAt  DateTime?      @map("reset_token_expires_at")

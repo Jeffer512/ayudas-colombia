@@ -6,17 +6,25 @@ import { createHelpOrg } from './factories.js'
 
 const app = createApp()
 
-type RegisterResult = { status: number; body: { verificationUrl?: string | null } }
+type RegisterResult = {
+  status: number
+  body: { verificationUrl?: string | null; verificationCode?: string | null }
+}
 
-function tokenFrom(body: { verificationUrl?: string | null }): string | undefined {
+function tokenFrom(body: {
+  verificationUrl?: string | null
+}): string | undefined {
   if (!body.verificationUrl) return undefined
   const url = new URL(body.verificationUrl, 'http://localhost')
   return url.searchParams.get('token') ?? undefined
 }
 
-async function register(overrides: Record<string, unknown> = {}): Promise<
-  { res: RegisterResult; token?: string } & RegisterResult
-> {
+async function register(overrides: Record<string, unknown> = {}): Promise<{
+  res: RegisterResult
+  token?: string
+  code?: string
+  email: string
+}> {
   const body = {
     email: 'gerente@fundacion.org',
     password: 'contrasena-segura',
@@ -24,7 +32,12 @@ async function register(overrides: Record<string, unknown> = {}): Promise<
     ...overrides,
   }
   const res = await request(app).post('/api/auth/register').send(body)
-  return { res, token: tokenFrom(res.body) }
+  return {
+    res,
+    token: tokenFrom(res.body),
+    code: res.body.verificationCode,
+    email: body.email,
+  }
 }
 
 async function verifyAndLogin(email: string, password: string, token: string) {
@@ -45,10 +58,12 @@ async function citizenAgent(email: string, name: string) {
 
 describe('POST /api/auth/register', () => {
   it('crea la cuenta y NO abre sesión: devuelve el enlace de verificación', async () => {
-    const { res, token } = await register()
+    const { res, token, code } = await register()
 
     expect(res.status).toBe(201)
     expect(token).toBeDefined()
+    expect(code).toBeDefined()
+    expect(code).toMatch(/^\d{6}$/)
     expect(res.body.verificationUrl).toContain('/verificar-correo?token=')
     const setCookie = res.headers['set-cookie'] as unknown as string[] | undefined
     expect(setCookie).toBeUndefined()
@@ -60,6 +75,7 @@ describe('POST /api/auth/register', () => {
     expect(user).not.toBeNull()
     expect(user!.emailVerifiedAt).toBeNull()
     expect(user!.verifyTokenHash).not.toBeNull()
+    expect(user!.verifyCodeHash).not.toBeNull()
     expect(user!.memberships).toHaveLength(0)
   })
 
@@ -178,6 +194,118 @@ describe('POST /api/auth/verify-email', () => {
     })
     expect(user!.emailVerifiedAt).not.toBeNull()
     expect(user!.verifyTokenHash).toBeNull()
+    expect(user!.verifyCodeHash).toBeNull()
+  })
+
+  it('verifica el correo con el código de 6 dígitos y limpia ambos hashes', async () => {
+    const { code, email } = await register()
+
+    const res = await request(app)
+      .post('/api/auth/verify-email')
+      .send({ code, email })
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    expect(user!.emailVerifiedAt).not.toBeNull()
+    expect(user!.verifyTokenHash).toBeNull()
+    expect(user!.verifyCodeHash).toBeNull()
+  })
+
+  it('rechaza un código incorrecto', async () => {
+    const { email } = await register()
+
+    const res = await request(app)
+      .post('/api/auth/verify-email')
+      .send({ code: '000000', email })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('rechaza un código sin correo', async () => {
+    const res = await request(app)
+      .post('/api/auth/verify-email')
+      .send({ code: '123456' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('bloquea el código tras 5 intentos incorrectos y limpia el hash', async () => {
+    const { code, email } = await register()
+    const wrong = code === '000000' ? '111111' : '000000'
+
+    for (let i = 0; i < 4; i++) {
+      const res = await request(app)
+        .post('/api/auth/verify-email')
+        .send({ code: wrong, email })
+      expect(res.status).toBe(400)
+    }
+
+    const locked = await request(app)
+      .post('/api/auth/verify-email')
+      .send({ code: wrong, email })
+    expect(locked.status).toBe(429)
+    expect(locked.body.code).toBe('code_locked')
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    expect(user!.verifyCodeHash).toBeNull()
+    expect(user!.verifyCodeAttempts).toBe(5)
+  })
+
+  it('mantiene el token válido tras bloquear el código', async () => {
+    const { code, email, token } = await register()
+    const wrong = code === '000000' ? '111111' : '000000'
+
+    for (let i = 0; i < 5; i++) {
+      await request(app)
+        .post('/api/auth/verify-email')
+        .send({ code: wrong, email })
+    }
+
+    const res = await request(app)
+      .post('/api/auth/verify-email')
+      .send({ token })
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    expect(user!.emailVerifiedAt).not.toBeNull()
+  })
+
+  it('el reenvío restablece los intentos y el bloqueo', async () => {
+    const { code, email } = await register()
+    const wrong = code === '000000' ? '111111' : '000000'
+
+    for (let i = 0; i < 5; i++) {
+      await request(app)
+        .post('/api/auth/verify-email')
+        .send({ code: wrong, email })
+    }
+    await request(app)
+      .post('/api/auth/resend-verification')
+      .send({ email })
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    expect(user!.verifyCodeAttempts).toBe(0)
+  })
+
+  it('un código correcto restablece los intentos fallidos', async () => {
+    const { code, email } = await register()
+    const wrong = code === '000000' ? '111111' : '000000'
+
+    await request(app)
+      .post('/api/auth/verify-email')
+      .send({ code: wrong, email })
+
+    const res = await request(app)
+      .post('/api/auth/verify-email')
+      .send({ code, email })
+    expect(res.status).toBe(200)
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    expect(user!.verifyCodeAttempts).toBe(0)
+    expect(user!.emailVerifiedAt).not.toBeNull()
   })
 })
 

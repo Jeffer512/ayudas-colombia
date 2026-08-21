@@ -17,6 +17,7 @@ export async function sendVerificationEmail(opts: {
   to: string
   name: string
   token: string
+  code: string
 }) {
   const url = buildVerificationUrl(opts.token)
   await transport.sendMail({
@@ -26,20 +27,28 @@ export async function sendVerificationEmail(opts: {
     text: [
       `Hola ${opts.name},`,
       '',
-      'Para activar tu cuenta en la Red de ayudas, abre este enlace:',
+      'Para activar tu cuenta en la Red de ayudas, elige una de estas dos opciones:',
+      '',
+      `Opción 1 — Código de verificación: ${opts.code}`,
+      'Escribe este código de 6 dígitos en la pantalla de verificación.',
+      '',
+      'Opción 2 — Enlace de verificación:',
       url,
       '',
-      'El enlace es válido por 24 horas. Si no creaste una cuenta, ignora este correo.',
+      'El código y el enlace son válidos por 24 horas. Si no creaste una cuenta, ignora este correo.',
     ].join('\n'),
     html: [
       `<p>Hola <strong>${opts.name}</strong>,</p>`,
-      '<p>Para activar tu cuenta en la Red de ayudas, abre este enlace:</p>',
+      '<p>Para activar tu cuenta en la Red de ayudas, elige una de estas dos opciones:</p>',
+      `<p><strong>Opción 1 — Código de verificación:</strong> <span style="font-size:1.25rem;letter-spacing:0.3em">${opts.code}</span></p>`,
+      '<p>Escribe este código de 6 dígitos en la pantalla de verificación.</p>',
+      '<p><strong>Opción 2 — Enlace de verificación:</strong></p>',
       `<p><a href="${url}">Verificar mi correo</a></p>`,
-      '<p>El enlace es válido por 24 horas. Si no creaste una cuenta, ignora este correo.</p>',
+      '<p>El código y el enlace son válidos por 24 horas. Si no creaste una cuenta, ignora este correo.</p>',
     ].join('\n'),
   })
   if (!env.smtpUrl) {
-    console.log(`[email:dev] verificacion de ${opts.to} -> ${url}`)
+    console.log(`[email:dev] verificacion de ${opts.to} -> ${url} (codigo ${opts.code})`)
   }
 }
 

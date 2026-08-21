@@ -15,9 +15,19 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>
 
-export const verifyEmailSchema = z.object({
-  token: z.string().trim().min(20).max(200),
-})
+export const verifyEmailSchema = z
+  .object({
+    token: z.string().trim().min(20).max(200).optional(),
+    code: z.string().trim().regex(/^\d{6}$/).optional(),
+    email: z.string().trim().toLowerCase().email().optional(),
+  })
+  .refine((value) => value.token !== undefined || value.code !== undefined, {
+    message: 'Debes enviar un token o un código de verificación',
+  })
+  .refine(
+    (value) => value.code === undefined || value.email !== undefined,
+    { message: 'El código requiere el correo del usuario' },
+  )
 
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>
 

@@ -10,6 +10,7 @@ import {
 import { ApiError } from '../lib/errors.js'
 import {
   generateVerifyToken,
+  generateVerifyCode,
   hashVerifyToken,
   VERIFY_TOKEN_TTL_MS,
 } from '../lib/verification.js'
@@ -58,6 +59,7 @@ export async function registerUser(input: RegisterInput) {
 
   const passwordHash = await bcrypt.hash(input.password, ROUNDS)
   const verifyToken = generateVerifyToken()
+  const verifyCode = generateVerifyCode()
 
   await prisma.user.create({
     data: {
@@ -65,6 +67,7 @@ export async function registerUser(input: RegisterInput) {
       name: input.name,
       passwordHash,
       verifyTokenHash: hashVerifyToken(verifyToken),
+      verifyCodeHash: hashVerifyToken(verifyCode),
       verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
     },
   })
@@ -73,35 +76,88 @@ export async function registerUser(input: RegisterInput) {
     to: input.email,
     name: input.name,
     token: verifyToken,
+    code: verifyCode,
   })
 
   return {
     verificationUrl: env.production ? null : buildVerificationUrl(verifyToken),
+    verificationCode: env.production ? null : verifyCode,
   }
 }
 
 export async function verifyEmail(input: VerifyEmailInput) {
-  const tokenHash = hashVerifyToken(input.token)
-  const user = await prisma.user.findFirst({
-    where: { verifyTokenHash: tokenHash },
-  })
+  if (input.token) {
+    const user = await prisma.user.findFirst({
+      where: { verifyTokenHash: hashVerifyToken(input.token) },
+    })
+    if (
+      !user ||
+      !user.verifyTokenExpiresAt ||
+      user.verifyTokenExpiresAt < new Date()
+    ) {
+      throw new ApiError(400, 'El enlace de verificación no es válido o expiró')
+    }
+    if (!user.emailVerifiedAt) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerifiedAt: new Date(),
+          verifyTokenHash: null,
+          verifyCodeHash: null,
+          verifyCodeAttempts: 0,
+          verifyTokenExpiresAt: null,
+        },
+      })
+    }
+    return { ok: true }
+  }
+
+  const user = await prisma.user.findFirst({ where: { email: input.email } })
   if (
     !user ||
+    !user.verifyCodeHash ||
     !user.verifyTokenExpiresAt ||
     user.verifyTokenExpiresAt < new Date()
   ) {
-    throw new ApiError(400, 'El enlace de verificación no es válido o expiró')
+    throw new ApiError(400, 'El código de verificación no es válido o expiró')
   }
-  if (!user.emailVerifiedAt) {
+  if (user.verifyCodeAttempts >= 5) {
+    throw new ApiError(
+      429,
+      'Demasiados intentos, solicita un nuevo código',
+      'code_locked',
+    )
+  }
+
+  if (hashVerifyToken(input.code!) !== user.verifyCodeHash) {
+    const attempts = user.verifyCodeAttempts + 1
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        emailVerifiedAt: new Date(),
-        verifyTokenHash: null,
-        verifyTokenExpiresAt: null,
-      },
+      data:
+        attempts >= 5
+          ? { verifyCodeAttempts: attempts, verifyCodeHash: null }
+          : { verifyCodeAttempts: attempts },
     })
+    if (attempts >= 5) {
+      throw new ApiError(
+        429,
+        'Demasiados intentos, solicita un nuevo código',
+        'code_locked',
+      )
+    }
+    throw new ApiError(400, 'Código incorrecto')
   }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerifiedAt: new Date(),
+      verifyTokenHash: null,
+      verifyCodeHash: null,
+      verifyCodeAttempts: 0,
+      verifyTokenExpiresAt: null,
+    },
+  })
   return { ok: true }
 }
 
@@ -114,10 +170,13 @@ export async function resendVerification(input: ResendVerificationInput) {
   }
 
   const verifyToken = generateVerifyToken()
+  const verifyCode = generateVerifyCode()
   await prisma.user.update({
     where: { id: user.id },
     data: {
       verifyTokenHash: hashVerifyToken(verifyToken),
+      verifyCodeHash: hashVerifyToken(verifyCode),
+      verifyCodeAttempts: 0,
       verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
     },
   })
@@ -125,6 +184,7 @@ export async function resendVerification(input: ResendVerificationInput) {
     to: user.email,
     name: user.name,
     token: verifyToken,
+    code: verifyCode,
   })
   return { ok: true }
 }
@@ -207,6 +267,7 @@ export async function updateAccount(userId: string, input: UpdateAccountInput) {
     }
 
     const verifyToken = generateVerifyToken()
+    const verifyCode = generateVerifyCode()
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -214,6 +275,8 @@ export async function updateAccount(userId: string, input: UpdateAccountInput) {
         email: input.email,
         emailVerifiedAt: null,
         verifyTokenHash: hashVerifyToken(verifyToken),
+        verifyCodeHash: hashVerifyToken(verifyCode),
+        verifyCodeAttempts: 0,
         verifyTokenExpiresAt: new Date(Date.now() + VERIFY_TOKEN_TTL_MS),
       },
     })
@@ -222,6 +285,7 @@ export async function updateAccount(userId: string, input: UpdateAccountInput) {
       to: input.email,
       name: input.name ?? user.name,
       token: verifyToken,
+      code: verifyCode,
     })
 
     return {
@@ -229,6 +293,7 @@ export async function updateAccount(userId: string, input: UpdateAccountInput) {
       email: input.email,
       emailChanged: true,
       verificationUrl: env.production ? null : buildVerificationUrl(verifyToken),
+      verificationCode: env.production ? null : verifyCode,
     }
   }
 
