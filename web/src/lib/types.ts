@@ -508,6 +508,7 @@ export type JoinedOrgMembership = {
 
 export interface RegisterResult {
   verificationUrl?: string | null
+  verificationCode?: string | null
 }
 
 export interface MeResponse {
@@ -524,6 +525,7 @@ export interface UpdateAccountResult {
   email: string
   emailChanged: boolean
   verificationUrl: string | null
+  verificationCode: string | null
 }
 
 export type NewOrgRequest = {

@@ -94,6 +94,7 @@ describe('AccountPage', () => {
       email: 'gerente@correo.org',
       emailChanged: false,
       verificationUrl: null,
+      verificationCode: null,
     })
     const user = userEvent.setup()
     renderPage()
@@ -140,6 +141,7 @@ describe('AccountPage', () => {
       email: 'nuevo@correo.org',
       emailChanged: true,
       verificationUrl: 'http://localhost:5173/verificar-correo?token=abc',
+      verificationCode: null,
     })
     const user = userEvent.setup()
     renderPage()

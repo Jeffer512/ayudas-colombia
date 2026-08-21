@@ -41,7 +41,7 @@ describe('VerifyEmailPage', () => {
     renderPage('/verificar-correo?token=valid-token')
 
     await waitFor(() =>
-      expect(mockedVerifyEmail).toHaveBeenCalledWith('valid-token'),
+      expect(mockedVerifyEmail).toHaveBeenCalledWith({ token: 'valid-token' }),
     )
     expect(
       await screen.findByRole('heading', { name: 'Correo verificado' }),

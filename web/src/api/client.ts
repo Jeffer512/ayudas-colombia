@@ -313,10 +313,10 @@ export const api = {
     return http('/auth/register', { method: 'POST', body: JSON.stringify(body) })
   },
 
-  verifyEmail(token: string): Promise<{ ok: boolean }> {
+  verifyEmail(input: { token?: string; code?: string; email?: string }): Promise<{ ok: boolean }> {
     return http('/auth/verify-email', {
       method: 'POST',
-      body: JSON.stringify({ token }),
+      body: JSON.stringify(input),
     })
   },
 
