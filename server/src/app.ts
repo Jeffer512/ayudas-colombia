@@ -13,6 +13,8 @@ import { avisosRouter } from './routes/avisos.js'
 import { citiesRouter } from './routes/cities.js'
 import { cityMessagesRouter } from './routes/cityMessages.js'
 import { healthRouter } from './routes/health.js'
+import { robotsRouter } from './routes/robots.js'
+import { sitemapRouter } from './routes/sitemap.js'
 import { helpOrgsRouter } from './routes/helpOrgs.js'
 import { offersRouter } from './routes/offers.js'
 import { reportsRouter } from './routes/reports.js'
@@ -67,6 +69,8 @@ export function createApp() {
   }
 
   app.use('/api/health', healthRouter)
+  app.use(robotsRouter)
+  app.use(sitemapRouter)
   app.use('/api/auth', authRouter)
   app.use('/api/cities', citiesRouter)
   app.use('/api/city-messages', cityMessagesRouter)
