@@ -15,13 +15,17 @@ import { cityMessagesRouter } from './routes/cityMessages.js'
 import { healthRouter } from './routes/health.js'
 import { robotsRouter } from './routes/robots.js'
 import { sitemapRouter } from './routes/sitemap.js'
+import { resolveSeo } from './seo/buildHead.js'
+import { loadTemplate, renderHtml } from './seo/injectHead.js'
 import { helpOrgsRouter } from './routes/helpOrgs.js'
 import { offersRouter } from './routes/offers.js'
 import { reportsRouter } from './routes/reports.js'
 import { requestsRouter } from './routes/requests.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
-const WEB_DIST = path.resolve(moduleDir, '../../web/dist')
+const WEB_DIST = process.env.WEB_DIST
+  ? path.resolve(process.env.WEB_DIST)
+  : path.resolve(moduleDir, '../../web/dist')
 
 export function createApp() {
   const app = express()
@@ -65,7 +69,8 @@ export function createApp() {
 
   const servesWeb = env.production && fs.existsSync(WEB_DIST)
   if (servesWeb) {
-    app.use(express.static(WEB_DIST))
+    app.use(express.static(WEB_DIST, { index: false }))
+    loadTemplate(WEB_DIST)
   }
 
   app.use('/api/health', healthRouter)
@@ -82,12 +87,18 @@ export function createApp() {
   app.use('/api/admin', adminRouter)
 
   if (servesWeb) {
-    app.use((req, res, next) => {
-      if (req.method !== 'GET' || req.path.startsWith('/api/')) {
+    app.use(async (req, res, next) => {
+      if (req.method !== 'GET' || req.path.startsWith('/api/') || /\.[a-zA-Z0-9]+$/.test(req.path)) {
         next()
         return
       }
-      res.sendFile(path.join(WEB_DIST, 'index.html'))
+      try {
+        const host = `${req.protocol}://${req.get('host')}`
+        const seo = await resolveSeo(req.path, host)
+        res.status(seo.status).send(renderHtml(seo.meta))
+      } catch (err) {
+        next(err)
+      }
     })
   }
 
