@@ -14,6 +14,7 @@ import {
   TRANSPORT_LABELS,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
+import { usePageHead } from '../seo/usePageHead'
 import type { StatusUpdate } from '../lib/types'
 
 const inputClass =
@@ -32,6 +33,17 @@ export default function OfferDetailPage() {
     queryKey: ['offer', id],
     queryFn: () => api.offer(id),
   })
+
+  usePageHead(
+    offer
+      ? {
+          title: `${offer.title} — Ayuda Colombia`,
+          description: offer.description
+            ? `${OFFER_TYPE_LABELS[offer.type] ?? offer.type} en ${offer.city.name}. ${offer.description.slice(0, 150)}`
+            : `${OFFER_TYPE_LABELS[offer.type] ?? offer.type} en ${offer.city.name}.`,
+        }
+      : undefined,
+  )
 
   const mutation = useMutation({
     mutationFn: (body: StatusUpdate) => api.updateOfferStatus(id, body),

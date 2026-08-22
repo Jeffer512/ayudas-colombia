@@ -12,6 +12,7 @@ import {
   URGENCY_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
+import { usePageHead } from '../seo/usePageHead'
 
 const MARK_THRESHOLD = 3
 
@@ -23,6 +24,17 @@ export default function AvisoDetailPage() {
     queryKey: ['aviso', id],
     queryFn: () => api.aviso(id),
   })
+
+  usePageHead(
+    aviso
+      ? {
+          title: `${aviso.title} — Ayuda Colombia`,
+          description: aviso.description
+            ? `${AVISO_TYPE_LABELS[aviso.type] ?? aviso.type} en ${aviso.city.name}. ${aviso.description.slice(0, 150)}`
+            : `${AVISO_TYPE_LABELS[aviso.type] ?? aviso.type} en ${aviso.city.name}.`,
+        }
+      : undefined,
+  )
 
   const mutation = useMutation({
     mutationFn: () => api.markAviso(id, { markerId: api.markerId() }),

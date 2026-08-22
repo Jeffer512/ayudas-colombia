@@ -16,6 +16,7 @@ import {
   URGENCY_META,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
+import { usePageHead } from '../seo/usePageHead'
 import type { StatusUpdate } from '../lib/types'
 
 const inputClass =
@@ -35,6 +36,17 @@ export default function RequestDetailPage() {
     queryKey: ['request', id],
     queryFn: () => api.request(id),
   })
+
+  usePageHead(
+    request
+      ? {
+          title: `${request.title} — Ayuda Colombia`,
+          description: request.description
+            ? `${REQUEST_TYPE_LABELS[request.type] ?? request.type} en ${request.city.name}. ${request.description.slice(0, 150)}`
+            : `${REQUEST_TYPE_LABELS[request.type] ?? request.type} en ${request.city.name}.`,
+        }
+      : undefined,
+  )
 
   const mutation = useMutation({
     mutationFn: (body: StatusUpdate) => api.updateRequestStatus(id, body),

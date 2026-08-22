@@ -23,6 +23,7 @@ import RequestDetailPage from './pages/RequestDetailPage'
 import RequestEditPage from './pages/RequestEditPage'
 import TransportHubPage from './pages/TransportHubPage'
 import AccountPage from './pages/AccountPage'
+import SeoHead from './seo/SeoHead'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <SeoHead />
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />

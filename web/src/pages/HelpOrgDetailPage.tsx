@@ -10,6 +10,7 @@ import {
   HELP_ORG_TYPE_LABELS,
 } from '../lib/constants'
 import { formatDate } from '../lib/format'
+import { usePageHead } from '../seo/usePageHead'
 import OrgInventory from '../components/OrgInventory'
 
 export default function HelpOrgDetailPage() {
@@ -19,6 +20,15 @@ export default function HelpOrgDetailPage() {
     queryKey: ['help-org', id],
     queryFn: () => api.helpOrg(id),
   })
+
+  usePageHead(
+    orgQuery.data
+      ? {
+          title: `${orgQuery.data.name} — Ayuda Colombia`,
+          description: `${HELP_ORG_TYPE_LABELS[orgQuery.data.type] ?? orgQuery.data.type} en ${orgQuery.data.city.name}.`,
+        }
+      : undefined,
+  )
 
   const requestsQuery = useQuery({
     queryKey: ['requests', { org: id }],
