@@ -28,6 +28,7 @@ function requireSecret(
 export const env = {
   port: Number(process.env.PORT ?? 4000),
   production: isProduction,
+  webDist: process.env.WEB_DIST || '',
   trustProxy: process.env.TRUST_PROXY === 'true',
   databaseUrl:
     isTest

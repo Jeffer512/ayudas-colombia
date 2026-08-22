@@ -21,6 +21,7 @@ function get(path: string) {
 describe('Inyección de head SEO', () => {
   beforeAll(() => {
     env.production = true
+    env.webDist = FIXTURE
     loadTemplate(FIXTURE)
   })
 

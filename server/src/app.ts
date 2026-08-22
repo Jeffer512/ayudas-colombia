@@ -23,9 +23,6 @@ import { reportsRouter } from './routes/reports.js'
 import { requestsRouter } from './routes/requests.js'
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url))
-const WEB_DIST = process.env.WEB_DIST
-  ? path.resolve(process.env.WEB_DIST)
-  : path.resolve(moduleDir, '../../web/dist')
 
 export function createApp() {
   const app = express()
@@ -67,12 +64,6 @@ export function createApp() {
   app.use(express.json({ limit: '10mb' }))
   app.use(trackVisit)
 
-  const servesWeb = env.production && fs.existsSync(WEB_DIST)
-  if (servesWeb) {
-    app.use(express.static(WEB_DIST, { index: false }))
-    loadTemplate(WEB_DIST)
-  }
-
   app.use('/api/health', healthRouter)
   app.use(robotsRouter)
   app.use(sitemapRouter)
@@ -85,6 +76,16 @@ export function createApp() {
   app.use('/api/avisos', avisosRouter)
   app.use('/api/help-orgs', helpOrgsRouter)
   app.use('/api/admin', adminRouter)
+
+
+  const WEB_DIST = env.webDist
+    ? path.resolve(env.webDist)
+    : path.resolve(moduleDir, '../../web/dist')
+  const servesWeb = env.production && fs.existsSync(WEB_DIST)
+  if (servesWeb) {
+    app.use(express.static(WEB_DIST, { index: false }))
+    loadTemplate(WEB_DIST)
+  }
 
   if (servesWeb) {
     app.use(async (req, res, next) => {
