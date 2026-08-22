@@ -1,4 +1,4 @@
-export const INDEXABLE_ROUTES = ['/', '/red-de-ayudas'] as const
+export const INDEXABLE_ROUTES = ['/', '/red-de-ayudas', '/guia'] as const
 
 const NOFOLLOW_PREFIXES = [
   '/admin',
@@ -18,10 +18,16 @@ const ROUTE_TITLES: Record<string, string> = {
   '/ofrecer-ayuda': 'Ofrecer Ayuda y Donaciones — Ayuda Colombia',
   '/informar': 'Informar — Ayuda Colombia',
   '/transporte': 'Coordinación de Transporte — Ayuda Colombia',
+  '/guia': 'Guía de ayuda — Ayuda Colombia',
 }
 
 const DEFAULT_DESCRIPTION =
   'Plataforma ciudadana de coordinación de ayuda humanitaria y donaciones tras el terremoto en Colombia.'
+
+const ROUTE_DESCRIPTIONS: Record<string, string> = {
+  '/guia':
+    'Cómo solicitar ayuda, ofrecer donaciones, abrir centros de acopio y coordinar transporte tras el terremoto en Colombia.',
+}
 
 export interface RouteMeta {
   title: string
@@ -48,7 +54,7 @@ export function routeMeta(pathname: string): RouteMeta {
   const isIndex = INDEXABLE_ROUTES.includes(pathname as (typeof INDEXABLE_ROUTES)[number])
   return {
     title: ROUTE_TITLES[pathname] ?? 'Ayuda Colombia — Red de Emergencia',
-    description: DEFAULT_DESCRIPTION,
+    description: ROUTE_DESCRIPTIONS[pathname] ?? DEFAULT_DESCRIPTION,
     robots: isIndex ? 'index,follow' : robotsDirective(pathname),
     indexable: isIndex,
   }

@@ -15,7 +15,7 @@ export interface SeoMeta {
   jsonLd?: string | null
 }
 
-const INDEXABLE = new Set(['/', '/red-de-ayudas'])
+const INDEXABLE = new Set(['/', '/red-de-ayudas', '/guia'])
 
 const NOFOLLOW_PREFIXES = [
   '/admin',
@@ -30,6 +30,10 @@ const NOFOLLOW_PREFIXES = [
 
 const DEFAULT_DESCRIPTION =
   'Plataforma ciudadana de coordinación de ayuda humanitaria y donaciones tras el terremoto en Colombia.'
+
+const GUIDE_TITLE = 'Guía de ayuda — Ayuda Colombia'
+const GUIDE_DESCRIPTION =
+  'Cómo solicitar ayuda, ofrecer donaciones, abrir centros de acopio y coordinar transporte tras el terremoto en Colombia.'
 
 function robotsFor(pathname: string): string {
   if (
@@ -138,19 +142,28 @@ export async function resolveSeo(
     const title =
       pathname === '/'
         ? 'Ayuda Colombia — Coordinación y Donaciones por Terremoto'
-        : 'Red de Ayudas y Centros de Acopio — Ayuda Colombia'
+        : pathname === '/red-de-ayudas'
+          ? 'Red de Ayudas y Centros de Acopio — Ayuda Colombia'
+          : GUIDE_TITLE
+    const description =
+      pathname === '/'
+        ? DEFAULT_DESCRIPTION
+        : pathname === '/red-de-ayudas'
+          ? DEFAULT_DESCRIPTION
+          : GUIDE_DESCRIPTION
+    const jsonLd = pathname === '/' ? homeJsonLd(host) : undefined
     return {
       status: 200,
       meta: {
         title,
-        description: DEFAULT_DESCRIPTION,
+        description,
         canonical,
         robots: 'index,follow',
         ogType: 'website',
         ogTitle: title,
-        ogDescription: DEFAULT_DESCRIPTION,
+        ogDescription: description,
         ogImage,
-        jsonLd: homeJsonLd(host),
+        jsonLd,
       },
     }
   }

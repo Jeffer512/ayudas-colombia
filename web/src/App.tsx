@@ -5,6 +5,7 @@ import AdminPage from './pages/AdminPage'
 import CreateAvisoPage from './pages/CreateAvisoPage'
 import CreateOfferPage from './pages/CreateOfferPage'
 import CreateRequestPage from './pages/CreateRequestPage'
+import GuidePage from './pages/GuidePage'
 import HelpOrgDetailPage from './pages/HelpOrgDetailPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="/aviso/:id" element={<AvisoDetailPage />} />
             <Route path="/nuevo-centro" element={<NewOrgPage />} />
             <Route path="/red-de-ayudas" element={<RedDeAyudasPage />} />
+            <Route path="/guia" element={<GuidePage />} />
             <Route path="/organizacion/:id" element={<HelpOrgDetailPage />} />
             <Route path="/iniciar-sesion" element={<LoginPage />} />
             <Route path="/registro" element={<RegisterPage />} />

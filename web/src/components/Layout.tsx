@@ -264,8 +264,16 @@ export default function Layout() {
       </main>
 
       <footer className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-6 text-center text-sm text-fg-muted sm:px-6 lg:px-8">
-          Red de ayuda ciudadana
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-4 py-6 text-center text-sm text-fg-muted sm:px-6 lg:px-8">
+          <nav aria-label="Información" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <Link to="/guia" className="hover:text-fg">
+              Cómo usar?
+            </Link>
+            <Link to="/red-de-ayudas" className="hover:text-fg">
+              Red de ayudas
+            </Link>
+          </nav>
+          <span>Red de ayuda ciudadana</span>
         </div>
       </footer>
     </div>

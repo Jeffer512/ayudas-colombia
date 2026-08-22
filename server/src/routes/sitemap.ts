@@ -5,6 +5,7 @@ export const sitemapRouter = Router()
 const STATIC_URLS = [
   { path: '/', changefreq: 'hourly', priority: '1.0' },
   { path: '/red-de-ayudas', changefreq: 'daily', priority: '0.8' },
+  { path: '/guia', changefreq: 'weekly', priority: '0.6' },
 ]
 
 function escapeXml(value: string): string {

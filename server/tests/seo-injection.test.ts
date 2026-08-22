@@ -61,4 +61,12 @@ describe('Inyección de head SEO', () => {
     expect(res.status).toBe(200)
     expect(res.text).toContain('content="noindex,nofollow"')
   })
+  
+  it('la guía es indexable', async () => {
+    const res = await get('/guia')
+    expect(res.status).toBe(200)
+    expect(res.text).toContain('content="index,follow"')
+    expect(res.text).toContain('Guía de ayuda — Ayuda Colombia')
+    expect(res.text).not.toContain('content="noindex,follow"')
+  })
 })
