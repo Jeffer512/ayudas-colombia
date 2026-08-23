@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { prisma } from '../src/db.js'
 import { createRequest, createOffer, ensureCity } from './factories.js'
-import { closeStaleRequests } from '../src/services/requests.js'
 
 const app = createApp()
 
@@ -483,49 +482,6 @@ describe('POST /api/requests/:id/status · dueño de la solicitud', () => {
 
     expect(res.status).toBe(403)
     expect(res.body.error).toBe('Código de cierre incorrecto')
-  })
-})
-
-describe('cierre automático por inactividad', () => {
-  it('cierra solicitudes abiertas sin actividad por más de 3 días', async () => {
-    const stale = await createRequest({
-      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-    })
-    await closeStaleRequests()
-
-    const res = await request(app).get(`/api/requests/${stale.id}`)
-    expect(res.status).toBe(200)
-    expect(res.body.status).toBe('resolved')
-    expect(res.body.resolvedAt).not.toBeNull()
-    expect(
-      res.body.events.some(
-        (e: { note: string | null }) => e.note === 'Cerrada automáticamente por inactividad',
-      ),
-    ).toBe(true)
-  })
-
-  it('no cierra solicitudes con actividad reciente', async () => {
-    const fresh = await createRequest({
-      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    })
-    await closeStaleRequests()
-
-    const res = await request(app).get(`/api/requests/${fresh.id}`)
-    expect(res.status).toBe(200)
-    expect(res.body.status).toBe('open')
-  })
-
-  it('el cierre automático conserva el código para reabrir', async () => {
-    const stale = await createRequest({
-      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-    })
-    await closeStaleRequests()
-
-    const res = await request(app)
-      .post(`/api/requests/${stale.id}/status`)
-      .send({ status: 'open', resolveCode: '1234' })
-    expect(res.status).toBe(200)
-    expect(res.body.status).toBe('open')
   })
 })
 
@@ -1052,37 +1008,6 @@ describe('POST /api/requests/:id/help · transporte y contacto', () => {
     await request(app)
       .post(`/api/requests/${created.id}/status`)
       .send({ status: 'resolved', resolveCode: '1234' })
-
-    const after = await prisma.offer.findFirst({ where: { requestId: created.id } })
-    expect(after?.status).toBe('unavailable')
-  })
-})
-
-describe('cierre automático con ofertas vinculadas', () => {
-  it('no cierra un pedido vencido con una entrega en camino', async () => {
-    const created = await createRequest({
-      type: 'supplies_request',
-      transport: 'needs_transport',
-      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-    })
-    await createOffer({ transport: 'needs_transport', requestId: created.id, status: 'in_transit' })
-    await closeStaleRequests()
-
-    const res = await request(app).get(`/api/requests/${created.id}`)
-    expect(res.body.status).toBe('open')
-  })
-
-  it('cierra un pedido vencido y su oferta vinculada pendiente', async () => {
-    const created = await createRequest({
-      type: 'supplies_request',
-      transport: 'needs_transport',
-      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-    })
-    const offer = await createOffer({ transport: 'needs_transport', requestId: created.id })
-    await closeStaleRequests()
-
-    const res = await request(app).get(`/api/requests/${created.id}`)
-    expect(res.body.status).toBe('resolved')
 
     const after = await prisma.offer.findFirst({ where: { requestId: created.id } })
     expect(after?.status).toBe('unavailable')

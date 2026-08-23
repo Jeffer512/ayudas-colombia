@@ -28,8 +28,6 @@ const TRANSITIONS: Record<string, string[]> = {
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-const STALE_REQUEST_MS = 3 * 24 * 60 * 60 * 1000
-const AUTO_CLOSE_NOTE = 'Cerrada automáticamente por inactividad'
 const CLOSED_STATES = ['resolved', 'duplicate', 'invalid']
 
 const URGENCY_RANK: Record<string, number> = {
@@ -609,41 +607,4 @@ export async function updateRequestStatus(
   ])
 
   return getRequest(id, viewer)
-}
-
-export async function closeStaleRequests() {
-  const stale = await prisma.request.findMany({
-    where: {
-      status: 'open',
-      updatedAt: { lt: new Date(Date.now() - STALE_REQUEST_MS) },
-      linkedOffers: {
-        none: { status: 'in_transit' },
-      },
-    },
-    select: { id: true },
-  })
-
-  for (const { id } of stale) {
-    await prisma.$transaction([
-      prisma.request.update({
-        where: { id },
-        data: { status: 'resolved', resolvedAt: new Date() },
-      }),
-      prisma.requestEvent.create({
-        data: {
-          requestId: id,
-          status: 'resolved',
-          note: AUTO_CLOSE_NOTE,
-          actorName: 'Sistema',
-        },
-      }),
-      prisma.offer.updateMany({
-        where: { requestId: id, status: 'open' },
-        data: { status: 'unavailable', resolvedAt: new Date() },
-      }),
-    ])
-    console.log(`[auto-close] request ${id}`)
-  }
-
-  return stale.length
 }
