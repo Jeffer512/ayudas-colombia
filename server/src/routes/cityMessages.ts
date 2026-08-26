@@ -28,7 +28,7 @@ cityMessagesRouter.get(
   asyncHandler(async (req, res) => {
     const filters = cityMessageFiltersSchema.parse(req.query)
     res.json(
-      await listCityMessages(filters, viewerFromSession(currentSession(req))),
+      await listCityMessages(filters, viewerFromSession(await currentSession(req))),
     )
   }),
 )
@@ -58,7 +58,7 @@ cityMessagesRouter.post(
     const input = createCityMessageSchema.parse(req.body)
     const message = await createCityMessage(
       input,
-      viewerFromSession(currentSession(req)),
+      viewerFromSession(await currentSession(req)),
     )
     broadcast(input.city, { message })
     res.status(201).json({ ...message, mine: true })

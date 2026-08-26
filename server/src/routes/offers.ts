@@ -52,14 +52,14 @@ offersRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const filters = offerFiltersSchema.parse(req.query)
-    res.json(await listOffers(filters, viewerFromSession(currentSession(req))))
+    res.json(await listOffers(filters, viewerFromSession(await currentSession(req))))
   }),
 )
 
 offersRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getOffer(String(req.params.id), viewerFromSession(currentSession(req))))
+    res.json(await getOffer(String(req.params.id), viewerFromSession(await currentSession(req))))
   }),
 )
 
@@ -68,7 +68,7 @@ offersRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createOfferSchema.parse(req.body)
-    const created = await createOffer(input, viewerFromSession(currentSession(req)))
+    const created = await createOffer(input, viewerFromSession(await currentSession(req)))
     res.status(201).json(created)
   }),
 )
@@ -82,7 +82,7 @@ offersRouter.put(
       await updateOffer(
         String(req.params.id),
         input,
-        viewerFromSession(currentSession(req)),
+        viewerFromSession(await currentSession(req)),
       ),
     )
   }),
@@ -97,7 +97,7 @@ offersRouter.post(
       await verifyOfferCode(
         String(req.params.id),
         input,
-        viewerFromSession(currentSession(req)),
+        viewerFromSession(await currentSession(req)),
       ),
     )
   }),
@@ -113,7 +113,7 @@ offersRouter.post(
         String(req.params.id),
         input,
         false,
-        viewerFromSession(currentSession(req)),
+        viewerFromSession(await currentSession(req)),
       ),
     )
   }),

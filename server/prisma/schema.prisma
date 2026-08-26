@@ -21,6 +21,7 @@ model User {
   resetTokenExpiresAt  DateTime?      @map("reset_token_expires_at")
   createdAt            DateTime         @default(now()) @map("created_at")
   updatedAt            DateTime         @updatedAt @map("updated_at")
+  sessionsInvalidatedAt DateTime?        @map("sessions_invalidated_at")
 
   memberships HelpOrgStaff[]
   claims      OfferClaim[]

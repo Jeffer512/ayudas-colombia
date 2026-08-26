@@ -37,14 +37,14 @@ avisosRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const filters = avisoFiltersSchema.parse(req.query)
-    res.json(await listAvisos(filters, viewerFromSession(currentSession(req))))
+    res.json(await listAvisos(filters, viewerFromSession(await currentSession(req))))
   }),
 )
 
 avisosRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getAviso(String(req.params.id), viewerFromSession(currentSession(req))))
+    res.json(await getAviso(String(req.params.id), viewerFromSession(await currentSession(req))))
   }),
 )
 
@@ -53,7 +53,7 @@ avisosRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createAvisoSchema.parse(req.body)
-    const created = await createAviso(input, viewerFromSession(currentSession(req)))
+    const created = await createAviso(input, viewerFromSession(await currentSession(req)))
     res.status(201).json(created)
   }),
 )

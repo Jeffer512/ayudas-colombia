@@ -59,14 +59,14 @@ requestsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const filters = requestFiltersSchema.parse(req.query)
-    res.json(await listRequests(filters, viewerFromSession(currentSession(req))))
+    res.json(await listRequests(filters, viewerFromSession(await currentSession(req))))
   }),
 )
 
 requestsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await getRequest(String(req.params.id), viewerFromSession(currentSession(req))))
+    res.json(await getRequest(String(req.params.id), viewerFromSession(await currentSession(req))))
   }),
 )
 
@@ -75,7 +75,7 @@ requestsRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createRequestSchema.parse(req.body)
-    const created = await createRequest(input, viewerFromSession(currentSession(req)))
+    const created = await createRequest(input, viewerFromSession(await currentSession(req)))
     res.status(201).json(created)
   }),
 )
@@ -89,7 +89,7 @@ requestsRouter.put(
       await updateRequest(
         String(req.params.id),
         input,
-        viewerFromSession(currentSession(req)),
+        viewerFromSession(await currentSession(req)),
       ),
     )
   }),
@@ -104,7 +104,7 @@ requestsRouter.post(
       await verifyRequestCode(
         String(req.params.id),
         input,
-        viewerFromSession(currentSession(req)),
+        viewerFromSession(await currentSession(req)),
       ),
     )
   }),
@@ -120,7 +120,7 @@ requestsRouter.post(
         String(req.params.id),
         input,
         false,
-        viewerFromSession(currentSession(req)),
+        viewerFromSession(await currentSession(req)),
       ),
     )
   }),
@@ -135,7 +135,7 @@ requestsRouter.post(
       await helpRequest(
         String(req.params.id),
         input,
-        viewerFromSession(currentSession(req)),
+        viewerFromSession(await currentSession(req)),
       ),
     )
   }),

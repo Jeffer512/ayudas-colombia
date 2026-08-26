@@ -83,7 +83,7 @@ helpOrgsRouter.post(
   createLimiter,
   asyncHandler(async (req, res) => {
     const input = createHelpOrgSchema.parse(req.body)
-    const session = currentSession(req)
+    const session = await currentSession(req)
     const isAdmin = isAdminToken(
       req.header('x-admin-token'),
       process.env.ADMIN_TOKEN ?? '',

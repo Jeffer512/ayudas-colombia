@@ -348,6 +348,10 @@ export async function changePassword(userId: string, input: ChangePasswordInput)
       passwordHash,
       resetTokenHash: null,
       resetTokenExpiresAt: null,
+      // Revoke every existing session (including other devices) by marking
+      // this moment as the invalidation point. Tokens issued before it are
+      // rejected in verifyLive().
+      sessionsInvalidatedAt: new Date(),
     },
   })
   return { ok: true }
@@ -394,6 +398,8 @@ export async function resetPassword(input: ResetPasswordInput) {
       passwordHash,
       resetTokenHash: null,
       resetTokenExpiresAt: null,
+      // Invalidate all outstanding sessions (e.g. a stolen token) on reset.
+      sessionsInvalidatedAt: new Date(),
     },
   })
   return { ok: true }

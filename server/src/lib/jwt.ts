@@ -8,6 +8,7 @@ export interface SessionPayload {
   orgId: string
   role: string
   membershipId?: string
+  iat?: number
 }
 
 export function signSession(payload: SessionPayload) {
@@ -31,6 +32,9 @@ export function verifySession(token: string): SessionPayload | null {
       }
       if (typeof decoded.membershipId === 'string') {
         payload.membershipId = decoded.membershipId
+      }
+      if (typeof decoded.iat === 'number') {
+        payload.iat = decoded.iat
       }
       return payload
     }

@@ -187,7 +187,11 @@ authRouter.patch(
   requireSession,
   asyncHandler(async (req, res) => {
     const input = changePasswordSchema.parse(req.body)
-    res.json(await changePassword(req.session!.sub, input))
+    await changePassword(req.session!.sub, input)
+    // Every session is revoked (sessionsInvalidatedAt set inside
+    // changePassword), so clear this device's now-dead cookie too.
+    res.clearCookie(SESSION_COOKIE, { path: '/' })
+    res.json({ ok: true })
   }),
 )
 
@@ -199,7 +203,7 @@ authRouter.post('/logout', (_req, res) => {
 authRouter.get(
   '/me',
   asyncHandler(async (req, res) => {
-    const session = currentSession(req)
+    const session = await currentSession(req)
     if (!session) {
       res.json({ authenticated: false, name: null, email: null, staff: null })
       return
