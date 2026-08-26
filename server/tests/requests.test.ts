@@ -202,7 +202,7 @@ describe('POST /api/requests', () => {
 
     const bad = await request(app)
       .post('/api/requests')
-      .send({ ...validRequest, type: 'shelter_request', transport: 'needs_transport' })
+      .send({ ...validRequest, type: 'volunteers_request', transport: 'needs_transport' })
     expect(bad.status).toBe(400)
   })
 
@@ -585,7 +585,7 @@ describe('PUT /api/requests/:id', () => {
   })
 
   it('no permite cambiar el tipo ni la ciudad', async () => {
-    const created = await createRequest({ type: 'shelter_request' })
+    const created = await createRequest({ type: 'volunteers_request' })
     const res = await request(app)
       .put(`/api/requests/${created.id}`)
       .send({
@@ -596,12 +596,12 @@ describe('PUT /api/requests/:id', () => {
       })
 
     expect(res.status).toBe(200)
-    expect(res.body.type).toBe('shelter_request')
+    expect(res.body.type).toBe('volunteers_request')
     expect(res.body.city.code).toBe('pereira')
   })
 
   it('rechaza el transporte en pedidos que no son de suministros', async () => {
-    const created = await createRequest({ type: 'shelter_request' })
+    const created = await createRequest({ type: 'volunteers_request' })
     const res = await request(app)
       .put(`/api/requests/${created.id}`)
       .send({

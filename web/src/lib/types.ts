@@ -3,14 +3,11 @@ export type RequestType =
   | 'missing_pet'
   | 'supplies_request'
   | 'volunteers_request'
-  | 'shelter_request'
   | 'medical_request'
-  | 'transport_request'
 
 export type OfferType =
   | 'supplies_offered'
   | 'volunteers_offered'
-  | 'shelter_offered'
   | 'transport_offered'
 
 export type AvisoType = 'info'

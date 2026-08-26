@@ -18,7 +18,7 @@ type SampleEntry = {
 }
 
 type SampleOffer = {
-  type: 'supplies_offered' | 'volunteers_offered' | 'shelter_offered' | 'transport_offered'
+  type: 'supplies_offered' | 'volunteers_offered' | 'transport_offered'
   status: 'open' | 'in_transit' | 'fulfilled' | 'unavailable'
   title: string
   description: string
@@ -79,17 +79,6 @@ const sampleRequests: Record<string, SampleEntry> = {
       phone: '3100000000',
     },
   },
-  shelter_request: {
-    title: 'Familia requiere refugio tras colapso de vivienda',
-    description:
-      'Una familia de 4 personas quedó sin techo luego del colapso de su vivienda en la zona alta. Necesitan refugio temporal por varias semanas.',
-    status: 'open',
-    urgency: 'critical',
-    address: 'Zona alta, vereda El Tigre',
-    lat: 4.8401,
-    lng: -75.7302,
-    reporter: { name: 'Pedro Salazar', phone: '3105551003' },
-  },
   medical_request: {
     title: 'Se necesita enfermera para adulto mayor lesionado',
     description:
@@ -101,17 +90,6 @@ const sampleRequests: Record<string, SampleEntry> = {
     lng: -75.6904,
     reporter: { name: 'Dora Londoño', phone: '3105551004' },
   },
-  transport_request: {
-    title: 'Requieren transporte para trasladar insumos médicos',
-    description:
-      'Hay medicamentos y material sanitario en la bodega del hospital para llevar a los puestos de salud de las veredas.',
-    status: 'open',
-    urgency: 'medium',
-    address: 'Hospital San Jorge, bodega 2',
-    lat: 4.8112,
-    lng: -75.699,
-    transport: 'needs_transport',
-    reporter: { name: 'Jairo Mejía', phone: '3105551005' },
   },
 }
 
@@ -180,17 +158,6 @@ const sampleOffers: SampleOffer[] = [
       name: 'Óscar Prieto',
       phone: '3105551007',
     },
-  },
-  {
-    type: 'shelter_offered',
-    status: 'open',
-    title: 'Dispongo de casa para acoger 5 personas',
-    description:
-      'Ofrezco mi casa en las afueras para alojar hasta 5 personas por tiempo indefinido. Hay cocina, baño y espacio para dos familias.',
-    address: 'Vereda Yarumal, finca La Esperanza',
-    lat: 4.79,
-    lng: -75.66,
-    reporter: { name: 'Héctor Uribe', phone: '3105551008' },
   },
   {
     type: 'transport_offered',

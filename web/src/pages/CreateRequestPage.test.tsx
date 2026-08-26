@@ -155,7 +155,7 @@ describe('CreateRequestPage', () => {
 
     expect(screen.queryByLabelText('Transporte')).not.toBeInTheDocument()
 
-    await user.selectOptions(await screen.findByLabelText('Tipo'), 'shelter_request')
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'volunteers_request')
     expect(screen.queryByLabelText('Transporte')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Tipo'), 'supplies_request')
@@ -187,7 +187,7 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
 
     expect(screen.queryByLabelText('Qué necesitas (opcional)')).not.toBeInTheDocument()
 
-    await user.selectOptions(await screen.findByLabelText('Tipo'), 'shelter_request')
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'volunteers_request')
     expect(screen.queryByLabelText('Qué necesitas (opcional)')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Tipo'), 'supplies_request')
@@ -393,13 +393,13 @@ it('envía los ítems pedidos solo en solicitudes de suministros', async () => {
     })
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/pedir-ayuda?tipo=shelter_request']}>
+        <MemoryRouter initialEntries={['/pedir-ayuda?tipo=volunteers_request']}>
           <CreateRequestPage />
         </MemoryRouter>
       </QueryClientProvider>,
     )
 
     const typeSelect = await screen.findByLabelText('Tipo')
-    expect(typeSelect).toHaveValue('shelter_request')
+    expect(typeSelect).toHaveValue('volunteers_request')
   })
 })

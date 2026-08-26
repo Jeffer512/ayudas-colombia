@@ -290,7 +290,7 @@ export default function RequestForm({
                 ))}
               </select>
               <p className="mt-1 text-xs text-fg-muted">
-                Si marcas "Necesito transporte", quien ofrezca suministros sabrá
+                Si marcas "Necesita transporte", quien ofrezca suministros sabrá
                 que también debe poder llevarlos.
               </p>
             </div>

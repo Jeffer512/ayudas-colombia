@@ -3,16 +3,13 @@ export const REQUEST_TYPES = [
   'missing_pet',
   'supplies_request',
   'volunteers_request',
-  'shelter_request',
   'medical_request',
-  'transport_request',
 ] as const
 export type RequestType = (typeof REQUEST_TYPES)[number]
 
 export const OFFER_TYPES = [
   'supplies_offered',
   'volunteers_offered',
-  'shelter_offered',
   'transport_offered',
 ] as const
 export type OfferType = (typeof OFFER_TYPES)[number]

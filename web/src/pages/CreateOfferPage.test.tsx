@@ -103,7 +103,6 @@ describe('CreateOfferPage', () => {
 
     expect(options).toContain('Ofrezco suministros')
     expect(options).toContain('Me ofrezco como voluntario')
-    expect(options).toContain('Refugio ofrecido')
     expect(options).not.toContain('Ofrezco transporte')
     expect(options).not.toContain('Solicitud de suministros')
     expect(screen.queryByLabelText('Urgencia')).not.toBeInTheDocument()
@@ -630,7 +629,7 @@ it('envía ítems elegidos en el selector y la zona cuando puede transportar', a
     const user = userEvent.setup()
     renderPage()
 
-    await user.selectOptions(await screen.findByLabelText('Tipo'), 'shelter_offered')
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'volunteers_offered')
     expect(screen.queryByLabelText(/Zona de entrega/)).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Tipo'), 'supplies_offered')

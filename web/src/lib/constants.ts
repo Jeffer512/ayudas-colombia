@@ -5,15 +5,12 @@ export const REQUEST_TYPE_LABELS: Record<string, string> = {
   missing_pet: 'Mascota perdida',
   supplies_request: 'Solicitud de suministros',
   volunteers_request: 'Solicitud de voluntarios',
-  shelter_request: 'Necesito refugio',
   medical_request: 'Asistencia médica',
-  transport_request: 'Necesito transporte',
 }
 
 export const OFFER_TYPE_LABELS: Record<string, string> = {
   supplies_offered: 'Ofrezco suministros',
   volunteers_offered: 'Me ofrezco como voluntario',
-  shelter_offered: 'Refugio ofrecido',
   transport_offered: 'Ofrezco transporte',
 }
 

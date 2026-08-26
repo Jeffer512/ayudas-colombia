@@ -123,7 +123,7 @@ describe('POST /api/offers', () => {
 
     const bad = await request(app)
       .post('/api/offers')
-      .send({ ...validOffer, type: 'shelter_offered', transport: 'needs_transport' })
+      .send({ ...validOffer, type: 'volunteers_offered', transport: 'needs_transport' })
     expect(bad.status).toBe(400)
   })
 
@@ -364,7 +364,7 @@ describe('GET /api/offers con forTransport', () => {
   it('solo muestra ofertas de suministros que necesitan transporte y están abiertas', async () => {
     await createOffer({ transport: 'needs_transport' })
     await createOffer({ transport: 'can_transport' })
-    await createOffer({ type: 'shelter_offered' })
+    await createOffer({ type: 'volunteers_offered' })
     await createOffer({ type: 'transport_offered' })
     await createOffer({ transport: 'needs_transport', status: 'fulfilled', resolvedAt: new Date() })
 
@@ -689,7 +689,7 @@ describe('PUT /api/offers/:id', () => {
   })
 
   it('no permite cambiar el tipo ni la ciudad', async () => {
-    const created = await createOffer({ type: 'shelter_offered' })
+    const created = await createOffer({ type: 'volunteers_offered' })
     const res = await request(app)
       .put(`/api/offers/${created.id}`)
       .send({
@@ -700,7 +700,7 @@ describe('PUT /api/offers/:id', () => {
       })
 
     expect(res.status).toBe(200)
-    expect(res.body.type).toBe('shelter_offered')
+    expect(res.body.type).toBe('volunteers_offered')
     expect(res.body.city.code).toBe('pereira')
   })
 
@@ -919,7 +919,7 @@ describe('ofertas vinculadas a un pedido', () => {
 
     const notSupplies = await request(app)
       .post('/api/offers')
-      .send({ ...validOffer, type: 'shelter_offered', destinationOrgId: org.id })
+      .send({ ...validOffer, type: 'volunteers_offered', destinationOrgId: org.id })
     expect(notSupplies.status).toBe(400)
   })
 
