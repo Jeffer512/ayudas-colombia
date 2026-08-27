@@ -24,6 +24,7 @@ vi.mock('../api/client', () => ({
     helpOrgs: vi.fn(),
     joinOrg: vi.fn(),
     updateHelpOrg: vi.fn(),
+    updateHelpOrgStatus: vi.fn(),
     logout: vi.fn(),
   },
 }))
@@ -42,6 +43,7 @@ const mockedRejectOrgMember = vi.mocked(api.rejectOrgMember)
 const mockedHelpOrgs = vi.mocked(api.helpOrgs)
 const mockedJoinOrg = vi.mocked(api.joinOrg)
 const mockedUpdateHelpOrg = vi.mocked(api.updateHelpOrg)
+const mockedUpdateHelpOrgStatus = vi.mocked(api.updateHelpOrgStatus)
 
 const staff: Staff = {
   id: 's1',
@@ -117,6 +119,7 @@ beforeEach(() => {
   mockedJoinOrg.mockReset()
 
   mockedUpdateHelpOrg.mockReset()
+  mockedUpdateHelpOrgStatus.mockReset()
 
   mockedMe.mockResolvedValue({
     authenticated: true,
@@ -231,6 +234,63 @@ describe('MyOrgPage — datos de la organización', () => {
     expect(
       screen.getByText('Publicar un pedido de la organización'),
     ).toBeInTheDocument()
+  })
+})
+
+describe('MyOrgPage — estado de la organización', () => {
+  it('permite al manager cerrar la organización', async () => {
+    renderPage()
+
+    expect(
+      await screen.findByText('Estado de la organización'),
+    ).toBeInTheDocument()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Cerrar organización' }),
+    )
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Confirmar cierre/ }),
+    )
+
+    await waitFor(() =>
+      expect(mockedUpdateHelpOrgStatus).toHaveBeenCalledWith('o1', {
+        status: 'closed',
+      }),
+    )
+  })
+
+  it('permite al manager reabrir la organización cerrada', async () => {
+    mockedHelpOrg.mockResolvedValue({ ...org, status: 'closed' })
+    renderPage()
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Reabrir organización' }),
+    )
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Confirmar apertura/ }),
+    )
+
+    await waitFor(() =>
+      expect(mockedUpdateHelpOrgStatus).toHaveBeenCalledWith('o1', {
+        status: 'open',
+      }),
+    )
+  })
+
+  it('no muestra el control de estado para un miembro', async () => {
+    mockedMe.mockResolvedValue({
+      authenticated: true,
+      name: staff.name,
+      email: staff.email,
+      staff: { ...staff, role: 'member' },
+      emailVerified: true,
+      pendingOrgId: null,
+    })
+    renderPage()
+    await screen.findByText('Mi organización')
+
+    expect(
+      screen.queryByText('Estado de la organización'),
+    ).not.toBeInTheDocument()
   })
 })
 

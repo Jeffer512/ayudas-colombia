@@ -9,6 +9,7 @@ import type {
   HelpOrgItem,
   HelpOrgItemInput,
   HelpOrgListResponse,
+  HelpOrgStatus,
   JoinedOrgMembership,
   Aviso,
   AvisoFilters,
@@ -246,6 +247,16 @@ export const api = {
 
   updateHelpOrg(id: string, body: UpdateOrgProfile): Promise<HelpOrg> {
     return http(`/help-orgs/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+  },
+
+  updateHelpOrgStatus(
+    id: string,
+    body: { status: HelpOrgStatus; note?: string },
+  ): Promise<HelpOrg> {
+    return http(`/help-orgs/${id}/status`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
   },
 
   joinOrg(orgId: string): Promise<{ membership: JoinedOrgMembership }> {

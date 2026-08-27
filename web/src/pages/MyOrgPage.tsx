@@ -18,6 +18,7 @@ import type {
   HelpOrgCategory,
   HelpOrgItem,
   HelpOrgItemKind,
+  HelpOrgStatus,
   RequestType,
   UpdateOrgProfile,
   Urgency,
@@ -110,6 +111,18 @@ export default function MyOrgPage() {
       queryClient.invalidateQueries({ queryKey: ['members', staff?.orgId] })
     },
     onError: (err: Error) => setMemberError(err.message),
+  })
+
+  const [confirmingAction, setConfirmingAction] = useState<HelpOrgStatus | null>(null)
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: (status: HelpOrgStatus) =>
+      api.updateHelpOrgStatus(staff!.orgId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['help-org', staff?.orgId] })
+      setConfirmingAction(null)
+    },
+    onError: () => setConfirmingAction(null),
   })
 
   const [profile, setProfile] = useState<ProfileDraft | null>(null)
@@ -372,6 +385,54 @@ export default function MyOrgPage() {
       {org && staff.role === 'manager' && (
         <section className="mt-4 rounded-lg border border-border bg-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-fg-muted">
+              Estado de la organización
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-fg-muted">
+                {org.status === 'open' ? 'Abierta' : 'Cerrada'}
+              </span>
+              {confirmingAction ? (
+                <>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={toggleStatusMutation.isPending}
+                    onClick={() => {
+                      toggleStatusMutation.mutate(confirmingAction)
+                      setConfirmingAction(null)
+                    }}
+                  >
+                    Confirmar {confirmingAction === 'closed' ? 'cierre' : 'apertura'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfirmingAction(null)}
+                  >
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setConfirmingAction(org.status === 'open' ? 'closed' : 'open')
+                  }
+                >
+                  {org.status === 'open' ? 'Cerrar organización' : 'Reabrir organización'}
+                </Button>
+              )}
+            </div>
+          </div>
+          {toggleStatusMutation.isError && (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              No se pudo cambiar el estado de la organización.
+            </p>
+          )}
+          <div className="mt-4 border-t border-border" />
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-4">
             <h2 className="text-sm font-semibold text-fg-muted">
               Datos de la organización
             </h2>
