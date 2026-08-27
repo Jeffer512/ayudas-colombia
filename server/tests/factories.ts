@@ -113,7 +113,6 @@ export async function createHelpOrg(
       lat: 4.8133,
       lng: -75.6961,
       cityId: city.id,
-      resolveCode: '1234',
       ...data,
     },
     include: { city: true },

@@ -84,7 +84,6 @@ describe('/api/help-orgs', () => {
       status: 'open',
     })
     expect(res.body.lat).toBe(4.8133)
-    expect(res.body.resolveCode).toMatch(/^\d{4}$/)
   })
 
   it('crea una organización tipo oficial cuando se envía el token de administrador', async () => {
@@ -260,21 +259,25 @@ describe('POST /api/help-orgs/:id/status', () => {
     await prisma.helpOrg.deleteMany()
   })
 
-  it('cierra una organización con el código del creador', async () => {
+  it('permite al manager cerrar la organización', async () => {
     const org = await createHelpOrg()
-    const res = await request(app)
+    const manager = await joinStaff(org.id)
+
+    const res = await manager
       .post(`/api/help-orgs/${org.id}/status`)
-      .send({ status: 'closed', resolveCode: '1234', note: 'Cierre temporal' })
+      .send({ status: 'closed', note: 'Cierre temporal' })
 
     expect(res.status).toBe(200)
     expect(res.body.status).toBe('closed')
   })
 
-  it('rechaza cerrar con código incorrecto', async () => {
+  it('rechaza el cierre a un usuario que no es manager (403)', async () => {
     const org = await createHelpOrg()
-    const res = await request(app)
+    const stranger = await citizenAgent('stranger@correo.org', 'Stranger')
+
+    const res = await stranger
       .post(`/api/help-orgs/${org.id}/status`)
-      .send({ status: 'closed', resolveCode: '9999' })
+      .send({ status: 'closed' })
 
     expect(res.status).toBe(403)
   })
@@ -282,6 +285,7 @@ describe('POST /api/help-orgs/:id/status', () => {
   it('admite que el administrador cierre cualquier organización', async () => {
     const org = await createHelpOrg()
     process.env.ADMIN_TOKEN = 'test-admin-token'
+
     const res = await request(app)
       .post(`/api/help-orgs/${org.id}/status`)
       .set('x-admin-token', 'test-admin-token')
@@ -291,11 +295,13 @@ describe('POST /api/help-orgs/:id/status', () => {
     expect(res.body.status).toBe('closed')
   })
 
-  it('reabre una organización cerrada', async () => {
+  it('permite al manager reabrir una organización cerrada', async () => {
     const org = await createHelpOrg({ status: 'closed' })
-    const res = await request(app)
+    const manager = await joinStaff(org.id)
+
+    const res = await manager
       .post(`/api/help-orgs/${org.id}/status`)
-      .send({ status: 'open', resolveCode: '1234' })
+      .send({ status: 'open' })
 
     expect(res.status).toBe(200)
     expect(res.body.status).toBe('open')

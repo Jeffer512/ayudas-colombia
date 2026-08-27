@@ -128,13 +128,10 @@ helpOrgsRouter.post(
 
 helpOrgsRouter.post(
   '/:id/status',
+  requireOrgManagerOrAdmin('id'),
   asyncHandler(async (req, res) => {
     const input = updateHelpOrgStatusSchema.parse(req.body)
-    const isAdmin = isAdminToken(
-      req.header('x-admin-token'),
-      process.env.ADMIN_TOKEN ?? '',
-    )
-    res.json(await updateHelpOrgStatus(String(req.params.id), input, isAdmin))
+    res.json(await updateHelpOrgStatus(String(req.params.id), input))
   }),
 )
 

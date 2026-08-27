@@ -417,7 +417,7 @@ async function main() {
 
   for (const org of sampleOrgs) {
     const created = await prisma.helpOrg.create({
-      data: { ...org, cityId: city.id, resolveCode: '1234' },
+      data: { ...org, cityId: city.id },
     })
     console.log(
       `Red de ayudas (${created.category}/${created.type}/${created.status}): ${created.name}`,

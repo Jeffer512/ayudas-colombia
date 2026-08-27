@@ -47,7 +47,6 @@ export type HelpOrgFilters = z.infer<typeof helpOrgFiltersSchema>
 
 export const updateHelpOrgStatusSchema = z.object({
   status: z.enum(['open', 'closed']),
-  resolveCode: z.string().trim().min(4).max(6).optional(),
   note: z.string().trim().max(2000).optional(),
 })
 

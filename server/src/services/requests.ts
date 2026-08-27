@@ -11,6 +11,7 @@ import type {
 } from '../validators/request.js'
 import type { Viewer } from '../lib/viewer.js'
 import { canSeeContact, isOwner } from '../lib/viewer.js'
+import { generateResolveCode } from '../lib/verification.js'
 
 type SerializedRequest = Request & {
   city: City
@@ -42,10 +43,6 @@ function byUrgencyThenNewest(a: Request, b: Request): number {
   const rankB = URGENCY_RANK[b.urgency] ?? 4
   if (rankA !== rankB) return rankA - rankB
   return b.createdAt.getTime() - a.createdAt.getTime()
-}
-
-function generateResolveCode(): string {
-  return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
 
 export function serializeRequest(

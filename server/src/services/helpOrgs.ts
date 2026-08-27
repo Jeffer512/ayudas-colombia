@@ -4,6 +4,7 @@ import type { HelpOrgCategory } from '../constants.js'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import { serializeStaff } from './auth.js'
+import { generateResolveCode } from '../lib/verification.js'
 import type {
   CreateHelpOrgInput,
   CreateOrgRequestInput,
@@ -19,10 +20,6 @@ type HelpOrgItemWithUpdater = HelpOrgItem & {
 }
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-function generateResolveCode(): string {
-  return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
-}
 
 export function serializeHelpOrg(org: HelpOrgWithCity, managed = false) {
   return {
@@ -141,7 +138,6 @@ export async function createHelpOrg(
       contactPhone: input.contactPhone ?? null,
       hours: input.hours ?? null,
       accepts: input.accepts ?? null,
-      resolveCode: generateResolveCode(),
     },
     include: { city: true },
   })
@@ -170,7 +166,6 @@ export async function createHelpOrg(
 
   return {
     ...serializeHelpOrg(org, membership !== null),
-    resolveCode: org.resolveCode,
     membership,
   }
 }
@@ -213,7 +208,6 @@ export async function joinHelpOrg(orgId: string, userId: string) {
 export async function updateHelpOrgStatus(
   id: string,
   input: UpdateHelpOrgStatusInput,
-  isAdmin = false,
 ) {
   if (!isUuid.test(id)) throw new ApiError(404, 'Organización no encontrada')
 
@@ -225,11 +219,6 @@ export async function updateHelpOrgStatus(
 
   if (org.status === input.status) {
     return serializeHelpOrg(org, (await managedOrgIds([org.id])).has(org.id))
-  }
-
-  const code = (input.resolveCode ?? '').trim()
-  if (!isAdmin && (!org.resolveCode || code !== org.resolveCode)) {
-    throw new ApiError(403, 'Código de cierre incorrecto')
   }
 
   const updated = await prisma.helpOrg.update({

@@ -16,6 +16,7 @@ import {
   offerVisibleToAudience,
 } from '../lib/viewer.js'
 import type { ContactVisibility, OfferAudience } from '../constants.js'
+import { generateResolveCode } from '../lib/verification.js'
 
 type ClaimWithUser = OfferClaim & { claimer: { name: string } | null }
 
@@ -48,10 +49,6 @@ const OFFER_TRANSITIONS: Record<string, string[]> = {
 }
 
 const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-function generateResolveCode(): string {
-  return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
-}
 
 export function serializeOffer(offer: SerializedOffer, viewer?: Viewer) {
   const activeClaim = (offer.claims ?? []).find((c) => c.status === 'committed')
