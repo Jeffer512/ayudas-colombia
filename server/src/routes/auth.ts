@@ -98,6 +98,14 @@ const passwordChangeLimiter = rateLimit({
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: env.production ? 10 : 10_000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos de inicio de sesión, intenta más tarde' },
+})
+
 authRouter.post(
   '/register',
   registerLimiter,
@@ -128,6 +136,7 @@ authRouter.post(
 
 authRouter.post(
   '/login',
+  loginLimiter,
   asyncHandler(async (req, res) => {
     const input = loginSchema.parse(req.body)
     const { user, membership, staff } = await loginUser(input)
