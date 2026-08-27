@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
 import { prisma } from '../db.js'
 import { colombiaDayKey, colombiaNow } from '../lib/colombiaTime.js'
+import { getClientIp } from '../lib/clientIp.js'
 
 const VISITOR_HEADER = 'x-visitor-id'
 
@@ -28,7 +29,7 @@ export function trackVisit(req: Request, _res: Response, next: NextFunction) {
   }
   const visitorId = req.header(VISITOR_HEADER)
   if (visitorId) {
-    record(visitorId, req.ip)
+    record(visitorId, getClientIp(req))
   }
   next()
 }
