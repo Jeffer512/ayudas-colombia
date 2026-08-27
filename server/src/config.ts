@@ -29,7 +29,10 @@ export const env = {
   port: Number(process.env.PORT ?? 4000),
   production: isProduction,
   webDist: process.env.WEB_DIST || '',
-  trustProxy: process.env.TRUST_PROXY === 'true',
+  trustProxy: (() => {
+    const tp = process.env.TRUST_PROXY?.trim()
+    return tp && tp !== 'false' ? (/^\d+$/.test(tp) ? Number(tp) : tp) : false
+  })(),
   databaseUrl:
     isTest
       ? process.env.DATABASE_URL_TEST ??
