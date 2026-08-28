@@ -204,13 +204,6 @@ export default function Layout() {
           </div>
           <nav aria-label="Principal móvil" className="flex-1 space-y-1 overflow-y-auto p-4">
             {drawerLinks}
-            <NavLink
-              to="/mi-organizacion"
-              onClick={() => setMenuOpen(false)}
-              className={navLinkClass}
-            >
-              Mi organización
-            </NavLink>
             {authenticated ? (
               <div className="mt-4 space-y-1 border-t border-border pt-4">
                 <NavLink
