@@ -91,7 +91,6 @@ const sampleRequests: Record<string, SampleEntry> = {
     lng: -75.6904,
     reporter: { name: 'Dora Londoño', phone: '3105551004' },
   },
-  },
 }
 
 const sampleOffers: SampleOffer[] = [
