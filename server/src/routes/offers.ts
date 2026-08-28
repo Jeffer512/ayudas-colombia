@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
-import { asyncHandler } from '../middleware/asyncHandler.js'
+
 import { currentSession, requireSession } from '../middleware/requireSession.js'
 import { viewerFromSession } from '../lib/viewer.js'
 import {
@@ -50,33 +50,33 @@ export const offersRouter = Router()
 
 offersRouter.get(
   '/',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const filters = offerFiltersSchema.parse(req.query)
     res.json(await listOffers(filters, viewerFromSession(await currentSession(req))))
-  }),
+  },
 )
 
 offersRouter.get(
   '/:id',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(await getOffer(String(req.params.id), viewerFromSession(await currentSession(req))))
-  }),
+  },
 )
 
 offersRouter.post(
   '/',
   createLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = createOfferSchema.parse(req.body)
     const created = await createOffer(input, viewerFromSession(await currentSession(req)))
     res.status(201).json(created)
-  }),
+  },
 )
 
 offersRouter.put(
   '/:id',
   editLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = updateOfferSchema.parse(req.body)
     res.json(
       await updateOffer(
@@ -85,13 +85,13 @@ offersRouter.put(
         viewerFromSession(await currentSession(req)),
       ),
     )
-  }),
+  },
 )
 
 offersRouter.post(
   '/:id/verify-code',
   editLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = verifyResolveCodeSchema.parse(req.body)
     res.json(
       await verifyOfferCode(
@@ -100,13 +100,13 @@ offersRouter.post(
         viewerFromSession(await currentSession(req)),
       ),
     )
-  }),
+  },
 )
 
 offersRouter.post(
   '/:id/status',
   statusLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = updateOfferStatusSchema.parse(req.body)
     res.json(
       await updateOfferStatus(
@@ -116,13 +116,13 @@ offersRouter.post(
         viewerFromSession(await currentSession(req)),
       ),
     )
-  }),
+  },
 )
 
 offersRouter.post(
   '/:id/claim',
   requireSession,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = claimSchema.parse(req.body ?? {})
     const offer = await claimOffer(
       String(req.params.id),
@@ -130,14 +130,14 @@ offersRouter.post(
       input,
     )
     res.json(offer)
-  }),
+  },
 )
 
 offersRouter.delete(
   '/:id/claim',
   requireSession,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const offer = await cancelClaim(String(req.params.id), viewerFromSession(req.session))
     res.json(offer)
-  }),
+  },
 )

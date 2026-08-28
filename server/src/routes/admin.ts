@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
 import { OFFER_STATUSES, REQUEST_STATUSES } from '../constants.js'
 import { prisma } from '../db.js'
-import { asyncHandler } from '../middleware/asyncHandler.js'
+
 import { requireAdmin } from '../middleware/requireAdmin.js'
 import { setAvisoStatus } from '../services/avisos.js'
 import { hideCityMessage } from '../services/cityMessages.js'
@@ -44,55 +44,55 @@ adminRouter.use(adminLimiter)
 
 adminRouter.post(
   '/requests/:id/status',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = statusSchema.parse(req.body)
     const updated = await updateRequestStatus(String(req.params.id), input, true)
     res.json(updated)
-  }),
+  },
 )
 
 adminRouter.post(
   '/offers/:id/status',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = offerStatusSchema.parse(req.body)
     const updated = await updateOfferStatus(String(req.params.id), input, true)
     res.json(updated)
-  }),
+  },
 )
 
 adminRouter.post(
   '/avisos/:id/status',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = avisoStatusSchema.parse(req.body)
     res.json(await setAvisoStatus(String(req.params.id), input.status))
-  }),
+  },
 )
 
 adminRouter.get(
   '/reports',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const filters = reportFiltersSchema.parse(req.query)
     res.json(await listReports(filters))
-  }),
+  },
 )
 
 adminRouter.post(
   '/reports/:id/review',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(await reviewReport(String(req.params.id)))
-  }),
+  },
 )
 
 adminRouter.delete(
   '/city-messages/:id',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(await hideCityMessage(String(req.params.id)))
-  }),
+  },
 )
 
 adminRouter.get(
   '/analytics',
-  asyncHandler(async (_req, res) => {
+  async (_req, res) => {
     const rows = await prisma.$queryRaw<{ day: Date; visitors: bigint }[]>`
       SELECT (created_at AT TIME ZONE 'America/Bogota')::date AS day,
         COUNT(DISTINCT visitor_id) AS visitors
@@ -128,5 +128,5 @@ adminRouter.get(
       last7: Number(ranges?.last7 ?? 0),
       last30: Number(ranges?.last30 ?? 0),
     })
-  }),
+  },
 )

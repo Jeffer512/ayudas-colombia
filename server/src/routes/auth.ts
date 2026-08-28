@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { env } from '../config.js'
-import { asyncHandler } from '../middleware/asyncHandler.js'
+
 import {
   currentSession,
   requireSession,
@@ -119,35 +119,35 @@ const loginLimiter = rateLimit({
 authRouter.post(
   '/register',
   registerLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = registerSchema.parse(req.body)
     const result = await registerUser(input)
     res.status(201).json(result)
-  }),
+  },
 )
 
 authRouter.post(
   '/verify-email',
   verifyLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = verifyEmailSchema.parse(req.body)
     res.json(await verifyEmail(input))
-  }),
+  },
 )
 
 authRouter.post(
   '/resend-verification',
   resendLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = resendVerificationSchema.parse(req.body)
     res.json(await resendVerification(input))
-  }),
+  },
 )
 
 authRouter.post(
   '/login',
   loginLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = loginSchema.parse(req.body)
     const { user, membership, staff } = await loginUser(input)
     setSessionCookie(res, {
@@ -157,61 +157,61 @@ authRouter.post(
       membershipId: membership?.id,
     })
     res.json({ staff })
-  }),
+  },
 )
 
 authRouter.post(
   '/forgot-password',
   forgotPasswordLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = forgotPasswordSchema.parse(req.body)
     res.json(await requestPasswordReset(input))
-  }),
+  },
 )
 
 authRouter.post(
   '/reset-password',
   resetPasswordLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = resetPasswordSchema.parse(req.body)
     res.json(await resetPassword(input))
-  }),
+  },
 )
 
 authRouter.patch(
   '/account',
   accountUpdateLimiter,
   requireSession,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = updateAccountSchema.parse(req.body)
     res.json(await updateAccount(req.session!.sub, input))
-  }),
+  },
 )
 
 authRouter.delete(
   '/account',
   accountDeleteLimiter,
   requireSession,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = deleteAccountSchema.parse(req.body)
     await deleteAccount(req.session!.sub, input)
     res.clearCookie(SESSION_COOKIE, { path: '/' })
     res.json({ ok: true })
-  }),
+  },
 )
 
 authRouter.patch(
   '/password',
   passwordChangeLimiter,
   requireSession,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = changePasswordSchema.parse(req.body)
     await changePassword(req.session!.sub, input)
     // Every session is revoked (sessionsInvalidatedAt set inside
     // changePassword), so clear this device's now-dead cookie too.
     res.clearCookie(SESSION_COOKIE, { path: '/' })
     res.json({ ok: true })
-  }),
+  },
 )
 
 authRouter.post('/logout', (_req, res) => {
@@ -221,7 +221,7 @@ authRouter.post('/logout', (_req, res) => {
 
 authRouter.get(
   '/me',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const session = await currentSession(req)
     if (!session) {
       res.json({ authenticated: false, name: null, email: null, staff: null })
@@ -241,5 +241,5 @@ authRouter.get(
       emailVerified: sessionUser.emailVerified,
       pendingOrgId: sessionUser.pendingOrgId,
     })
-  }),
+  },
 )

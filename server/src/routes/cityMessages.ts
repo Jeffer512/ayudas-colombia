@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
-import { asyncHandler } from '../middleware/asyncHandler.js'
+
 import { currentSession } from '../middleware/requireSession.js'
 import { viewerFromSession } from '../lib/viewer.js'
 import { broadcast, subscribe } from '../lib/streams.js'
@@ -25,17 +25,17 @@ export const cityMessagesRouter = Router()
 
 cityMessagesRouter.get(
   '/',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const filters = cityMessageFiltersSchema.parse(req.query)
     res.json(
       await listCityMessages(filters, viewerFromSession(await currentSession(req))),
     )
-  }),
+  },
 )
 
 cityMessagesRouter.get(
   '/:city/events',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const city = String(req.params.city)
     res.status(200).set({
       'Content-Type': 'text/event-stream',
@@ -48,13 +48,13 @@ cityMessagesRouter.get(
     res.write(': conectado\n\n')
     const heartbeat = setInterval(() => res.write(': ping\n\n'), 25_000)
     req.on('close', () => clearInterval(heartbeat))
-  }),
+  },
 )
 
 cityMessagesRouter.post(
   '/',
   createLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = createCityMessageSchema.parse(req.body)
     const message = await createCityMessage(
       input,
@@ -62,5 +62,5 @@ cityMessagesRouter.post(
     )
     broadcast(input.city, { message })
     res.status(201).json({ ...message, mine: true })
-  }),
+  },
 )

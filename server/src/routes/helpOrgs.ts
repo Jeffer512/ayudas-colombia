@@ -2,7 +2,7 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import type { NextFunction, Request, Response } from 'express'
 import { isAdminToken } from '../lib/admin.js'
-import { asyncHandler } from '../middleware/asyncHandler.js'
+
 import {
   currentSession,
   requireOrgStaff,
@@ -56,32 +56,32 @@ function requireOrgManagerOrAdmin(orgIdParam: string) {
 
 helpOrgsRouter.get(
   '/',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const filters = helpOrgFiltersSchema.parse(req.query)
     res.json(await listHelpOrgs(filters))
-  }),
+  },
 )
 
 helpOrgsRouter.get(
   '/:id',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(await getHelpOrg(String(req.params.id)))
-  }),
+  },
 )
 
 helpOrgsRouter.put(
   '/:id',
   requireOrgManagerOrAdmin('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = updateHelpOrgSchema.parse(req.body)
     res.json(await updateHelpOrg(String(req.params.id), input))
-  }),
+  },
 )
 
 helpOrgsRouter.post(
   '/',
   createLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = createHelpOrgSchema.parse(req.body)
     const session = await currentSession(req)
     const isAdmin = isAdminToken(
@@ -103,13 +103,13 @@ helpOrgsRouter.post(
     }
     const { membership: _membership, ...body } = created
     res.status(201).json(body)
-  }),
+  },
 )
 
 helpOrgsRouter.post(
   '/:id/join',
   requireSession,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const result = await joinHelpOrg(
       String(req.params.id),
       req.session!.sub,
@@ -123,43 +123,43 @@ helpOrgsRouter.post(
       })
     }
     res.status(201).json({ membership: result.membership })
-  }),
+  },
 )
 
 helpOrgsRouter.post(
   '/:id/status',
   requireOrgManagerOrAdmin('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = updateHelpOrgStatusSchema.parse(req.body)
     res.json(await updateHelpOrgStatus(String(req.params.id), input))
-  }),
+  },
 )
 
 helpOrgsRouter.get(
   '/:id/members',
   requireOrgStaff('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json({ members: await listMembers(String(req.params.id)) })
-  }),
+  },
 )
 
 helpOrgsRouter.post(
   '/:id/members/:memberId/approve',
   requireOrgStaff('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const member = await approveMember(
       String(req.params.id),
       String(req.params.memberId),
       req.session!.role,
     )
     res.json({ member })
-  }),
+  },
 )
 
 helpOrgsRouter.post(
   '/:id/members/:memberId/reject',
   requireOrgStaff('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(
       await rejectMember(
         String(req.params.id),
@@ -167,29 +167,29 @@ helpOrgsRouter.post(
         req.session!.role,
       ),
     )
-  }),
+  },
 )
 
 helpOrgsRouter.post(
   '/:id/requests',
   requireOrgStaff('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = createOrgRequestSchema.parse(req.body)
     res.status(201).json(await createOrgRequest(String(req.params.id), input))
-  }),
+  },
 )
 
 helpOrgsRouter.get(
   '/:id/items',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json({ items: await listOrgItems(String(req.params.id)) })
-  }),
+  },
 )
 
 helpOrgsRouter.post(
   '/:id/items',
   requireOrgStaff('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = upsertHelpOrgItemSchema.parse(req.body)
     const item = await createOrgItem(
       String(req.params.id),
@@ -197,13 +197,13 @@ helpOrgsRouter.post(
       req.session!.membershipId!,
     )
     res.status(201).json({ item })
-  }),
+  },
 )
 
 helpOrgsRouter.put(
   '/:id/items/:itemId',
   requireOrgStaff('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = upsertHelpOrgItemSchema.parse(req.body)
     const item = await updateOrgItem(
       String(req.params.id),
@@ -212,18 +212,18 @@ helpOrgsRouter.put(
       req.session!.membershipId!,
     )
     res.json({ item })
-  }),
+  },
 )
 
 helpOrgsRouter.delete(
   '/:id/items/:itemId',
   requireOrgStaff('id'),
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(
       await deleteOrgItem(
         String(req.params.id),
         String(req.params.itemId),
       ),
     )
-  }),
+  },
 )

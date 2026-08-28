@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
-import { asyncHandler } from '../middleware/asyncHandler.js'
+
 import { currentSession } from '../middleware/requireSession.js'
 import { viewerFromSession } from '../lib/viewer.js'
 import {
@@ -57,33 +57,33 @@ export const requestsRouter = Router()
 
 requestsRouter.get(
   '/',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const filters = requestFiltersSchema.parse(req.query)
     res.json(await listRequests(filters, viewerFromSession(await currentSession(req))))
-  }),
+  },
 )
 
 requestsRouter.get(
   '/:id',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(await getRequest(String(req.params.id), viewerFromSession(await currentSession(req))))
-  }),
+  },
 )
 
 requestsRouter.post(
   '/',
   createLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = createRequestSchema.parse(req.body)
     const created = await createRequest(input, viewerFromSession(await currentSession(req)))
     res.status(201).json(created)
-  }),
+  },
 )
 
 requestsRouter.put(
   '/:id',
   editLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = updateRequestSchema.parse(req.body)
     res.json(
       await updateRequest(
@@ -92,13 +92,13 @@ requestsRouter.put(
         viewerFromSession(await currentSession(req)),
       ),
     )
-  }),
+  },
 )
 
 requestsRouter.post(
   '/:id/verify-code',
   editLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = verifyResolveCodeSchema.parse(req.body)
     res.json(
       await verifyRequestCode(
@@ -107,13 +107,13 @@ requestsRouter.post(
         viewerFromSession(await currentSession(req)),
       ),
     )
-  }),
+  },
 )
 
 requestsRouter.post(
   '/:id/status',
   statusLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = updateRequestStatusSchema.parse(req.body)
     res.json(
       await updateRequestStatus(
@@ -123,13 +123,13 @@ requestsRouter.post(
         viewerFromSession(await currentSession(req)),
       ),
     )
-  }),
+  },
 )
 
 requestsRouter.post(
   '/:id/help',
   helpLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = helpRequestSchema.parse(req.body)
     res.json(
       await helpRequest(
@@ -138,5 +138,5 @@ requestsRouter.post(
         viewerFromSession(await currentSession(req)),
       ),
     )
-  }),
+  },
 )

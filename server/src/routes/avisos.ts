@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
-import { asyncHandler } from '../middleware/asyncHandler.js'
+
 import { currentSession } from '../middleware/requireSession.js'
 import { viewerFromSession } from '../lib/viewer.js'
 import {
@@ -35,34 +35,34 @@ export const avisosRouter = Router()
 
 avisosRouter.get(
   '/',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const filters = avisoFiltersSchema.parse(req.query)
     res.json(await listAvisos(filters, viewerFromSession(await currentSession(req))))
-  }),
+  },
 )
 
 avisosRouter.get(
   '/:id',
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     res.json(await getAviso(String(req.params.id), viewerFromSession(await currentSession(req))))
-  }),
+  },
 )
 
 avisosRouter.post(
   '/',
   createLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const input = createAvisoSchema.parse(req.body)
     const created = await createAviso(input, viewerFromSession(await currentSession(req)))
     res.status(201).json(created)
-  }),
+  },
 )
 
 avisosRouter.post(
   '/:id/mark',
   markLimiter,
-  asyncHandler(async (req, res) => {
+  async (req, res) => {
     const { markerId } = avisoMarkSchema.parse(req.body)
     res.json(await markAviso(String(req.params.id), markerId))
-  }),
+  },
 )
