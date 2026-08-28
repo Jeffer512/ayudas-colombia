@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { cities } from './cities.js'
+import { hashResolveCode } from '../src/lib/verification.js'
 
 const prisma = new PrismaClient()
 
@@ -366,7 +367,7 @@ async function main() {
         lng: sample.lng,
         cityId: city.id,
         reporterId: reporter.id,
-        resolveCode: '1234',
+        resolveCode: await hashResolveCode('1234'),
         resolvedAt: sample.status === 'resolved' ? new Date() : null,
         events: { create: eventsFor('request', sample.status, sample.reporter.name) },
       },
@@ -388,7 +389,7 @@ async function main() {
         lng: sample.lng,
         cityId: city.id,
         reporterId: reporter.id,
-        resolveCode: '1234',
+        resolveCode: await hashResolveCode('1234'),
         resolvedAt: sample.status === 'fulfilled' ? new Date() : null,
       },
     })

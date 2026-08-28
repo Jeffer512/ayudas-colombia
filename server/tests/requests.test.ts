@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { prisma } from '../src/db.js'
 import { createRequest, createOffer, ensureCity } from './factories.js'
+import { verifyResolveCode } from '../src/lib/verification.js'
 
 const app = createApp()
 
@@ -187,7 +188,7 @@ describe('POST /api/requests', () => {
     expect(res.body.resolveCode).toMatch(/^\d{4}$/)
 
     const stored = await prisma.request.findUnique({ where: { id: res.body.id } })
-    expect(stored?.resolveCode).toBe(res.body.resolveCode)
+    expect(await verifyResolveCode(res.body.resolveCode, stored?.resolveCode ?? '')).toBe(true)
 
     const detail = await request(app).get(`/api/requests/${res.body.id}`)
     expect(detail.body.resolveCode).toBeUndefined()

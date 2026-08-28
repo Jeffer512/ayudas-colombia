@@ -7,6 +7,7 @@ import type {
   ReporterUncheckedCreateInput,
 } from '@prisma/client'
 import { prisma } from '../src/db.js'
+import { hashResolveCode } from '../src/lib/verification.js'
 
 export async function ensureCity() {
   const existing = await prisma.city.findUnique({ where: { code: 'pereira' } })
@@ -49,7 +50,7 @@ export async function createRequest(
       description: 'Se requiere ayuda para mover escombros en la calle 12.',
       cityId: city.id,
       reporterId: reporter.id,
-      resolveCode: '1234',
+      resolveCode: await hashResolveCode('1234'),
       ...requestData,
       events: {
         create: {
@@ -76,7 +77,7 @@ export async function createOffer(
       description: 'Tengo agua y comida para entregar a las familias afectadas.',
       cityId: city.id,
       reporterId: reporter.id,
-      resolveCode: '1234',
+      resolveCode: await hashResolveCode('1234'),
       ...offerData,
     },
     include: { city: true, reporter: true },

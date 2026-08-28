@@ -16,7 +16,7 @@ import {
   offerVisibleToAudience,
 } from '../lib/viewer.js'
 import type { ContactVisibility, OfferAudience } from '../constants.js'
-import { generateResolveCode } from '../lib/verification.js'
+import { generateResolveCode, hashResolveCode, verifyResolveCode } from '../lib/verification.js'
 
 type ClaimWithUser = OfferClaim & { claimer: { name: string } | null }
 
@@ -388,6 +388,8 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
     input.audience ??
     (input.type === 'volunteers_offered' ? 'users' : 'public')
 
+  const resolveCode = generateResolveCode()
+
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
@@ -432,13 +434,13 @@ export async function createOffer(input: CreateOfferInput, viewer?: Viewer) {
         reporterId: reporter.id,
         contactVisibility: input.contactVisibility,
         audience,
-        resolveCode: generateResolveCode(),
+        resolveCode: await hashResolveCode(resolveCode),
       },
       include: OFFER_INCLUDE,
     })
   })
 
-  return { ...serializeOffer(created, viewer), resolveCode: created.resolveCode }
+  return { ...serializeOffer(created, viewer), resolveCode }
 }
 
 export async function updateOffer(
@@ -467,7 +469,7 @@ export async function updateOffer(
 
   if (!isOwner(viewer, offer.reporter.userId)) {
     const code = (input.resolveCode ?? '').trim()
-    if (!offer.resolveCode || code !== offer.resolveCode) {
+    if (!await verifyResolveCode(code, offer.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
   }
@@ -607,7 +609,7 @@ export async function verifyOfferCode(
 
   const code = (input.resolveCode ?? '').trim()
   if (!isOwner(viewer, offer.reporter.userId)) {
-    if (!offer.resolveCode || code !== offer.resolveCode) {
+    if (!await verifyResolveCode(code, offer.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
   }
@@ -662,7 +664,7 @@ export async function updateOfferStatus(
     !isAdmin &&
     !isOwnerFlag &&
     !isClaimer &&
-    (!offer.resolveCode || code !== offer.resolveCode)
+    !await verifyResolveCode(code, offer.resolveCode)
   ) {
     throw new ApiError(403, 'Código de cierre incorrecto')
   }

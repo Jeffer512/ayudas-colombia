@@ -4,7 +4,7 @@ import type { HelpOrgCategory } from '../constants.js'
 import { prisma } from '../db.js'
 import { ApiError } from '../lib/errors.js'
 import { serializeStaff } from './auth.js'
-import { generateResolveCode } from '../lib/verification.js'
+import { generateResolveCode, hashResolveCode } from '../lib/verification.js'
 import type {
   CreateHelpOrgInput,
   CreateOrgRequestInput,
@@ -332,6 +332,8 @@ export async function createOrgRequest(
     )
   }
 
+  const resolveCode = generateResolveCode()
+
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
@@ -357,7 +359,7 @@ export async function createOrgRequest(
         reporterId: reporter.id,
         helpOrgId: org.id,
         contactVisibility: input.contactVisibility,
-        resolveCode: generateResolveCode(),
+        resolveCode: await hashResolveCode(resolveCode),
         events: {
           create: [
             {
@@ -385,7 +387,7 @@ export async function createOrgRequest(
     title: created.title,
     city: { code: created.city.code, name: created.city.name },
     contactVisibility: created.contactVisibility,
-    resolveCode: created.resolveCode,
+    resolveCode,
     organization: { id: org.id, name: org.name, category: org.category },
   }
 }

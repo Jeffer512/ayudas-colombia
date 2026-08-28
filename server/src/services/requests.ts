@@ -11,7 +11,7 @@ import type {
 } from '../validators/request.js'
 import type { Viewer } from '../lib/viewer.js'
 import { canSeeContact, isOwner } from '../lib/viewer.js'
-import { generateResolveCode } from '../lib/verification.js'
+import { generateResolveCode, hashResolveCode, verifyResolveCode } from '../lib/verification.js'
 
 type SerializedRequest = Request & {
   city: City
@@ -241,6 +241,8 @@ export async function createRequest(input: CreateRequestInput, viewer?: Viewer) 
 
   const photoUrl = input.photo ? await uploadPhoto(input.photo) : null
 
+  const resolveCode = generateResolveCode()
+
   const created = await prisma.$transaction(async (tx) => {
     const reporter = await tx.reporter.create({
       data: {
@@ -268,7 +270,7 @@ export async function createRequest(input: CreateRequestInput, viewer?: Viewer) 
         cityId: city.id,
         reporterId: reporter.id,
         contactVisibility: input.contactVisibility,
-        resolveCode: generateResolveCode(),
+        resolveCode: await hashResolveCode(resolveCode),
         events: {
           create: [
             {
@@ -283,7 +285,7 @@ export async function createRequest(input: CreateRequestInput, viewer?: Viewer) 
     })
   })
 
-  return { ...serializeRequest(created, 0, undefined, viewer), resolveCode: created.resolveCode }
+  return { ...serializeRequest(created, 0, undefined, viewer), resolveCode }
 }
 
 export async function helpRequest(
@@ -386,7 +388,7 @@ export async function helpRequest(
           cityId: request.cityId,
           reporterId: reporter.id,
           contactVisibility: 'users',
-          resolveCode: generateResolveCode(),
+          resolveCode: await hashResolveCode(generateResolveCode()),
           requestId: id,
         },
       })
@@ -434,7 +436,7 @@ export async function updateRequest(
 
   if (!isOwner(viewer, request.reporter.userId)) {
     const code = (input.resolveCode ?? '').trim()
-    if (!request.resolveCode || code !== request.resolveCode) {
+    if (!await verifyResolveCode(code, request.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
   }
@@ -524,7 +526,7 @@ export async function verifyRequestCode(
 
   const code = (input.resolveCode ?? '').trim()
   if (!isOwner(viewer, request.reporter.userId)) {
-    if (!request.resolveCode || code !== request.resolveCode) {
+    if (!await verifyResolveCode(code, request.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
   }
@@ -564,7 +566,7 @@ export async function updateRequestStatus(
   let resolvedAt = request.resolvedAt
   if (input.status === 'resolved') {
     const code = (input.resolveCode ?? '').trim()
-    if (!isAdmin && !isOwnerFlag && (!request.resolveCode || code !== request.resolveCode)) {
+    if (!isAdmin && !isOwnerFlag && !await verifyResolveCode(code, request.resolveCode)) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
     resolvedAt = request.resolvedAt ?? new Date()
@@ -573,7 +575,7 @@ export async function updateRequestStatus(
       !isAdmin &&
       !isOwnerFlag &&
       CLOSED_STATES.includes(from) &&
-      (!request.resolveCode || (input.resolveCode ?? '').trim() !== request.resolveCode)
+      !await verifyResolveCode((input.resolveCode ?? '').trim(), request.resolveCode)
     ) {
       throw new ApiError(403, 'Código de cierre incorrecto')
     }
