@@ -6,7 +6,7 @@
     "web"
   ],
   "engines": {
-    "node": ">=25 <26"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "concurrently -n server,web -c blue,green \"npm run dev -w server\" \"npm run dev -w web\"",
