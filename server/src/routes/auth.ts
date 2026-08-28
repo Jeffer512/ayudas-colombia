@@ -8,7 +8,7 @@ import {
 } from '../middleware/requireSession.js'
 import { setSessionCookie } from '../lib/cookies.js'
 import { SESSION_COOKIE } from '../lib/jwt.js'
-import { getClientIp } from '../lib/clientIp.js'
+import { rateLimitKey } from '../lib/clientIp.js'
 import {
   changePassword,
   deleteAccount,
@@ -40,7 +40,7 @@ const registerLimiter = rateLimit({
   limit: env.production ? 10 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiados registros, intenta más tarde' },
 })
 
@@ -49,7 +49,7 @@ const resendLimiter = rateLimit({
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
@@ -58,7 +58,7 @@ const verifyLimiter = rateLimit({
   limit: env.production ? 10 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiados intentos, intenta más tarde' },
 })
 
@@ -67,7 +67,7 @@ const forgotPasswordLimiter = rateLimit({
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
@@ -76,7 +76,7 @@ const resetPasswordLimiter = rateLimit({
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
@@ -85,7 +85,7 @@ const accountUpdateLimiter = rateLimit({
   limit: env.production ? 10 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
@@ -94,7 +94,7 @@ const accountDeleteLimiter = rateLimit({
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
@@ -103,7 +103,7 @@ const passwordChangeLimiter = rateLimit({
   limit: env.production ? 5 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiadas solicitudes, intenta más tarde' },
 })
 
@@ -112,7 +112,7 @@ const loginLimiter = rateLimit({
   limit: env.production ? 10 : 10_000,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: getClientIp,
+  keyGenerator: rateLimitKey,
   message: { error: 'Demasiados intentos de inicio de sesión, intenta más tarde' },
 })
 
